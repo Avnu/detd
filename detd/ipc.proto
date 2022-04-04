@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+
+message StreamQosRequest {
+	string interface = 1;
+	uint32 period = 2;
+	uint32 size = 3;
+	string dmac = 4;
+	uint32 vid = 5;
+	uint32 pcp = 6;
+	uint32 txmin = 7;
+	uint32 txmax = 8;
+	bool   setup_socket = 9;
+}
+
+
+message StreamQosResponse {
+	bool    ok = 1;
+	string  vlan_interface = 2;
+	uint32  socket_priority = 3;
+}
