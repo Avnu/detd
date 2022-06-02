@@ -9,8 +9,9 @@ import math
 import threading
 
 from .systemconf import SystemConfigurator
+from .systemconf import SystemInformation
 from .systemconf import Check
-from .devices import IntelMgbe
+from .devices import Device
 
 
 
@@ -268,8 +269,9 @@ class Interface:
     def __init__(self, name):
         self.name = name
 
-        # FIXME: detect and assign the right device based on the name
-        self.device = IntelMgbe()
+        sysinfo = SystemInformation()
+        pci_id = sysinfo.get_pci_id(name)
+        self.device = Device.from_pci_id(pci_id)
 
 
 

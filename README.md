@@ -78,6 +78,7 @@ See [Contributing](README.md#contributing) :)
 
 * Current suppport for Intel mGBE only
   * Code conceived to support additional devices
+  * PCI ID autodetection in place
 * Current support for Linux only
 * Current support for talker streams only
 * Current taprio support restricted to offload mode
@@ -330,9 +331,7 @@ OK (skipped=2)
   * This will make integration with C applications straighforward
   * The python3 implementation can be used as an example
 * Add device backends
-  * Currently mGBE EHL supported
-* Add device auto-identification
-  * E.g. look for vendor/product ids for the interface provided and instantiate the right class
+  * For guidance and examples, please refer to [detd/devices.py](detd/devices.py) module documentation
 * Add more Linux backend targets
   * taprio offload is already implemented
   * More could follow, e.g. taprio software, taprio tx-assist, launch-time support...

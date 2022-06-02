@@ -39,24 +39,26 @@ class TestConfiguration(unittest.TestCase):
 
     def test_configuration_wrong_interface(self):
 
-        seed(1)
-        interface_name = "eth0{}".format(random())
+        with RunContext(self.mode):
 
-        interval = 20 * 1000 * 1000 # ns
-        size = 1522                 # Bytes
+            seed(1)
+            interface_name = "eth0{}".format(random())
 
-        txoffset = 250 * 1000       # ns
-        addr = "7a:b9:ed:d6:d2:12"
-        vid = 3
-        pcp = 6
+            interval = 20 * 1000 * 1000 # ns
+            size = 1522                 # Bytes
 
-        interface = Interface(interface_name)
-        traffic = TrafficSpecification(interval, size)
-        stream = StreamConfiguration(addr, vid, pcp, txoffset)
+            txoffset = 250 * 1000       # ns
+            addr = "7a:b9:ed:d6:d2:12"
+            vid = 3
+            pcp = 6
+
+            interface = Interface(interface_name)
+            traffic = TrafficSpecification(interval, size)
+            stream = StreamConfiguration(addr, vid, pcp, txoffset)
 
 
-        with self.assertRaises(TypeError):
-            config = Configuration(interface, stream, traffic)
+            with self.assertRaises(TypeError):
+                config = Configuration(interface, stream, traffic)
 
 
     def test_configuration_wrong_dmac(self):
@@ -77,103 +79,109 @@ class TestConfiguration(unittest.TestCase):
 
     def test_configuration_negative_vid(self):
 
-        interface_name = "eth0"
+        with RunContext(self.mode):
+            interface_name = "eth0"
 
-        interval = 20 * 1000 * 1000 # ns
-        size = 1522                 # Bytes
+            interval = 20 * 1000 * 1000 # ns
+            size = 1522                 # Bytes
 
-        txoffset = 250 * 1000       # ns
-        addr = "7a:b9:ed:d6:d2:12"
-        vid = -1
-        pcp = 6
+            txoffset = 250 * 1000       # ns
+            addr = "7a:b9:ed:d6:d2:12"
+            vid = -1
+            pcp = 6
 
-        with self.assertRaises(TypeError):
-            stream = StreamConfiguration(addr, vid, pcp, txoffset)
+            with self.assertRaises(TypeError):
+                stream = StreamConfiguration(addr, vid, pcp, txoffset)
 
 
     def test_configuration_negative_pcp(self):
 
-        interface_name = "eth0"
+        with RunContext(self.mode):
+            interface_name = "eth0"
 
-        interval = 20 * 1000 * 1000 # ns
-        size = 1522                 # Bytes
+            interval = 20 * 1000 * 1000 # ns
+            size = 1522                 # Bytes
 
-        txoffset = 250 * 1000       # ns
-        addr = "7a:b9:ed:d6:d2:12"
-        vid = 3
-        pcp = -1
+            txoffset = 250 * 1000       # ns
+            addr = "7a:b9:ed:d6:d2:12"
+            vid = 3
+            pcp = -1
 
-        with self.assertRaises(TypeError):
-            stream = StreamConfiguration(addr, vid, pcp, txoffset)
+            with self.assertRaises(TypeError):
+                stream = StreamConfiguration(addr, vid, pcp, txoffset)
 
 
     def test_configuration_negative_txoffset(self):
 
-        interface_name = "eth0"
+        with RunContext(self.mode):
+            interface_name = "eth0"
 
-        interval = 20 * 1000 * 1000 # ns
-        size = 1522                 # Bytes
+            interval = 20 * 1000 * 1000 # ns
+            size = 1522                 # Bytes
 
-        txoffset = -250 * 1000       # ns
-        addr = "7a:b9:ed:d6:d2:12"
-        vid = 3
-        pcp = 4
+            txoffset = -250 * 1000       # ns
+            addr = "7a:b9:ed:d6:d2:12"
+            vid = 3
+            pcp = 4
 
-        with self.assertRaises(TypeError):
-            stream = StreamConfiguration(addr, vid, pcp, txoffset)
+            with self.assertRaises(TypeError):
+                stream = StreamConfiguration(addr, vid, pcp, txoffset)
 
 
     def test_configuration_negative_interval(self):
 
-        interface_name = "eth0"
+        with RunContext(self.mode):
+            interface_name = "eth0"
 
-        interval = -20 * 1000 * 1000 # ns
-        size = 1522                 # Bytes
+            interval = -20 * 1000 * 1000 # ns
+            size = 1522                 # Bytes
 
-        txoffset = 250 * 1000       # ns
-        addr = "7a:b9:ed:d6:d2:12"
-        vid = 3
-        pcp = 4
+            txoffset = 250 * 1000       # ns
+            addr = "7a:b9:ed:d6:d2:12"
+            vid = 3
+            pcp = 4
 
-        with self.assertRaises(TypeError):
-            traffic = TrafficSpecification(interval, size)
+            with self.assertRaises(TypeError):
+                traffic = TrafficSpecification(interval, size)
 
 
     def test_configuration_negative_size(self):
 
-        interface_name = "eth0"
+        with RunContext(self.mode):
+            interface_name = "eth0"
 
-        interval = 20 * 1000 * 1000 # ns
-        size = -1                   # Bytes
+            interval = 20 * 1000 * 1000 # ns
+            size = -1                   # Bytes
 
-        txoffset = 250 * 1000       # ns
-        addr = "7a:b9:ed:d6:d2:12"
-        vid = 3
-        pcp = 4
+            txoffset = 250 * 1000       # ns
+            addr = "7a:b9:ed:d6:d2:12"
+            vid = 3
+            pcp = 4
 
-        with self.assertRaises(TypeError):
-            traffic = TrafficSpecification(interval, size)
+            with self.assertRaises(TypeError):
+                traffic = TrafficSpecification(interval, size)
 
 
     def test_configuration_txoffset_exceeds_interval(self):
 
-        interface_name = "eth0"
+        with RunContext(self.mode):
+            interface_name = "eth0"
 
-        interval = 20 * 1000 * 1000  # ns
-        size = 50                    # Bytes
+            interval = 20 * 1000 * 1000  # ns
+            size = 50                    # Bytes
 
-        txoffset = 250 * 1000 * 1000 # ns
-        addr = "7a:b9:ed:d6:d2:12"
-        vid = 3
-        pcp = 4
+            txoffset = 250 * 1000 * 1000 # ns
+            addr = "7a:b9:ed:d6:d2:12"
+            vid = 3
+            pcp = 4
 
-        interface = Interface(interface_name)
-        traffic = TrafficSpecification(interval, size)
-        stream = StreamConfiguration(addr, vid, pcp, txoffset)
+            interface = Interface(interface_name)
+            traffic = TrafficSpecification(interval, size)
+            stream = StreamConfiguration(addr, vid, pcp, txoffset)
 
 
-        with self.assertRaises(TypeError):
-            config = Configuration(interface, stream, traffic)
+            with self.assertRaises(TypeError):
+                config = Configuration(interface, stream, traffic)
 
 
 

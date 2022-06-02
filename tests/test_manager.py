@@ -44,11 +44,12 @@ class TestManager(unittest.TestCase):
         vid = 3
         pcp = 6
 
-        interface = Interface(interface_name)
-        traffic = TrafficSpecification(interval, size)
-        stream = StreamConfiguration(addr, vid, pcp, txoffset)
+        with RunContext(self.mode):
+            interface = Interface(interface_name)
+            traffic = TrafficSpecification(interval, size)
+            stream = StreamConfiguration(addr, vid, pcp, txoffset)
 
-        self.config = Configuration(interface, stream, traffic)
+            self.config = Configuration(interface, stream, traffic)
 
 
     def test_add_talker_success(self):

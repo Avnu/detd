@@ -28,6 +28,7 @@ from .systemconf import Check
 from .systemconf import QdiscConfigurator
 from .systemconf import VlanConfigurator
 from .systemconf import DeviceConfigurator
+from .systemconf import SystemInformation
 
 
 _SERVICE_UNIX_DOMAIN_SOCKET='/tmp/uds_detd_server.sock'
@@ -193,23 +194,26 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
 
     def _mock_setup_talker(self, request):
-        addr = request.dmac
-        vid = request.vid
-        pcp = request.pcp
-        txoffset = request.txmin
-        interval = request.period
-        size = request.size
-        interface_name = request.interface
-
-        stream = StreamConfiguration(addr, vid, pcp, txoffset)
-        traffic = TrafficSpecification(interval, size)
-        interface = Interface(interface_name)
-
-        config = Configuration(interface, stream, traffic)
 
         with mock.patch.object(QdiscConfigurator,  'run', return_value=None), \
              mock.patch.object(VlanConfigurator,   'run', return_value=None), \
-             mock.patch.object(DeviceConfigurator, 'run', return_value=None):
+             mock.patch.object(DeviceConfigurator, 'run', return_value=None), \
+             mock.patch.object(SystemInformation,  'get_pci_id', return_value=('8086:4B30')):
+
+            addr = request.dmac
+            vid = request.vid
+            pcp = request.pcp
+            txoffset = request.txmin
+            interval = request.period
+            size = request.size
+            interface_name = request.interface
+
+            stream = StreamConfiguration(addr, vid, pcp, txoffset)
+            traffic = TrafficSpecification(interval, size)
+            interface = Interface(interface_name)
+
+            config = Configuration(interface, stream, traffic)
+
             vlan_interface, soprio = self.server.manager.add_talker(config)
 
         return vlan_interface, soprio

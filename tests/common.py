@@ -18,6 +18,7 @@ from detd import Interface
 from detd import Traffic
 from detd import TrafficType
 from detd import Manager
+from detd import SystemInformation
 
 from contextlib import AbstractContextManager
 
@@ -42,24 +43,27 @@ class RunContext(AbstractContextManager):
         self.mode = mode
 
         if mode == TestMode.HOST:
-            self.qdisc_mock  = mock.patch.object(QdiscConfigurator,  'run', side_effect=qdisc_exc)
-            self.vlan_mock   = mock.patch.object(VlanConfigurator,   'run', side_effect=vlan_exc)
-            self.device_mock = mock.patch.object(DeviceConfigurator, 'run', side_effect=device_exc)
+            self.qdisc_conf_mock  = mock.patch.object(QdiscConfigurator,  'run', side_effect=qdisc_exc)
+            self.vlan_conf_mock   = mock.patch.object(VlanConfigurator,   'run', side_effect=vlan_exc)
+            self.device_conf_mock = mock.patch.object(DeviceConfigurator, 'run', side_effect=device_exc)
+            self.device_mock = mock.patch.object(SystemInformation, 'get_pci_id', return_value=('8086:4B30'))
 
 
     def __enter__(self):
 
         if self.mode == TestMode.HOST:
-            self.qdisc_mock.start()
-            self.vlan_mock.start()
+            self.qdisc_conf_mock.start()
+            self.vlan_conf_mock.start()
+            self.device_conf_mock.start()
             self.device_mock.start()
 
 
     def __exit__(self, exc_type, exc_value, traceback):
 
         if self.mode == TestMode.HOST:
-            self.qdisc_mock.stop()
-            self.vlan_mock.stop()
+            self.qdisc_conf_mock.stop()
+            self.vlan_conf_mock.stop()
+            self.device_conf_mock.stop()
             self.device_mock.stop()
 
 

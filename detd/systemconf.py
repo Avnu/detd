@@ -159,6 +159,42 @@ class Check:
 
 
 
+class SystemInformation:
+
+    """ Provides read-only information about the system"""
+
+
+    def __init__(self):
+        pass
+
+
+    def get_pci_id(self, interface):
+        """
+        Returns the PCI ID string for a give network interface
+
+        The PCI ID string returned contains vendor and product ids, separated
+        by a semicolon. E.g. "8086:4BA0"
+
+        Raises a RuntimeError if it is not able to find which PCI ID is
+        associated to the interface.
+        """
+
+        filename="/sys/class/net/{}/device/uevent".format(interface)
+        # E.g.:
+        # PCI_ID=8086:4BA0
+        regex = re.compile("PCI_ID=([0-9a-fA-F]{4}):([0-9a-fA-F]{4})")
+        with open(filename, 'r') as f:
+            for line in f:
+                m = regex.match(line)
+                if m:
+                    vendor = m.groups()[0]
+                    device = m.groups()[1]
+                    return "{}:{}".format(vendor, device)
+
+        raise RuntimeError("uevent for {} lacks a PCI_ID entry".format(interface))
+
+
+
 """
 CommandString classes
 
