@@ -564,7 +564,6 @@ class VlanConfigurator:
 
 
     def run(self, command):
-        # print(command)
         cmd = command.split()
         result = subprocess.run(cmd, capture_output=True, check=True)
 
