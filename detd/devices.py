@@ -101,7 +101,7 @@ class Device:
             if pci_id in device.PCI_IDS:
                 return device(pci_id)
 
-        raise NameError("Unrecognized PCI ID: {}".format(device))
+        raise NameError("Unrecognized PCI ID: {}".format(pci_id))
 
 
 

@@ -12,6 +12,7 @@ from detd import CommandStringIpLinkSet
 from detd import CommandStringEthtoolFeatures
 from detd import CommandStringEthtoolSetChannels
 from detd import CommandStringEthtoolSetRing
+from detd import CommandStringEthtoolGetDriverInformation
 
 
 
@@ -87,6 +88,20 @@ class TestCommandString(unittest.TestCase):
         expected = 'ethtool --set-ring eth0 tx 1024 rx 256'
 
         self.assert_commandstring_equal(cmd, expected)
+
+
+
+
+    def test_ethtoolgetdriverinformation(self):
+
+        interface_name = "eth0"
+
+        cmd = CommandStringEthtoolGetDriverInformation(interface_name)
+        expected = 'ethtool --driver eth0'
+
+        self.assert_commandstring_equal(cmd, expected)
+
+
 
 
 

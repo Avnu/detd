@@ -11,8 +11,8 @@ from unittest import mock
 from unittest.mock import mock_open
 from subprocess import CalledProcessError
 
-from detd import Interface
 from detd import SystemInformation
+from detd import CommandEthtool
 
 import os
 
@@ -33,24 +33,43 @@ class TestSystemInformation(unittest.TestCase):
             self.mode = TestMode.HOST
 
 
-    def test_getpciid_success(self):
+    def test_getpcidbdf_success(self):
 
         sysinfo = SystemInformation()
 
         interface = "eth0"
 
-        uevent = """
-DRIVER=stmmaceth
-PCI_CLASS=20018
-PCI_ID=8086:4BA0
-PCI_SUBSYS_ID=8086:7270
-PCI_SLOT_NAME=0000:00:1d.1
-MODALIAS=pci:v00008086d00004BA0sv00008086sd00007270bc02sc00i18"""
+        driver_information = [
+            'driver: st_gmac',
+            'version: 5.17.1-rt17',
+            'firmware-version:',
+            'expansion-rom-version:',
+            'bus-info: 0000:00:1d.1',
+            'supports-statistics: yes',
+            'supports-test: no',
+            'supports-eeprom-access: no',
+            'supports-register-dump: yes',
+            'supports-priv-flags: no'
+        ]
 
-        mocked_open = mock.mock_open(read_data=uevent)
+
+        with mock.patch.object(CommandEthtool, 'get_driver_information', return_value=driver_information):
+            domain, bus, device, function = sysinfo.get_pci_dbdf(interface)
+            self.assertEqual(domain, "0000")
+            self.assertEqual(bus, "00")
+            self.assertEqual(device, "1d")
+            self.assertEqual(function, "1")
+
+
+    def test_gethex(self):
+
+        vendor_or_product_id = '0x8086'
+        mocked_open = mock.mock_open(read_data=vendor_or_product_id)
         with mock.patch('builtins.open', mocked_open):
-            pci_id = sysinfo.get_pci_id(interface)
-            self.assertEqual(pci_id, "8086:4BA0")
+            sysinfo = SystemInformation()
+            filename = "da/file"
+            value = sysinfo.get_hex(filename)
+            self.assertEqual(value, '8086')
 
 
     def test_getpciid_parse_error(self):

@@ -168,30 +168,64 @@ class SystemInformation:
         pass
 
 
+    def get_pci_dbdf(self, interface):
+        ethtool = CommandEthtool()
+        output = ethtool.get_driver_information(interface)
+        # E.g.:
+        # bus-info: 0000:00:1d.1
+        regex = re.compile("^bus-info: ([0-9a-fA-F]{4}):([0-9a-fA-F]{2}):([0-9a-fA-F]{2}).([0-9a-fA-F])$")
+        for line in output:
+            m = regex.match(line)
+            if m:
+                domain = m.groups()[0]
+                bus = m.groups()[1]
+                device = m.groups()[2]
+                function = m.groups()[3]
+                return domain, bus, device, function
+
+        raise RuntimeError("ethtool output does not include correct bus-info".format(interface))
+
+
+
+    def get_hex(self, filename):
+
+        # E.g.:
+        # 0x8086
+        regex = re.compile("0x([0-9a-fA-F]{4})")
+
+        with open(filename, 'r') as f:
+            line = f.read()
+            m = regex.match(line)
+            if m:
+                vendor = m.groups()[0]
+            else:
+                raise RuntimeError("Corrupted PCI entry for {}".format(interface))
+
+        return vendor.upper()
+
+
     def get_pci_id(self, interface):
         """
         Returns the PCI ID string for a give network interface
 
-        The PCI ID string returned contains vendor and product ids, separated
-        by a semicolon. E.g. "8086:4BA0"
+        The PCI ID string returned contains vendor and product ids in uppercase,
+        separated by a semicolon. E.g. "8086:4BA0"
 
         Raises a RuntimeError if it is not able to find which PCI ID is
         associated to the interface.
         """
 
-        filename="/sys/class/net/{}/device/uevent".format(interface)
-        # E.g.:
-        # PCI_ID=8086:4BA0
-        regex = re.compile("PCI_ID=([0-9a-fA-F]{4}):([0-9a-fA-F]{4})")
-        with open(filename, 'r') as f:
-            for line in f:
-                m = regex.match(line)
-                if m:
-                    vendor = m.groups()[0]
-                    device = m.groups()[1]
-                    return "{}:{}".format(vendor, device)
+        domain, bus, device, function = self.get_pci_dbdf(interface)
+        base = "/sys/bus/pci/devices/{}:{}:{}.{}".format(domain, bus, device, function)
 
-        raise RuntimeError("uevent for {} lacks a PCI_ID entry".format(interface))
+        filename = "{}/vendor".format(base)
+        vendor = self.get_hex(filename)
+
+        filename = "{}/device".format(base)
+        product = self.get_hex(filename)
+
+        return "{}:{}".format(vendor, product)
+
 
 
 
@@ -498,6 +532,88 @@ class CommandStringEthtoolSetRing(collections.UserString):
 
 
 
+class CommandStringEthtoolGetDriverInformation(collections.UserString):
+
+    def __init__(self, interface):
+
+        self.check_args(interface)
+
+        template = Template(inspect.cleandoc('''
+           ethtool --driver $interface'''))
+
+        params = self._parameters(interface)
+        data = template.substitute(params).replace('\n', '')
+
+        super().__init__(data)
+
+
+    def check_args(self, interface):
+        pass
+
+
+    def _parameters(self, interface):
+        parameters = {}
+        parameters['interface'] = interface
+
+        return parameters
+
+
+
+
+class CommandEthtool:
+
+    def __init__(self):
+        pass
+
+    def run(self, command):
+        cmd = command.split()
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        # ethtool returns 80 when the configuration does not change
+        # so we need to handle this case manually because check=True
+        # will just interpret any return code different than 0 as error
+        success_codes = [0, 80]
+        if result.returncode not in [0, 80]:
+            raise subprocess.CalledProcessError(result.returncode, command, stdout=result.stdout, stderr=result.stderr)
+
+        return result
+
+
+    def get_driver_information(self, interface):
+        cmd = CommandStringEthtoolGetDriverInformation(interface)
+
+        result = self.run(cmd)
+
+        return result.stdout.splitlines()
+
+
+    def set_eee(self, interface, eee):
+        cmd = CommandStringEthtoolSetEee(interface, eee)
+
+        self.run(cmd)
+
+
+    def set_ring(self, interface, num_tx_ring_entries, num_rx_ring_entries):
+        cmd = CommandStringEthtoolSetRing(interface, num_tx_ring_entries, num_rx_ring_entries)
+
+        self.run(cmd)
+
+
+    def set_channels(self, interface, num_tx_queues, num_rx_queues):
+        cmd = CommandStringEthtoolSetChannels(interface, num_tx_queues, num_rx_queues)
+
+        self.run(cmd)
+
+
+    def set_features(self, interface, features):
+        cmd = CommandStringEthtoolFeatures(interface, features)
+
+        self.run(cmd)
+
+
+
+
+
 class QdiscConfigurator:
 
     def __init__(self):
@@ -586,32 +702,14 @@ class DeviceConfigurator:
         pass
 
 
-    def run(self, command):
-        # print(command)
-        cmd = command.split()
-        result = subprocess.run(cmd, capture_output=True)
-
-        # ethtool returns 80 when the configuration does not change
-        # so we need to handle this case manually because check=True
-        # will just interpret any return code different than 0 as error
-        success_codes = [0, 80]
-        if result.returncode not in [0, 80]:
-            raise subprocess.CalledProcessError(result.returncode, command, stdout=result.stdout, stderr=result.stderr)
-
-
     def setup(self, interface, eee="off"):
 
-        cmd = CommandStringEthtoolSetEee(interface.name, eee)
-        self.run(str(cmd))
+        ethtool = CommandEthtool()
 
-        cmd = CommandStringEthtoolFeatures(interface.name, interface.device.features)
-        self.run(str(cmd))
-
-        cmd = CommandStringEthtoolSetChannels(interface.name, interface.device.num_tx_queues, interface.device.num_rx_queues)
-        self.run(str(cmd))
-
-        cmd = CommandStringEthtoolSetRing(interface.name, interface.device.num_rx_ring_entries, interface.device.num_rx_ring_entries)
-        self.run(str(cmd))
+        ethtool.set_eee(interface.name, eee)
+        ethtool.set_features(interface.name, interface.device.features)
+        ethtool.set_channels(interface.name, interface.device.num_tx_queues, interface.device.num_rx_queues)
+        ethtool.set_ring(interface.name, interface.device.num_tx_ring_entries, interface.device.num_rx_ring_entries)
 
 
 

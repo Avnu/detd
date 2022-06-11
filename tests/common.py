@@ -19,6 +19,7 @@ from detd import Traffic
 from detd import TrafficType
 from detd import Manager
 from detd import SystemInformation
+from detd import CommandEthtool
 
 from contextlib import AbstractContextManager
 
@@ -45,7 +46,7 @@ class RunContext(AbstractContextManager):
         if mode == TestMode.HOST:
             self.qdisc_conf_mock  = mock.patch.object(QdiscConfigurator,  'run', side_effect=qdisc_exc)
             self.vlan_conf_mock   = mock.patch.object(VlanConfigurator,   'run', side_effect=vlan_exc)
-            self.device_conf_mock = mock.patch.object(DeviceConfigurator, 'run', side_effect=device_exc)
+            self.device_conf_mock = mock.patch.object(CommandEthtool, 'run', side_effect=device_exc)
             self.device_mock = mock.patch.object(SystemInformation, 'get_pci_id', return_value=('8086:4B30'))
 
 
