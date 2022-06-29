@@ -278,6 +278,18 @@ cd detd
 
 ### Installation
 
+#### deb package
+
+A convenience script [package_debian.sh](tools/package_debian.sh) is provided to generate a deb file for easier installation on Debian-based distributions. It generates a deb file and stores it in /tmp.
+
+```bash
+cd tools
+./package_debian.sh
+apt install /tmp/detd_*deb
+```
+
+#### pip
+
 Dependencies:
 * python3
 * python3-protobuf
