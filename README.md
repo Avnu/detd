@@ -325,6 +325,7 @@ OK (skipped=2)
 
 **Junior tasks**
 
+* Replace protobuf interface by D-BUS based one
 * Make setup_qos.sh interface more compact
   * Instead of --address AB:CD:EF:FE:DC:BA --vid 3 --pcp 6
   * Use --stream AB:CD:EF:FE:DC:BA/3/6 and parse inside the string
@@ -332,7 +333,7 @@ OK (skipped=2)
   * Also involves providing the installation instructions, e.g. to set the right ownerships
 * Split device features into rx_features and tx_features
   * So e.g. only tx_features are applied when setting up the talker
-* Deb and RPM packaging
+* RPM packaging
 * systemd service file
 * Improve pep8 style compliance
 
