@@ -215,6 +215,9 @@ class IntelMgbeAdl(Device):
 
 class IntelI225(Device):
 
+    NUM_TX_QUEUES = 4
+    NUM_RX_QUEUES = 4
+
     # Devices supporting TSN: i225-LM, i225-IT
     PCI_IDS_VALID = ['8086:0D9F', '8086:15F2']
 
@@ -225,6 +228,48 @@ class IntelI225(Device):
     PCI_IDS_UNPROGRAMMED = ['8086:15FD']
 
     PCI_IDS = PCI_IDS_VALID + PCI_IDS_NON_TSN + PCI_IDS_UNPROGRAMMED
+
+
+    def __init__(self, pci_id):
+        super().__init__(IntelI225.NUM_TX_QUEUES, IntelI225.NUM_RX_QUEUES)
+
+        if pci_id in IntelI225.PCI_IDS_NON_TSN:
+            raise "This i225 device does not support TSN."
+
+        if pci_id in IntelI225.PCI_IDS_UNPROGRAMMED:
+            raise "The flash image in this i225 device is empty, or the NVM configuration loading failed."
+
+        # self.features
+        # Taking the name from ethtool's "features" option.
+        # Currently, the code just passes the key and value to ethtool.
+        # Ideally, this should be stored in a way independent from ethtool.
+        self.features['rxvlan'] = 'off'
+        #self.features['hw-tc-offload'] = 'on'
+
+        # self.num_tx_ring_entries and self.num_rx_ring_entries
+        # Provides the number of ring entries for Tx and Rx rings.
+        # Currently, the code just passes the value to ethtool's --set-ring.
+        self.num_tx_ring_entries = 1024
+        self.num_rx_ring_entries = 1024
+
+
+    def get_base_time_multiple(self):
+        return -1
+
+
+    def supports_schedule(self, schedule):
+
+        if schedule.opens_gate_multiple_times_per_cycle():
+            return False
+
+        # FIXME: check additional constraints, like maximum cycle time
+
+        return True
+
+
+    @property
+    def supports_split_channels(self):
+        return False
 
 
 class IntelI226(Device):
