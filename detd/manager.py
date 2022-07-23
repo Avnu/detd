@@ -7,6 +7,7 @@
 import enum
 import math
 import threading
+import time
 
 from .systemconf import SystemConfigurator
 from .systemconf import SystemInformation
@@ -39,7 +40,7 @@ class Configuration:
 
 class StreamConfiguration:
 
-    def __init__(self, addr, vid, pcp, txoffset):
+    def __init__(self, addr, vid, pcp, txoffset, base_time=None):
 
         if not Check.is_mac_address(addr):
             raise TypeError("Invalid MAC address")
@@ -53,10 +54,15 @@ class StreamConfiguration:
         if not Check.is_natural(txoffset):
             raise TypeError("Invalid TxOffset")
 
+        if not Check.is_natural(base_time):
+            if base_time is not None:
+                raise TypeError("Invalid base_time")
+
         self.addr = addr
         self.vid = vid
         self.pcp = pcp
         self.txoffset = txoffset
+        self.base_time = base_time
 
 
 class TrafficSpecification:
@@ -533,6 +539,14 @@ class InterfaceManager():
         self.scheduler.add(traffic)
 
 
+
+        # Normally, the base_time will be determined by the network planning process
+        # However, for quick tests, we may just want to give a value that allows us
+        # to send frames according to a given schedule. That is what a value of
+        # None in the base_time will trigger.
+        if config.stream.base_time is None:
+            self.update_base_time(config)
+
         try:
             self.runner.setup(self.interface, self.mapping, self.scheduler, config.stream)
         except:
@@ -546,3 +560,27 @@ class InterfaceManager():
 
         vlan_interface = "{}.{}".format(self.interface.name, config.stream.vid)
         return vlan_interface, soprio
+
+
+    # Unfortunately, not all devices accept base_time in the future, or base_time
+    # in the past, throwing errors if the wrong choice is taken. This method
+    # avoids those problems by setting a base_time according to each device
+    # specific behaviour.
+    def update_base_time(self, config):
+
+        period = config.traffic.interval
+        # The device object gives an integer that will determine how many
+        # cycles in the past or the future are added to the time of the next
+        # cycle start.
+        multiple = self.interface.device.get_base_time_multiple()
+
+        # XXX: evil trick to run on python3 < 3.9...
+        # The hardcoded 11 (taken from /usr/include/linux/time.h) must be
+        # replaced by time.CLOCK_TAI
+        # now = time.clock_gettime_ns(time.CLOCK_TAI)
+        CLOCK_TAI = 11
+        now = time.clock_gettime_ns(CLOCK_TAI)
+        ns_until_next_cycle = period - (now % period)
+        safety_margin = multiple * period
+
+        config.stream.base_time = (now + ns_until_next_cycle) + safety_margin

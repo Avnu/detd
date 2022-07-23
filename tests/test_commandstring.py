@@ -10,7 +10,8 @@ import unittest
 
 from detd import CommandStringIpLinkSet
 from detd import CommandStringEthtoolFeatures
-from detd import CommandStringEthtoolSetChannels
+from detd import CommandStringEthtoolSetCombinedChannels
+from detd import CommandStringEthtoolSetSplitChannels
 from detd import CommandStringEthtoolSetRing
 from detd import CommandStringEthtoolGetDriverInformation
 
@@ -64,14 +65,27 @@ class TestCommandString(unittest.TestCase):
 
 
 
-    def test_ethtoolsetchannels(self):
+    def test_ethtoolsetsplitchannels(self):
 
         interface_name = "eth0"
         num_tx_queues = 4
         num_rx_queues = 6
 
-        cmd = CommandStringEthtoolSetChannels(interface_name, num_tx_queues, num_rx_queues)
+        cmd = CommandStringEthtoolSetSplitChannels(interface_name, num_tx_queues, num_rx_queues)
         expected = 'ethtool --set-channels eth0 tx 4 rx 6'
+
+        self.assert_commandstring_equal(cmd, expected)
+
+
+
+
+    def test_ethtoolsetcombinedchannels(self):
+
+        interface_name = "eth0"
+        num_queues = 4
+
+        cmd = CommandStringEthtoolSetCombinedChannels(interface_name, num_queues)
+        expected = 'ethtool --set-channels eth0 combined 4'
 
         self.assert_commandstring_equal(cmd, expected)
 

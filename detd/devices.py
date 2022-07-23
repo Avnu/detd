@@ -104,6 +104,31 @@ class Device:
         raise NameError("Unrecognized PCI ID: {}".format(pci_id))
 
 
+    def get_base_time_multiple(self):
+        '''Returns the number of cycles that will be added to the start of the
+        next cycle to determine the base time. This is only used to make some
+        quick tests easier, so no network planner is involved.
+
+        A negative figure will set the base time in the past.
+
+        Subclass this to account for your device's specific handling of
+        allowed base times.
+        '''
+        return 0
+
+    @property
+    def supports_split_channels(self):
+        '''Returns true if the device allows to independently configure the
+        Rx and Tx channels, false otherwise.
+
+        "Channel" follows the ethtool convention.
+
+        Subclass this when your device supports separated Rx and Tx channels.
+        '''
+        return False
+
+
+
 
 class IntelMgbeEhl(Device):
 

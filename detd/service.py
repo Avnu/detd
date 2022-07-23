@@ -195,7 +195,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
     def _mock_setup_talker(self, request):
 
-        with mock.patch.object(QdiscConfigurator,  'run', return_value=None), \
+        with mock.patch.object(QdiscConfigurator,  'setup', return_value=None), \
              mock.patch.object(VlanConfigurator,   'run', return_value=None), \
              mock.patch.object(DeviceConfigurator, 'setup', return_value=None), \
              mock.patch.object(SystemInformation,  'get_pci_id', return_value=('8086:4B30')):

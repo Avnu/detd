@@ -13,6 +13,7 @@ import re
 import socket
 import stat
 import subprocess
+import sys
 import time
 
 from string import Template
@@ -471,7 +472,7 @@ class CommandStringEthtoolFeatures(collections.UserString):
 
 
 
-class CommandStringEthtoolSetChannels(collections.UserString):
+class CommandStringEthtoolSetSplitChannels(collections.UserString):
 
     def __init__(self, interface, num_tx_queues, num_rx_queues):
 
@@ -495,6 +496,30 @@ class CommandStringEthtoolSetChannels(collections.UserString):
 
         return parameters
 
+
+
+
+class CommandStringEthtoolSetCombinedChannels(collections.UserString):
+
+    def __init__(self, interface, num_queues):
+
+        template = Template(inspect.cleandoc('''
+           ethtool --set-channels $interface
+                   combined $num_queues'''))
+
+        params = self._parameters(interface, num_queues)
+        data = template.substitute(params).replace('\n', '')
+
+        super().__init__(data)
+
+
+
+    def _parameters(self, interface, num_queues):
+        parameters = {}
+        parameters['interface'] = interface
+        parameters['num_queues'] = num_queues
+
+        return parameters
 
 
 
@@ -558,6 +583,83 @@ class CommandStringEthtoolGetDriverInformation(collections.UserString):
         return parameters
 
 
+class CommandStringEthtoolGetChannelInformation(collections.UserString):
+
+    def __init__(self, interface):
+
+        self.check_args(interface)
+
+        template = Template(inspect.cleandoc('''
+           ethtool --show-channels $interface'''))
+
+        params = self._parameters(interface)
+        data = template.substitute(params).replace('\n', '')
+
+        super().__init__(data)
+
+
+    def check_args(self, interface):
+        pass
+
+
+    def _parameters(self, interface):
+        parameters = {}
+        parameters['interface'] = interface
+
+        return parameters
+
+
+
+class CommandTc:
+
+    def __init__(self):
+        pass
+
+
+    def run(self, command):
+        cmd = command.split()
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        success_codes = [0]
+        if result.returncode not in success_codes:
+            raise subprocess.CalledProcessError(result.returncode, command, result.stdout, result.stderr)
+
+        return result
+
+
+    def set_taprio_offload(self, interface, mapping, scheduler, base_time):
+
+        schedule = self._extract_schedule(scheduler)
+        cmd = CommandStringTcTaprioOffloadSet(interface.name, mapping.soprio_to_tc, mapping.tc_to_hwq, base_time, schedule)
+
+        self.run(cmd)
+
+
+    def unset_taprio_offload(self, interface):
+
+        cmd = CommandStringTcTaprioOffloadUnset(interface.name)
+
+        self.run(str(cmd))
+
+
+    def _extract_schedule(self, scheduler):
+        schedule = []
+        for slot in scheduler.schedule:
+            entry = {}
+            entry["command"] = "SetGateStates"
+            tc = slot.traffic.tc
+            gatemask = ""
+            for i in reversed(range(0,8)):
+                if i == tc:
+                    gatemask += "1"
+                else:
+                    gatemask += "0"
+            entry["gatemask"] = gatemask
+            entry["interval"] = slot.length
+            schedule.append(entry)
+        return schedule
+
+
 
 
 class CommandEthtool:
@@ -574,7 +676,7 @@ class CommandEthtool:
         # will just interpret any return code different than 0 as error
         success_codes = [0, 80]
         if result.returncode not in [0, 80]:
-            raise subprocess.CalledProcessError(result.returncode, command, stdout=result.stdout, stderr=result.stderr)
+            raise subprocess.CalledProcessError(result.returncode, command, result.stdout, result.stderr)
 
         return result
 
@@ -599,8 +701,14 @@ class CommandEthtool:
         self.run(cmd)
 
 
-    def set_channels(self, interface, num_tx_queues, num_rx_queues):
-        cmd = CommandStringEthtoolSetChannels(interface, num_tx_queues, num_rx_queues)
+    def set_split_channels(self, interface, num_tx_queues, num_rx_queues):
+        cmd = CommandStringEthtoolSetSplitChannels(interface, num_tx_queues, num_rx_queues)
+
+        self.run(cmd)
+
+
+    def set_combined_channels(self, interface, num_queues):
+        cmd = CommandStringEthtoolSetCombinedChannels(interface, num_queues)
 
         self.run(cmd)
 
@@ -620,56 +728,15 @@ class QdiscConfigurator:
         pass
 
 
-    def run(self, command):
-        # print(command)
-        cmd = command.split()
-        result = subprocess.run(cmd, capture_output=True, check=True)
+    def setup(self, interface, mapping, scheduler, base_time):
+        tc = CommandTc()
 
-
-    def setup(self, interface, mapping, scheduler):
-        # FIXME: provide a mechanism to pass base-time
-        base_time = self._calculate_base_time(scheduler.schedule.period)
-        schedule = self._extract_schedule(scheduler)
-        cmd = CommandStringTcTaprioOffloadSet(interface.name, mapping.soprio_to_tc, mapping.tc_to_hwq, base_time, schedule)
-        self.run(str(cmd))
-
+        tc.set_taprio_offload(interface, mapping, scheduler, base_time)
 
     def unset(self, interface):
-        cmd = CommandStringTcTaprioOffloadUnset(interface.name)
-        self.run(str(cmd))
+        tc = CommandTc()
 
-
-    def _calculate_base_time(self, period):
-        # XXX: evil trick to run on python3 < 3.9...
-        # The hardcoded 11 (taken from /usr/include/linux/time.h) must be
-        # replaced by time.CLOCK_TAI
-        # now = time.clock_gettime_ns(time.CLOCK_TAI)
-        CLOCK_TAI = 11
-        now = time.clock_gettime_ns(CLOCK_TAI)
-        ns_until_next_cycle = period - (now % period)
-        # We add a safety margin of two cycles
-        # FIXME: base time has to be provided by network planning
-        safety_margin = 2 * period
-        return (now + ns_until_next_cycle) + safety_margin
-
-
-    def _extract_schedule(self, scheduler):
-        schedule = []
-        for slot in scheduler.schedule:
-            entry = {}
-            entry["command"] = "SetGateStates"
-            tc = slot.traffic.tc
-            gatemask = ""
-            for i in reversed(range(0,8)):
-                if i == tc:
-                    gatemask += "1"
-                else:
-                    gatemask += "0"
-            entry["gatemask"] = gatemask
-            entry["interval"] = slot.length
-            schedule.append(entry)
-        return schedule
-
+        tc.unset_taprio_offload(interface)
 
 
 
@@ -708,7 +775,10 @@ class DeviceConfigurator:
 
         ethtool.set_eee(interface.name, eee)
         ethtool.set_features(interface.name, interface.device.features)
-        ethtool.set_channels(interface.name, interface.device.num_tx_queues, interface.device.num_rx_queues)
+        if interface.device.supports_split_channels:
+            ethtool.set_split_channels(interface.name, interface.device.num_tx_queues, interface.device.num_rx_queues)
+        else:
+            ethtool.set_combined_channels(interface.name, interface.device.num_tx_queues)
         ethtool.set_ring(interface.name, interface.device.num_tx_ring_entries, interface.device.num_rx_ring_entries)
 
 
@@ -777,10 +847,16 @@ class SystemConfigurator:
         if not self.args_valid(interface, mapping, scheduler, stream):
             raise TypeError
 
+        try:
+            self.device.setup(interface, eee="off")
+        except subprocess.CalledProcessError:
+            # FIXME add device restore
+            raise
+
         # FIXME: consider other exceptions, e.g. TypeError
         try:
             # FIXME add qdisc reset
-            self.qdisc.setup(interface, mapping, scheduler)
+            self.qdisc.setup(interface, mapping, scheduler, stream.base_time)
         except subprocess.CalledProcessError:
             raise
 
@@ -790,9 +866,4 @@ class SystemConfigurator:
             self.qdisc.unset(interface)
             raise
 
-        try:
-            self.device.setup(interface, eee="off")
-        except subprocess.CalledProcessError:
-            self.qdisc.unset(interface)
-            self.vlan.unset(interface, stream)
-            raise
+
