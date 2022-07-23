@@ -186,6 +186,12 @@ class Slot:
 
 
 class Schedule(list):
+    '''Represents the schedule as a list of slots.
+
+    Each slot:
+    * Is defined by its start and end time relative to the start of the cycle
+    * Holds a single traffic class
+    '''
 
     def __init__(self):
         super().__init__(self)
@@ -217,6 +223,49 @@ class Schedule(list):
         # The last best effort padding element may cover the remaining until period
         if self[-1].end < self.period:
             self.append(Slot(self[-1].end, self.period, traffic))
+
+
+    def opens_gate_multiple_times_per_cycle(self):
+        '''Returns True if any gate opens more than once over the same cycle.
+
+        Some devices do not allow a hardware queue to be opened more than once
+        in the same cycle.
+        '''
+
+        opened_once = []
+
+        # Traverse the slots in the schedule and check how many times the gate
+        # for a traffic type has to be opened.
+        i = 0
+        n = len(self)
+
+        while i < n:
+            print(i)
+            print(n)
+
+            # Determine traffic in this slot and in the previous one
+            traffic = self[i].traffic
+            if i == 0:
+                previous_traffic = None
+            else:
+                previous_traffic = self[i-1].traffic
+
+            if traffic in opened_once:
+                # If this slot contains the previous traffic, there is no
+                # new open event, as the gate simply remains open.
+                if previous_traffic == traffic:
+                    pass
+                else:
+                    return True
+            else:
+                opened_once.append(traffic)
+
+            i = i + 1
+
+
+        return False
+
+
 
 
     def __str__(self):
