@@ -80,6 +80,10 @@ class TrafficType(enum.Enum):
     BEST_EFFORT = 0
     SCHEDULED = 1
 
+    @classmethod
+    def contains(cls, value):
+        return value in cls._value2member_map_
+
 
 '''
 Only one gate open at the same time
