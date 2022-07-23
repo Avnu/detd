@@ -53,15 +53,12 @@ class Device:
         self.num_rx_queues = num_rx_queues
         self.best_effort_tx_queues = list(range(0, num_tx_queues))
 
-        # features will be initialized by the specific device class
+        # self.features
+        # Taking the name from ethtool's "features" option.
+        # Currently, the code just passes the key and value to ethtool.
+        # Ideally, this should be stored in a way independent from ethtool.
+        # Features will be initialized by the specific device class
         self.features = {}
-
-        # Initializes a list of available Tx queues e.g.
-        # [ 0 1 2 3 4 5 6 7 ] for devices with 8 Tx queues
-#        self.available_queues = list(range(0, num_tx_queues-1))
-        # Allocates queue 0 for Best Effort Traffic
-#        self.best_effort_queue = 0
- #       self.available_queues.remove(self.best_effort_queue)
 
         # FIXME: this should be done in runtime and not hardcoded
         # FIXME: e.g. adding the ethtool query to SystemInformation
@@ -99,6 +96,7 @@ class Device:
         Subclass this to account for your device's specific handling of
         allowed base times.
         '''
+
         return 0
 
 
@@ -112,7 +110,8 @@ class Device:
         Subclass this to account for your device's constraints. It may be
         used to account for bugs, but also limits like maximum cycle time.
         '''
-        return True
+
+        raise NotImplementedError("The handler class for the device must implement this function")
 
 
     @property
@@ -124,7 +123,8 @@ class Device:
 
         Subclass this when your device supports separated Rx and Tx channels.
         '''
-        return False
+
+        raise NotImplementedError("The handler class for the device must implement this function")
 
 
 
@@ -161,16 +161,9 @@ class IntelMgbeEhl(Device):
     def __init__(self, pci_id):
         super().__init__(IntelMgbeEhl.NUM_TX_QUEUES, IntelMgbeEhl.NUM_RX_QUEUES)
 
-        # self.features
-        # Taking the name from ethtool's "features" option.
-        # Currently, the code just passes the key and value to ethtool.
-        # Ideally, this should be stored in a way independent from ethtool.
         self.features['rxvlan'] = 'off'
         self.features['hw-tc-offload'] = 'on'
 
-        # self.num_tx_ring_entries and self.num_rx_ring_entries
-        # Provides the number of ring entries for Tx and Rx rings.
-        # Currently, the code just passes the value to ethtool's --set-ring.
         self.num_tx_ring_entries = 1024
         self.num_rx_ring_entries = 1024
 
@@ -202,15 +195,24 @@ class IntelMgbeTgl(Device):
 
     PCI_IDS = ['8086:A0AC']
 
+    def __init__(self, pci_id):
+        raise NotImplementedError("Handler class for Tiger Lake UP3's integrated TSN controller not yet implemented")
+
 
 class IntelMgbeTglH(Device):
 
     PCI_IDS = ['8086:A0AC', '8086:43AC', '8086:43A2']
 
+    def __init__(self, pci_id):
+        raise NotImplementedError("Handler class for Tiger Lake H's integrated TSN controller not yet implemented")
+
 
 class IntelMgbeAdl(Device):
 
     PCI_IDS = ['8086:7AAC', '8086:7AAD', '8086:54AC']
+
+    def __init__(self, pci_id):
+        raise NotImplementedError("Handler class for Alder Lake's integrated TSN controller not yet implemented")
 
 
 class IntelI225(Device):
@@ -239,10 +241,6 @@ class IntelI225(Device):
         if pci_id in IntelI225.PCI_IDS_UNPROGRAMMED:
             raise "The flash image in this i225 device is empty, or the NVM configuration loading failed."
 
-        # self.features
-        # Taking the name from ethtool's "features" option.
-        # Currently, the code just passes the key and value to ethtool.
-        # Ideally, this should be stored in a way independent from ethtool.
         self.features['rxvlan'] = 'off'
         #self.features['hw-tc-offload'] = 'on'
 
@@ -282,6 +280,9 @@ class IntelI226(Device):
 
     PCI_IDS = PCI_IDS_VALID + PCI_IDS_UNPROGRAMMED
 
+    def __init__(self, pci_id):
+        raise NotImplementedError("Handler class for i226 TSN Ethernet controller not yet implemented")
+
 
 class IntelI210(Device):
 
@@ -292,3 +293,6 @@ class IntelI210(Device):
     PCI_IDS_UNPROGRAMMED = ['8086:1531']
 
     PCI_IDS = PCI_IDS_VALID + PCI_IDS_UNPROGRAMMED
+
+    def __init__(self, pci_id):
+        raise NotImplementedError("Handler class for i210 Ethernet controller not yet implemented")
