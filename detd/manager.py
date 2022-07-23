@@ -143,6 +143,32 @@ class Traffic:
         return True
 
 
+    def __hash__(self):
+
+        assert(TrafficType.contains(self.type))
+
+        traffic_type = self.type
+        if traffic_type == TrafficType.BEST_EFFORT:
+            interval = None
+            size = None
+            start = None
+            addr = None
+            vid = None
+            pcp = None
+            tc = None
+        elif traffic_type == TrafficType.SCHEDULED:
+            interval = self.interval
+            size = self.size
+            start = self.start
+            addr = self.addr
+            vid = self.vid
+            pcp = self.pcp
+            tc = self.tc
+
+        fields_to_hash = [traffic_type, interval, size, start, addr, vid, pcp, tc]
+
+        return hash(fields_to_hash)
+
 
 class Slot:
 
