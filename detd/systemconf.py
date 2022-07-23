@@ -250,7 +250,7 @@ Input validation is performed by SystemConfigurator.
 
 # ip command strings
 
-class CommandStringIpLinkSet (collections.UserString):
+class CommandStringIpLinkSetVlan (collections.UserString):
 
     def __init__(self, device, vid, soprio_to_pcp):
 
@@ -289,7 +289,7 @@ class CommandStringIpLinkSet (collections.UserString):
         return params
 
 
-class CommandStringIpLinkUnset (collections.UserString):
+class CommandStringIpLinkUnsetVlan (collections.UserString):
 
     def __init__(self, device, vid):
 
@@ -610,6 +610,37 @@ class CommandStringEthtoolGetChannelInformation(collections.UserString):
 
 
 
+
+class CommandIp:
+
+    def __init__(self):
+        pass
+
+
+    def run(self, command):
+        cmd = command.split()
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        success_codes = [0]
+        if result.returncode not in success_codes:
+            raise subprocess.CalledProcessError(result.returncode, command, result.stdout, result.stderr)
+
+        return result
+
+
+    def set_vlan(self, interface, stream, mapping):
+        cmd = CommandStringIpLinkSetVlan(interface.name, stream.vid, mapping.soprio_to_pcp)
+
+        self.run(str(cmd))
+
+
+    def unset_vlan(self, interface, stream):
+        cmd = CommandStringIpLinkUnsetVlan(interface.name, stream.vid)
+
+        self.run(str(cmd))
+
+
+
 class CommandTc:
 
     def __init__(self):
@@ -746,19 +777,16 @@ class VlanConfigurator:
         pass
 
 
-    def run(self, command):
-        cmd = command.split()
-        result = subprocess.run(cmd, capture_output=True, check=True)
-
-
     def setup(self, interface, stream, mapping):
-        cmd = CommandStringIpLinkSet(interface.name, stream.vid, mapping.soprio_to_pcp)
-        self.run(str(cmd))
+        ip = CommandIp()
+
+        ip.set_vlan(interface, stream, mapping)
 
 
     def unset(self, interface, stream):
-        cmd = CommandStringIpLinkUnset(interface.name, stream.vid)
-        self.run(str(cmd))
+        ip = CommandIp()
+
+        ip.unset_vlan(interface, stream)
 
 
 

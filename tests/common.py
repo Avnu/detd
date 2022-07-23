@@ -21,6 +21,7 @@ from detd import Manager
 from detd import SystemInformation
 from detd import CommandEthtool
 from detd import CommandTc
+from detd import CommandIp
 
 from contextlib import AbstractContextManager
 
@@ -46,7 +47,7 @@ class RunContext(AbstractContextManager):
 
         if mode == TestMode.HOST:
             self.qdisc_conf_mock  = mock.patch.object(CommandTc,  'run', side_effect=qdisc_exc)
-            self.vlan_conf_mock   = mock.patch.object(VlanConfigurator,   'run', side_effect=vlan_exc)
+            self.vlan_conf_mock   = mock.patch.object(CommandIp,   'run', side_effect=vlan_exc)
             self.device_conf_mock = mock.patch.object(CommandEthtool, 'run', side_effect=device_exc)
             self.device_mock = mock.patch.object(SystemInformation, 'get_pci_id', return_value=('8086:4B30'))
 

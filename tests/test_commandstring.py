@@ -8,7 +8,8 @@ import inspect
 import re
 import unittest
 
-from detd import CommandStringIpLinkSet
+from detd import CommandStringIpLinkSetVlan
+from detd import CommandStringIpLinkUnsetVlan
 from detd import CommandStringEthtoolFeatures
 from detd import CommandStringEthtoolSetCombinedChannels
 from detd import CommandStringEthtoolSetSplitChannels
@@ -31,13 +32,13 @@ class TestCommandString(unittest.TestCase):
 
 
 
-    def test_iplinkset(self):
+    def test_iplinksetvlan(self):
 
         interface_name = "eth0"
         stream_vid = 3
         soprio_to_pcp = {0:7, 1:6, 2:5, 3:4, 4:3, 5:2, 6:1, 7:0}
 
-        cmd = CommandStringIpLinkSet(interface_name, stream_vid, soprio_to_pcp)
+        cmd = CommandStringIpLinkSetVlan(interface_name, stream_vid, soprio_to_pcp)
         expected = """
             ip link add
                     link     eth0

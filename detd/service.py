@@ -29,6 +29,7 @@ from .systemconf import QdiscConfigurator
 from .systemconf import VlanConfigurator
 from .systemconf import DeviceConfigurator
 from .systemconf import SystemInformation
+from .systemconf import CommandIp
 
 
 _SERVICE_UNIX_DOMAIN_SOCKET='/tmp/uds_detd_server.sock'
@@ -196,7 +197,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
     def _mock_setup_talker(self, request):
 
         with mock.patch.object(QdiscConfigurator,  'setup', return_value=None), \
-             mock.patch.object(VlanConfigurator,   'run', return_value=None), \
+             mock.patch.object(CommandIp,   'run', return_value=None), \
              mock.patch.object(DeviceConfigurator, 'setup', return_value=None), \
              mock.patch.object(SystemInformation,  'get_pci_id', return_value=('8086:4B30')):
 
