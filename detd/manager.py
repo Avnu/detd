@@ -315,9 +315,11 @@ class Scheduler:
         self.traffics.append(traffic)
         self.reschedule()
 
+
     def remove(self, traffic):
         self.traffics.remove(traffic)
         self.reschedule()
+
 
     def reschedule(self):
         if len(self.traffics) == 1 and self.traffics[0].type == TrafficType.BEST_EFFORT:
@@ -537,6 +539,11 @@ class InterfaceManager():
         traffic = Traffic(TrafficType.SCHEDULED, config)
         traffic.tc = tc
         self.scheduler.add(traffic)
+        if not self.interface.device.supports_schedule(self.scheduler.schedule):
+            # FIXME: add the limitations in the devices.py class handling the device
+            # and then print the docstrings when this error happens
+            print(self.scheduler.schedule)
+            raise TypeError("The device associated to the network interface does not support the resulting schedule")
 
 
 

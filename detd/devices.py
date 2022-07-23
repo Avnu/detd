@@ -116,6 +116,20 @@ class Device:
         '''
         return 0
 
+
+    def supports_schedule(self, schedule):
+        '''Returns True if the device is able to implement the schedule,
+        False otherwise
+
+        It is intended to prevent developers to try to set up a schedule
+        not supported by the underlying hardware implementation.
+
+        Subclass this to account for your device's constraints. It may be
+        used to account for bugs, but also limits like maximum cycle time.
+        '''
+        return True
+
+
     @property
     def supports_split_channels(self):
         '''Returns true if the device allows to independently configure the
