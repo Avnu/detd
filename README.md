@@ -63,7 +63,6 @@ In a little bit more detail:
 2. **Integrates all the inputs and generates the gating schedule**
     * It is able to generate very complex taprio configurations with just the stream and traffic information
 3. **Generates the commands implementing that configuration**
-    * Intel Elkhart Lake integrated TSN interface (mGBE) supported
     * taprio offload mode supported
 4. **Applies the configuration by running the commands**
     * When one of the commands fail, it is able to roll back the previous one to leave the system in a well-known state.
@@ -71,23 +70,29 @@ In a little bit more detail:
     * The basic implementation provides the VLAN interface name (e.g. eth0.3) and the socket prio to use to the calling application
     * The plan is to return a fully configured socket. The included client-server example is already implementing part of that flow.
 
+### Currently supported devices
 
-### Current Limitations
+* Intel® Ethernet Controller I225-LM
+* Intel® Ethernet Controller I225-IT
+* Intel Atom® x6000E Series (Elkhart Lake) integrated TSN controller
+
+
+
+### Current limitations
 
 See [Contributing](README.md#contributing) :)
 
-* Current suppport for Intel mGBE only
-  * Code conceived to support additional devices
-  * PCI ID autodetection in place
-* Current support for Linux only
-* Current support for talker streams only
-* Current taprio support restricted to offload mode
+* Only some Intel Ethernet controllers supported
+  * Code ready to support additional devices
+* Only Linux support
+* Only talker streams
+* taprio support restricted to offload mode
   * Code ready to support additional qdiscs
 * Launch-Time Control not supported
   * E.g. etf qdisc
 * Current support for AF_PACKET only
-* Basic local schedule calculation
-  * E.g. inter-packet gap not considered
+* Very basic local schedule calculation
+  * E.g. inter-packet gap not considered, only one traffic class per slot...
 
 
 ## Examples
@@ -325,6 +330,7 @@ OK (skipped=2)
 
 **Junior tasks**
 
+* Retrieve interface speed via ethtool
 * Replace protobuf interface by D-BUS based one
 * Make setup_qos.sh interface more compact
   * Instead of --address AB:CD:EF:FE:DC:BA --vid 3 --pcp 6
@@ -359,5 +365,10 @@ OK (skipped=2)
   * More clear separation of generic and platform specific details (e.g. subclassing per OS or platform)
 * Integrate time-synchronization
   * When a time-aware stream is requested, check if time synchronization is running and otherwise start it and initialize to the right operation values
+* Add logging capabilities
+* Add diagnostics mode
+  * Retrieve and collect runtime information about time synchronization, qdisc errors, etc
 * Evaluate using netlink for consideration instead of calling tc
   * E.g. a programmatic interface could improve aspects like error handling, security, etc, and would make code simpler by removing all the portions devoted to templating commands
+* Enlarge the scope to cover basic interaction with configuration authorities
+  * E.g. start enabling to load the configuration from a text file
