@@ -51,38 +51,23 @@ class Device:
 
         self.num_tx_queues = num_tx_queues
         self.num_rx_queues = num_rx_queues
+        self.best_effort_tx_queues = list(range(0, num_tx_queues))
+
         # features will be initialized by the specific device class
         self.features = {}
 
         # Initializes a list of available Tx queues e.g.
         # [ 0 1 2 3 4 5 6 7 ] for devices with 8 Tx queues
-        self.available_queues = list(range(0, num_tx_queues-1))
+#        self.available_queues = list(range(0, num_tx_queues-1))
         # Allocates queue 0 for Best Effort Traffic
-        self.best_effort_queue = 0
-        self.available_queues.remove(self.best_effort_queue)
+#        self.best_effort_queue = 0
+ #       self.available_queues.remove(self.best_effort_queue)
 
         # FIXME: this should be done in runtime and not hardcoded
         # FIXME: e.g. adding the ethtool query to SystemInformation
         # FIXME: and providing it to the constructor.
         self.rate = 1 * Gbps_to_bps # bits per second
         # FIXME: runtime changes in rate need to be managed
-
-
-    def assign_queue(self):
-        """
-        Returns a Tx queue number that can be used by the caller entity to
-        assign a traffic class to it.
-
-        Removes the returned queue number from the list of available queues.
-
-        This method provides a very simple allocation of queues. As the queues
-        in devices may have different features available, it is expected that
-        this interface becomes more complicated. E.g. in i210 only some queues
-        provide Launch Time Control.
-        """
-
-        # FIXME handle the case when all the queues have been already assigned
-        return self.available_queues.pop(0)
 
 
     @classmethod

@@ -304,7 +304,7 @@ class Scheduler:
 
         best_effort_traffic = Traffic(TrafficType.BEST_EFFORT)
         best_effort_traffic.socket_prio = mapping.best_effort_socket_prio
-        best_effort_traffic.queue = mapping.interface.device.best_effort_queue
+        best_effort_traffic.queue = mapping.interface.device.best_effort_tx_queues[0]
         best_effort_traffic.tc = mapping.best_effort_tc
 
         self.traffics.append(best_effort_traffic)
@@ -365,6 +365,36 @@ class Interface:
 
 class Mapping():
 
+    """
+    A class mapping the hardware and system resources (socket priorities,
+    queues, etc) to implement specific traffic types, given a set of
+    conventions.
+
+    It deals with the following elements:
+    - Network traffic classes and traffic types (e.g. based on PCP)
+    - Linux traffic classes used by the tc infrastructure
+    - Socket priorities
+    - Queues used by the tc infrastructure, including device hardware queues
+
+    Different mappings are expected to be available by subclassing it. The
+    default class allows for Best Effort and up to 7 streams.
+
+    The conventions followed are:
+    - Two traffic types supported: Best Effort and Scheduled (Time Critical)
+    - Best Effort:
+      - Socket priority 0 (default)
+      - Linux tc Traffic Class 0
+      - PCP 0
+      - Hardware queues minimum 1, default all
+    - Scheduled
+      - Socket priorities 7 to 254
+      - Linux tc Traffic Classes 1 to max hw queues minus one
+      - PCP 1 to max hw queues minus one
+      - Hardware queues maximum all but one, default none
+
+    This class is Linux specific.
+    """
+
 
     def __init__(self, interface):
 
@@ -399,7 +429,16 @@ class Mapping():
 
         # Index: traffic class
         # [{offset:, numqueues:}, {}]
-        self.tc_to_hwq = None
+
+        # Initially, all queues are used for best effort traffic
+        # Everytime that a new traffic class is added, a best effort queue
+        # will be removed and assigned to it
+        num_tx_queues = self.interface.device.num_tx_queues
+        self.tc_to_hwq = [ {"offset":0, "num_queues":num_tx_queues} ]
+
+        # Tx queues available to be assigned to streams
+        self.available_tx_queues = list(reversed(range(0, num_tx_queues)))
+
 
 
     @property
@@ -450,7 +489,6 @@ class Mapping():
 
 
     def assign_tc_and_map(self, soprio, traffics):
-#        tc = len(self.scheduler.traffics)
         tc = len(traffics)
         self.tc_to_soprio.append(soprio)
 
@@ -462,25 +500,44 @@ class Mapping():
         self.tc_to_soprio.remove(soprio)
 
 
-    def assign_queue_and_map(self, queue):
-        queue = self.interface.device.assign_queue()
-        # XXX FIX so actually queues are reserved and managed
-        self.tc_to_hwq = [
-            {"offset":0, "num_queues":1},
-            {"offset":1, "num_queues":1},
-            {"offset":2, "num_queues":1},
-            {"offset":3, "num_queues":1},
-            {"offset":4, "num_queues":1},
-            {"offset":5, "num_queues":1},
-            {"offset":6, "num_queues":1},
-            {"offset":7, "num_queues":1}]
+    def assign_queue_and_map(self, tc):
+
+        # There must be at least one queue available for best effort traffic
+        if len(self.available_tx_queues) == 1:
+            raise IndexError
+
+        queue = self.available_tx_queues.pop(0)
+
+        # Remove one queue from the best effort allocation
+        self.tc_to_hwq[0]["num_queues"] = self.tc_to_hwq[0]["num_queues"] - 1
+
+        # Assign the allocated queue to the new traffic class
+        new_offset = self.tc_to_hwq[0]["num_queues"]
+        self.tc_to_hwq.insert(1, {"offset": new_offset, "num_queues": 1})
+
 
         return queue
 
 
-    def unmap_and_free_queue(self, queue):
-        # XXX FIX so actually queues are reserved and managed
-        pass
+    def unmap_and_free_queue(self, tc):
+        # XXX In the default mapper, this is a rollback function. E.g. that is
+        # not intended to dynamically add or remove streams. It should only
+        # be called immediately after having called assign_queue_and_map, when
+        # a follow-up operation fails and the system would be left in an
+        # inconsistent state.
+        # Hence, it makes some assumptions about the last item added to the
+        # mapping, that would not proceed in a general function to free the
+        # queue assigned to a given traffic class.
+
+        # There must be at least one traffic class available for best effort
+        if len(self.tc_to_hwq) == 1:
+            raise IndexError
+
+        self.tc_to_hwq[0]["num_queues"] = self.tc_to_hwq[0]["num_queues"] + 1
+        del self.tc_to_hwq[1]
+
+        # Add the queue number to the available tx queues
+        self.available_tx_queues.append(self.available_tx_queues[-1] + 1)
 
 
 

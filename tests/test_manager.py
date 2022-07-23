@@ -13,6 +13,7 @@ from subprocess import CalledProcessError
 from detd import StreamConfiguration
 from detd import TrafficSpecification
 from detd import Interface
+from detd import Mapping
 from detd import Configuration
 from detd import SystemConfigurator
 
@@ -84,6 +85,171 @@ class TestManager(unittest.TestCase):
             manager = Manager()
 
             self.assertRaises(subprocess.CalledProcessError, manager.add_talker, self.config)
+
+
+    def test_assignqueueandmap(self):
+
+        with RunContext(self.mode):
+
+            interface_name = "eth0"
+            interface = Interface(interface_name)
+            tc = None
+
+            mapping = Mapping(interface)
+            expected_mapping = [ {"offset":0, "num_queues":8} ]
+            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+
+            mapping.assign_queue_and_map(tc)
+            expected_mapping = [
+                {"offset":0, "num_queues":7},
+                {"offset":7, "num_queues":1}]
+            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+
+            mapping.assign_queue_and_map(tc)
+            expected_mapping = [
+                {"offset":0, "num_queues":6},
+                {"offset":6, "num_queues":1},
+                {"offset":7, "num_queues":1}]
+            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+
+            mapping.assign_queue_and_map(tc)
+            expected_mapping = [
+                {"offset":0, "num_queues":5},
+                {"offset":5, "num_queues":1},
+                {"offset":6, "num_queues":1},
+                {"offset":7, "num_queues":1}]
+            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+
+            mapping.assign_queue_and_map(tc)
+            expected_mapping = [
+                {"offset":0, "num_queues":4},
+                {"offset":4, "num_queues":1},
+                {"offset":5, "num_queues":1},
+                {"offset":6, "num_queues":1},
+                {"offset":7, "num_queues":1}]
+            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+
+            mapping.assign_queue_and_map(tc)
+            expected_mapping = [
+                {"offset":0, "num_queues":3},
+                {"offset":3, "num_queues":1},
+                {"offset":4, "num_queues":1},
+                {"offset":5, "num_queues":1},
+                {"offset":6, "num_queues":1},
+                {"offset":7, "num_queues":1}]
+            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+
+            mapping.assign_queue_and_map(tc)
+            expected_mapping = [
+                {"offset":0, "num_queues":2},
+                {"offset":2, "num_queues":1},
+                {"offset":3, "num_queues":1},
+                {"offset":4, "num_queues":1},
+                {"offset":5, "num_queues":1},
+                {"offset":6, "num_queues":1},
+                {"offset":7, "num_queues":1}]
+            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+
+            mapping.assign_queue_and_map(tc)
+            expected_mapping = [
+                {"offset":0, "num_queues":1},
+                {"offset":1, "num_queues":1},
+                {"offset":2, "num_queues":1},
+                {"offset":3, "num_queues":1},
+                {"offset":4, "num_queues":1},
+                {"offset":5, "num_queues":1},
+                {"offset":6, "num_queues":1},
+                {"offset":7, "num_queues":1}]
+            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+
+            with self.assertRaises(IndexError):
+                mapping.assign_queue_and_map(tc)
+
+
+    def test_unmapandfreequeue(self):
+
+        with RunContext(self.mode):
+
+            interface_name = "eth0"
+            interface = Interface(interface_name)
+            tc = None
+
+            mapping = Mapping(interface)
+            mapping.assign_queue_and_map(tc)
+            mapping.assign_queue_and_map(tc)
+            mapping.assign_queue_and_map(tc)
+            mapping.assign_queue_and_map(tc)
+            mapping.assign_queue_and_map(tc)
+            mapping.assign_queue_and_map(tc)
+            mapping.assign_queue_and_map(tc)
+            expected_mapping = [
+                {"offset":0, "num_queues":1},
+                {"offset":1, "num_queues":1},
+                {"offset":2, "num_queues":1},
+                {"offset":3, "num_queues":1},
+                {"offset":4, "num_queues":1},
+                {"offset":5, "num_queues":1},
+                {"offset":6, "num_queues":1},
+                {"offset":7, "num_queues":1}]
+            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+
+            mapping.unmap_and_free_queue(tc)
+            expected_mapping = [
+                {"offset":0, "num_queues":2},
+                {"offset":2, "num_queues":1},
+                {"offset":3, "num_queues":1},
+                {"offset":4, "num_queues":1},
+                {"offset":5, "num_queues":1},
+                {"offset":6, "num_queues":1},
+                {"offset":7, "num_queues":1}]
+            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+
+            mapping.unmap_and_free_queue(tc)
+            expected_mapping = [
+                {"offset":0, "num_queues":3},
+                {"offset":3, "num_queues":1},
+                {"offset":4, "num_queues":1},
+                {"offset":5, "num_queues":1},
+                {"offset":6, "num_queues":1},
+                {"offset":7, "num_queues":1}]
+            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+
+            mapping.unmap_and_free_queue(tc)
+            expected_mapping = [
+                {"offset":0, "num_queues":4},
+                {"offset":4, "num_queues":1},
+                {"offset":5, "num_queues":1},
+                {"offset":6, "num_queues":1},
+                {"offset":7, "num_queues":1}]
+            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+
+            mapping.unmap_and_free_queue(tc)
+            expected_mapping = [
+                {"offset":0, "num_queues":5},
+                {"offset":5, "num_queues":1},
+                {"offset":6, "num_queues":1},
+                {"offset":7, "num_queues":1}]
+            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+
+            mapping.unmap_and_free_queue(tc)
+            expected_mapping = [
+                {"offset":0, "num_queues":6},
+                {"offset":6, "num_queues":1},
+                {"offset":7, "num_queues":1}]
+            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+
+            mapping.unmap_and_free_queue(tc)
+            expected_mapping = [
+                {"offset":0, "num_queues":7},
+                {"offset":7, "num_queues":1}]
+            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+
+            mapping.unmap_and_free_queue(tc)
+            expected_mapping = [ {"offset":0, "num_queues":8} ]
+            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+
+            with self.assertRaises(IndexError):
+                mapping.unmap_and_free_queue(tc)
 
 
 
