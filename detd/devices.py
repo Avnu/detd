@@ -179,6 +179,23 @@ class IntelMgbeEhl(Device):
         # For example, Energy Efficient Ethernet is disabled for all devices.
 
 
+    def get_base_time_multiple(self):
+        return 2
+
+
+    def supports_schedule(self, schedule):
+
+        # FIXME: check additional constraints, like maximum cycle time
+
+        return True
+
+
+    @property
+    def supports_split_channels(self):
+        return True
+
+
+
 # FIXME: All the classes below should be implemented
 
 class IntelMgbeTgl(Device):
