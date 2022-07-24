@@ -4,6 +4,20 @@
 # Authors:
 #   Hector Blanco Alcaine
 
+""" Module manager
+
+This module implements the core functionality:
+    * QoS requests: class Manager and specially class InterfaceManager
+    * Local scheduling of multiple streams: class Scheduler
+    * Resource allocation and dellocation: class Mapping
+
+It also contains the classes defining a stream configuration, and those
+modelling different traffic types.
+"""
+
+
+
+
 import enum
 import math
 import threading
@@ -11,7 +25,7 @@ import time
 
 from .systemconf import SystemConfigurator
 from .systemconf import SystemInformation
-from .systemconf import Check
+from .common import Check
 from .devices import Device
 
 
@@ -81,7 +95,6 @@ class TrafficSpecification:
 
 
 
-
 class TrafficType(enum.Enum):
     BEST_EFFORT = 0
     SCHEDULED = 1
@@ -89,6 +102,8 @@ class TrafficType(enum.Enum):
     @classmethod
     def contains(cls, value):
         return value in cls._value2member_map_
+
+
 
 
 '''
@@ -176,6 +191,8 @@ class Traffic:
         return hash(fields_to_hash)
 
 
+
+
 class Slot:
 
     def __init__(self, start, end, traffic):
@@ -189,6 +206,8 @@ class Slot:
 
     def __lt__(self, other):
         return self.start < other.start
+
+
 
 
 class Schedule(list):
@@ -270,11 +289,11 @@ class Schedule(list):
         return False
 
 
-
-
     def __str__(self):
         slots = ["|{0} {1}|".format(s.start, s.end) for s in self]
         return "<" + ",".join(slots) + '>\n'
+
+
 
 
 # Lowest common multiple
@@ -285,6 +304,7 @@ def lcm(numbers):
         lcm = abs(lcm * n) // math.gcd(lcm, n)
 
     return lcm
+
 
 
 
@@ -306,7 +326,6 @@ class Scheduler:
         best_effort_traffic.tc = mapping.best_effort_tc
 
         self.traffics.append(best_effort_traffic)
-
 
 
     def add(self, traffic):
@@ -539,6 +558,7 @@ class Mapping():
 
 
 
+
 class Manager():
 
 
@@ -556,6 +576,8 @@ class Manager():
                 self.talker_manager[config.interface.name] = InterfaceManager(config.interface)
 
             return self.talker_manager[config.interface.name].add_talker(config)
+
+
 
 
 class InterfaceManager():
@@ -601,7 +623,6 @@ class InterfaceManager():
             raise TypeError("The device associated to the network interface does not support the resulting schedule")
 
 
-
         # Normally, the base_time will be determined by the network planning process
         # However, for quick tests, we may just want to give a value that allows us
         # to send frames according to a given schedule. That is what a value of
@@ -628,6 +649,8 @@ class InterfaceManager():
     # in the past, throwing errors if the wrong choice is taken. This method
     # avoids those problems by setting a base_time according to each device
     # specific behaviour.
+    # Please note this is just a helper for quick experimentation, the base
+    # time should be provided by the network configuration.
     def update_base_time(self, config):
 
         period = config.traffic.interval

@@ -4,7 +4,8 @@
 # Authors:
 #   Hector Blanco Alcaine
 
-Gbps_to_bps = 1000 * 1000 * 1000
+
+
 
 """ Module devices
 
@@ -31,6 +32,13 @@ mocking infrastructure to iterate through all the available classes when
 running host based tests.
 
 """
+
+
+
+
+Gbps_to_bps = 1000 * 1000 * 1000
+
+
 
 
 class Device:

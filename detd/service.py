@@ -4,13 +4,32 @@
 # Authors:
 #   Hector Blanco Alcaine
 
+""" Module service
+
+This module implements the server and client side for the system service
+dealing with the application requests to guarantee deterministic QoS.
+
+   * Server-side
+     * class Service
+     * class ServiceRequestHandler
+
+
+   * Client-side
+     * class ServiceProxy
+
+Client and server side exchange messages using the protocol defined in the
+file ipc.proto
+"""
+
+
+
+
 import array
 import os
 import signal
 import socket
 import socketserver
 import stat
-import sys
 import threading
 
 from unittest import mock
@@ -26,13 +45,15 @@ from .manager import Manager
 
 from .systemconf import Check
 from .systemconf import QdiscConfigurator
-from .systemconf import VlanConfigurator
 from .systemconf import DeviceConfigurator
 from .systemconf import SystemInformation
 from .systemconf import CommandIp
 
 
+
+
 _SERVICE_UNIX_DOMAIN_SOCKET='/tmp/uds_detd_server.sock'
+
 
 
 
