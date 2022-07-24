@@ -246,8 +246,6 @@ class Schedule(list):
         n = len(self)
 
         while i < n:
-            print(i)
-            print(n)
 
             # Determine traffic in this slot and in the previous one
             traffic = self[i].traffic
