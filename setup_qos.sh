@@ -15,7 +15,7 @@ function usage () {
    echo "Usage:"
    echo "$0 --period <PERIOD> --bytes <BYTES> --offset <OFFSET> --interface <IFACE> --address <ADDRESS> --vid <VID> --pcp <PCP> -- <COMMAND> <ARGS>"
    echo "Example:"
-   echo "$0 --period 2000000 --bytes 1522 --offset 250000 --interface eth0 --address AB:CD:EF:FE:DC:BA --vid 3 --pcp 6 -- ping -w 1 8.8.8.8"
+   echo "$0 --period 2000000 --bytes 1522 --offset 250000 --interface eth0 --address AB:CD:EF:FE:DC:BA --vid 3 --pcp 6 -- ping -4 -w 1 8.8.8.8"
 }
 
 
