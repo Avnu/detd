@@ -76,6 +76,8 @@ function create_deb () {
 	sed -i '/^Description:.*/i Recommends: cgroup-tools' debian/control
 
 	echo -e "\tdh_installsystemd" >> debian/rules
+	# Restart detd when the application is upgraded
+	echo -e "\noverride_dh_systemd_start:\n\tdh_systemd_start --restart-after-upgrade" >> debian/rules
 	# Force xz for compression, to prevent installation issues with Zstandard
 	echo -e "\noverride_dh_builddeb:\n\tdh_builddeb -- -Zxz" >> debian/rules
 
