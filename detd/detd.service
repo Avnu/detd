@@ -1,0 +1,8 @@
+[Unit]
+Description=detd System Service
+
+[Service]
+ExecStart=/usr/bin/python3 -u /usr/bin/detd
+
+[Install]
+WantedBy=multi-user.target

@@ -56,6 +56,7 @@ function create_deb () {
 	# Create a tempdir and extract the package there
 	TMPDIR=`mktemp -d --suffix=.detd`
 	cp dist/${ID}.tar.gz ${TMPDIR}
+	cp detd/detd.service ${TMPDIR}
 	tar xvzf ${TMPDIR}/${ID}.tar.gz -C ${TMPDIR}
 
 
@@ -63,19 +64,24 @@ function create_deb () {
 	cd ${TMPDIR}/${ID}
 	debmake --binaryspec ':py3' --email ${EMAIL} --fullname ${FULLNAME} --spec
 
+	cp ${TMPDIR}/detd.service debian/
+
 	sed -i 's/^Section:[^$]*$/Section: Networking/' debian/control
 	sed -i 's/^Homepage:[^$]*$/Homepage\: https\:\/\/github.com\/Avnu\/detd/' debian/control
 	sed -i 's/^X-Python3-Version:[^$]*$/X-Python3-Version: >= 3.8/' debian/control
 	sed -i 's/^Build-Depends:\([^,]*\),$/Build-Depends: protobuf-compiler,\n              \1,/' debian/control
+	sed -i 's/^Build-Depends:\([^,]*\),$/Build-Depends: dh-systemd,\n              \1,/' debian/control
 	sed -i 's/^Depends:\(.*\)/Depends: iproute2,\n        \1/' debian/control
 	sed -i 's/^Depends:\(.*\)/Depends: ethtool,\n        \1/' debian/control
 	sed -i '/^Description:.*/i Recommends: cgroup-tools' debian/control
 
+	echo -e "\tdh_installsystemd" >> debian/rules
 	# Force xz for compression, to prevent installation issues with Zstandard
 	echo -e "\noverride_dh_builddeb:\n\tdh_builddeb -- -Zxz" >> debian/rules
 
 	# Generate the deb, make it available and perform clean-up
 	fakeroot debian/rules binary
+	dpkg --contents ../*deb
 	dpkg -I ../*deb
 	cp ../*deb /tmp
 	echo "The deb package is now available in /tmp"

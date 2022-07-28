@@ -340,7 +340,6 @@ OK (skipped=2)
 * Split device features into rx_features and tx_features
   * So e.g. only tx_features are applied when setting up the talker
 * RPM packaging
-* systemd service file
 * Improve pep8 style compliance
 
 
