@@ -54,7 +54,7 @@ class CommandTc:
 
         cmd = CommandStringTcTaprioOffloadUnset(interface.name)
 
-        self.run(str(cmd))
+        self.run(cmd)
 
 
 
