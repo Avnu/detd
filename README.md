@@ -330,44 +330,69 @@ OK (skipped=2)
 
 **Junior tasks**
 
-* Retrieve interface speed via ethtool
-* Replace protobuf interface by D-BUS based one
-* Make setup_qos.sh interface more compact
-  * Instead of --address AB:CD:EF:FE:DC:BA --vid 3 --pcp 6
-  * Use --stream AB:CD:EF:FE:DC:BA/3/6 and parse inside the string
-* Move the UDS from /tmp to the right location
-  * Also involves providing the installation instructions, e.g. to set the right ownerships
-* Split device features into rx_features and tx_features
-  * So e.g. only tx_features are applied when setting up the talker
-* RPM packaging
-* Improve pep8 style compliance
+* Linux integration
+  * RPM packaging
+  * Move the UDS from /tmp to the right location
+    * Also involves providing the installation instructions, e.g. to set the right ownerships
+
+* Developer Experience
+  * Make setup_qos.sh interface more compact
+    * Instead of --address AB:CD:EF:FE:DC:BA --vid 3 --pcp 6
+    * Use --stream AB:CD:EF:FE:DC:BA/3/6 and parse inside the string
+  * Specialized diagnostics exception when initial configuration fails
+    * Providing information about "usual suspects" in a consolidated way. E.g. time synch offsets.
+
+* System integration
+  * Rename QdiscConfigurator as NetworkQosConfigurator
+  * Add Linux class providing Linux-specific operations that do not rely on a specialized system command. E.g. get_pci_id that currently relies on /sys.
+  * Add support for taprio "pure software mode" in CommandTc, plus unit tests
+  * Add support for taprio "txtime-assist" mode (aka txtime offload mode) in CommandTc, plus unit tests
+
+* Device support
+  * Retrieve interface speed via ethtool
+  * Split device features into rx_features and tx_features
+    * So e.g. only tx_features are applied when setting up the talker
+  * Add more constraints to the device specific checks, like maximum cycle or slot lengths for the schedule checks.
+  * Add i226 support
+    * For guidance and examples, please refer to [detd/devices.py](detd/devices.py) module documentation
+
+* Code Quality
+  * Improve pep8 style compliance
 
 
 **Other improvements**
 
-* Add C library implementing protobuf interaction
-  * This will make integration with C applications straighforward
-  * The python3 implementation can be used as an example
-* Add device backends
-  * For guidance and examples, please refer to [detd/devices.py](detd/devices.py) module documentation
-* Add more Linux backend targets
-  * taprio offload is already implemented
-  * More could follow, e.g. taprio software, taprio tx-assist, launch-time support...
-* Add listener stream setup
-   * VLAN tag configuration
-   * DMAC subscription
-   * tc and ethtool configuration
-* Add profiles
-  * A layer on top of the basic interface that further elevates the level of abstraction
-  * E.g. 60802, 61850... that provide the right mappings abstracting the developers from that
-* Improve platform independence
-  * More clear separation of generic and platform specific details (e.g. subclassing per OS or platform)
-* Integrate time-synchronization
-  * When a time-aware stream is requested, check if time synchronization is running and otherwise start it and initialize to the right operation values
-* Add logging capabilities
-* Add diagnostics mode
-  * Retrieve and collect runtime information about time synchronization, qdisc errors, etc
-* Evaluate using netlink for consideration instead of calling tc
-  * E.g. a programmatic interface could improve aspects like error handling, security, etc, and would make code simpler by removing all the portions devoted to templating commands
-* Enlarge the scope to cover basic interaction with configuration authorities
-  * E.g. start enabling to load the configuration from a text file
+* Linux integration
+  * Add D-BUS interface
+  * Evaluate using netlink for consideration instead of e.g. just calling tc
+    * E.g. a programmatic interface could improve aspects like error handling, security, etc, and could make parts of the code simpler by removing all the portions devoted to templating commands
+  * XDP support
+    * Dependencies with listener stream and launch-time control support items below
+
+* Developer Experience
+  * Add C library implementing protobuf interaction
+    * This will make integration with C applications straighforward
+    * The python3 implementation can be used as an example
+  * Add profiles
+    * A layer on top of the basic interface that further elevates the level of abstraction
+    * E.g. 60802, 61850... that provide the right mappings abstracting the developers from that
+  * Enlarge the scope to cover basic interaction with configuration authorities
+    * E.g. start enabling to load the configuration from a text file
+  * Add logging capabilities
+  * Add diagnostics mode
+    * Retrieve and collect runtime information about time synchronization, qdisc errors, etc
+
+* System integration
+  * Add launch-time control support
+  * Integrate time-synchronization
+    * When a time-aware stream is requested, check if time synchronization is running and otherwise start it and initialize to the right operation values
+  * Improve platform independence
+    * More clear separation of generic and platform specific details (e.g. subclassing per OS or platform)
+
+* Device support
+  * Add support for more devices
+    * For guidance and examples, please refer to [detd/devices.py](detd/devices.py) module documentation
+  * Add listener stream setup
+    * VLAN tag configuration
+    * DMAC subscription
+    * tc and ethtool configuration
