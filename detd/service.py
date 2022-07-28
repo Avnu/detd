@@ -206,11 +206,13 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         size = request.size
         interface_name = request.interface
 
+        interface = Interface(interface_name)
         stream = StreamConfiguration(addr, vid, pcp, txoffset)
         traffic = TrafficSpecification(interval, size)
-        interface = Interface(interface_name)
 
-        vlan_interface, soprio = interface.add_talker(stream, traffic)
+        config = Configuration(interface, stream, traffic)
+
+        vlan_interface, soprio = self.server.manager.add_talker(config)
 
         return vlan_interface, soprio
 
@@ -330,16 +332,16 @@ class ServiceProxy:
 
 
 
-    def send_qos_request(self, interface_name, stream, traffic, setup_socket):
+    def send_qos_request(self, configuration, setup_socket):
         request = StreamQosRequest()
-        request.interface = interface_name
-        request.period = traffic.interval
-        request.size = traffic.size
-        request.dmac = stream.addr
-        request.vid = stream.vid
-        request.pcp = stream.pcp
-        request.txmin = stream.txoffset
-        request.txmax = stream.txoffset
+        request.interface = configuration.interface.name
+        request.period = configuration.traffic.interval
+        request.size = configuration.traffic.size
+        request.dmac = configuration.stream.addr
+        request.vid = configuration.stream.vid
+        request.pcp = configuration.stream.pcp
+        request.txmin = configuration.stream.txoffset
+        request.txmax = configuration.stream.txoffset
         request.setup_socket = setup_socket
 
         message = request.SerializeToString()
@@ -367,9 +369,9 @@ class ServiceProxy:
         return response, s
 
 
-    def setup_talker_socket(self, interface_name, stream, traffic):
+    def setup_talker_socket(self, configuration):
 
-        self.send_qos_request(interface_name, stream, traffic, setup_socket=True)
+        self.send_qos_request(configuration, setup_socket=True)
         status, sock = self.receive_qos_socket_response()
 
         if not status.ok:
@@ -379,9 +381,9 @@ class ServiceProxy:
         return sock
 
 
-    def setup_talker(self, interface_name, stream, traffic):
+    def setup_talker(self, configuration):
 
-        self.send_qos_request(interface_name, stream, traffic, setup_socket=False)
+        self.send_qos_request(configuration, setup_socket=False)
         response = self.receive_qos_response()
 
         if not response.ok:

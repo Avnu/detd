@@ -13,17 +13,19 @@ import unittest
 import unittest.mock
 
 
-from detd import StreamConfiguration
-from detd import TrafficSpecification
+from detd import Configuration
+from detd import Interface
 from detd import Service
 from detd import ServiceProxy
+from detd import StreamConfiguration
+from detd import TrafficSpecification
 
 
 from .common import *
 
 
 
-def setup_configuration():
+def setup_configuration(mode):
 
     interface_name = "eth0"
     interval = 20 * 1000 * 1000 # ns
@@ -33,10 +35,15 @@ def setup_configuration():
     addr = "03:C0:FF:EE:FF:AB"
     vid = 3
     pcp = 6
-    stream = StreamConfiguration(addr, vid, pcp, txoffset)
-    traffic = TrafficSpecification(interval, size)
 
-    return interface_name, stream, traffic
+    with RunContext(mode):
+        interface = Interface(interface_name)
+        stream = StreamConfiguration(addr, vid, pcp, txoffset)
+        traffic = TrafficSpecification(interval, size)
+
+        config = Configuration(interface, stream, traffic)
+
+    return config
 
 
 def setup_proxy():
@@ -103,9 +110,9 @@ class TestService(unittest.TestCase):
 
     def test_service_setup_talker_socket(self):
 
-        interface_name, stream, traffic = setup_configuration()
+        configuration = setup_configuration(self.mode)
 
-        sock = self.proxy.setup_talker_socket(interface_name, stream, traffic)
+        sock = self.proxy.setup_talker_socket(configuration)
 
         # XXX currently this is just testing that the socket priority
         # configured by the server is correctly propagated with SCM_RIGHTS
@@ -116,9 +123,9 @@ class TestService(unittest.TestCase):
 
     def test_service_setup_talker(self):
 
-        interface_name, stream, traffic = setup_configuration()
+        configuration = setup_configuration(self.mode)
 
-        vlan_interface, soprio = self.proxy.setup_talker(interface_name, stream, traffic)
+        vlan_interface, soprio = self.proxy.setup_talker(configuration)
 
         self.assertEqual(vlan_interface, "eth0.3")
         self.assertEqual(soprio, 7)
