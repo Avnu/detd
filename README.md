@@ -336,9 +336,14 @@ OK (skipped=2)
     * Also involves providing the installation instructions, e.g. to set the right ownerships
 
 * Developer Experience
+  * "detd-in-a-container"
+    * Containerize detd, and its associated dependencies, and offer the UDS interface to the host
+    * E.g. allow to use more recent ethtool versions to configure Qbu, integrate with more recent LinuxPTP versions, etc
   * Make setup_qos.sh interface more compact
     * Instead of --address AB:CD:EF:FE:DC:BA --vid 3 --pcp 6
     * Use --stream AB:CD:EF:FE:DC:BA/3/6 and parse inside the string
+  * Add support for setup_qos.sh to interact with the daemon
+    * E.g. currently it calls detd functions as if it were a library
   * Specialized diagnostics exception when initial configuration fails
     * Providing information about "usual suspects" in a consolidated way. E.g. time synch offsets.
 
@@ -350,11 +355,20 @@ OK (skipped=2)
 
 * Device support
   * Retrieve interface speed via ethtool
+    * E.g. currently it is hardcoded
+  * Add more constraints to the device specific checks
+    * E.g. maximum cycle or slot lengths for the schedule checks.
+  * Autodetect the number of Tx and Rx queues
+    * So we can remove that from the device support class
+  * Autodetect the availability of independent Tx and Rx channels
+    * So we can remove that from the device support class
   * Split device features into rx_features and tx_features
     * So e.g. only tx_features are applied when setting up the talker
-  * Add more constraints to the device specific checks, like maximum cycle or slot lengths for the schedule checks.
   * Add i226 support
     * For guidance and examples, please refer to [detd/devices.py](detd/devices.py) module documentation
+  * Add support for more devices
+  * Generic device support
+    * E.g. just fall-back to software taprio and etf. Depends on launch-time support
 
 * Code Quality
   * Improve pep8 style compliance
@@ -375,8 +389,11 @@ OK (skipped=2)
     * The python3 implementation can be used as an example
   * Add profiles
     * A layer on top of the basic interface that further elevates the level of abstraction
-    * E.g. 60802, 61850... that provide the right mappings abstracting the developers from that
-  * Enlarge the scope to cover basic interaction with configuration authorities
+    * E.g. IEC/IEEE 60802, 61850... that provide the right mappings abstracting the developers from that
+  * Make the implementation strategies configurable
+    * An implementation strategy maps traffic types to backends like mapping a time-aware stream to launch-time + Qbv, launch-time + Qbu, etc
+    * detd would offer the most sane default, but still allow to override it
+  * Cover basic interaction with TSN network configuration mechanisms
     * E.g. start enabling to load the configuration from a text file
   * Add logging capabilities
   * Add diagnostics mode
@@ -386,8 +403,9 @@ OK (skipped=2)
   * Add launch-time control support
   * Integrate time-synchronization
     * When a time-aware stream is requested, check if time synchronization is running and otherwise start it and initialize to the right operation values
+  * Integrate LLDP
   * Improve platform independence
-    * More clear separation of generic and platform specific details (e.g. subclassing per OS or platform)
+    * Further separation of generic and platform specific details (e.g. subclassing per OS or platform)
 
 * Device support
   * Add support for more devices
