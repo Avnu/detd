@@ -372,6 +372,8 @@ OK (skipped=2)
 
 * Code Quality
   * Improve pep8 style compliance
+  * Use class methods in command abstraction classes (e.g. CommandEthtool)
+    * E.g. simpler caller code
 
 
 **Other improvements**
@@ -414,3 +416,6 @@ OK (skipped=2)
     * VLAN tag configuration
     * DMAC subscription
     * tc and ethtool configuration
+
+* Port PoCs
+  * E.g. to VxWorks, or via MicroPython to FreeRTOS, Zephyr...
