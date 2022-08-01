@@ -158,15 +158,15 @@ class DeviceConfigurator:
 
         ethtool = CommandEthtool()
 
-        ethtool.set_eee(interface.name, eee)
-        ethtool.set_features(interface.name, interface.device.features)
+        ethtool.set_eee(interface, eee)
+        ethtool.set_features(interface)
 
         if sysinfo.interface_supports_split_channels(interface):
-            ethtool.set_split_channels(interface.name, interface.device.num_tx_queues, interface.device.num_rx_queues)
+            ethtool.set_split_channels(interface)
         else:
-            ethtool.set_combined_channels(interface.name, interface.device.num_tx_queues)
+            ethtool.set_combined_channels(interface)
 
-        ethtool.set_ring(interface.name, interface.device.num_tx_ring_entries, interface.device.num_rx_ring_entries)
+        ethtool.set_rings(interface)
 
 
 
@@ -237,7 +237,7 @@ class SystemInformation:
                 function = m.groups()[3]
                 return domain, bus, device, function
 
-        raise RuntimeError("ethtool output does not include correct bus-info information for {}".format(interface))
+        raise RuntimeError("ethtool output does not include correct bus-info information for {}".format(interface.name))
 
 
 
@@ -284,7 +284,7 @@ class SystemInformation:
     def get_channels_information(self, interface):
 
         ethtool = CommandEthtool()
-        output = ethtool.get_channels_information(interface.name)
+        output = ethtool.get_channels_information(interface)
 
         template = """Channel parameters for {}:
 Pre-set maximums:

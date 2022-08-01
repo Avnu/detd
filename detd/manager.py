@@ -374,7 +374,12 @@ class Interface:
         self.name = name
 
         sysinfo = SystemInformation()
-        pci_id = sysinfo.get_pci_id(name)
+
+        # XXX Passing self before completing __init__ is really weird but it
+        # helps to keep the interfaces offered by SystemInformation and
+        # SystemConfiguration consistent (e.g. they all accept Interface as
+        # the representation for a network interface)
+        pci_id = sysinfo.get_pci_id(self)
         self.device = Device.from_pci_id(pci_id)
 
 

@@ -40,7 +40,7 @@ class CommandEthtool:
 
 
     def get_driver_information(self, interface):
-        cmd = CommandStringEthtoolGetDriverInformation(interface)
+        cmd = CommandStringEthtoolGetDriverInformation(interface.name)
 
         result = self.run(cmd)
 
@@ -49,39 +49,39 @@ class CommandEthtool:
 
     def set_eee(self, interface, eee):
         check_eee(eee)
-        cmd = CommandStringEthtoolSetEee(interface, eee)
+        cmd = CommandStringEthtoolSetEee(interface.name, eee)
 
         self.run(cmd)
 
 
-    def set_ring(self, interface, num_tx_ring_entries, num_rx_ring_entries):
-        cmd = CommandStringEthtoolSetRing(interface, num_tx_ring_entries, num_rx_ring_entries)
+    def set_rings(self, interface):
+        cmd = CommandStringEthtoolSetRing(interface.name, interface.device.num_tx_ring_entries, interface.device.num_rx_ring_entries)
 
         self.run(cmd)
 
 
     def get_channels_information(self, interface):
-        cmd = CommandStringEthtoolGetChannelsInformation(interface)
+        cmd = CommandStringEthtoolGetChannelsInformation(interface.name)
 
         result = self.run(cmd)
 
         return result.stdout.splitlines()
 
 
-    def set_split_channels(self, interface, num_tx_queues, num_rx_queues):
-        cmd = CommandStringEthtoolSetSplitChannels(interface, num_tx_queues, num_rx_queues)
+    def set_split_channels(self, interface):
+        cmd = CommandStringEthtoolSetSplitChannels(interface.name, interface.device.num_tx_queues, interface.device.num_rx_queues)
 
         self.run(cmd)
 
 
-    def set_combined_channels(self, interface, num_queues):
-        cmd = CommandStringEthtoolSetCombinedChannels(interface, num_queues)
+    def set_combined_channels(self, interface):
+        cmd = CommandStringEthtoolSetCombinedChannels(interface.name, interface.device.num_tx_queues)
 
         self.run(cmd)
 
 
-    def set_features(self, interface, features):
-        cmd = CommandStringEthtoolFeatures(interface, features)
+    def set_features(self, interface):
+        cmd = CommandStringEthtoolFeatures(interface.name, interface.device.features)
 
         self.run(cmd)
 
