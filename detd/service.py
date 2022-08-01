@@ -32,6 +32,7 @@ import socketserver
 import stat
 import threading
 
+from pathlib import Path
 from unittest import mock
 
 from .ipc_pb2 import StreamQosRequest
@@ -52,7 +53,7 @@ from .systemconf import CommandIp
 
 
 
-_SERVICE_UNIX_DOMAIN_SOCKET='/tmp/uds_detd_server.sock'
+_SERVICE_UNIX_DOMAIN_SOCKET='/var/run/detd/detd_service.sock'
 
 
 
@@ -66,8 +67,7 @@ class Service(socketserver.UnixDatagramServer):
         # We create the lock file even before calling parent's constructor
         self.setup_lock_file()
 
-        if not Check.is_valid_path(_SERVICE_UNIX_DOMAIN_SOCKET):
-            raise TypeError
+        self.setup_unix_domain_socket()
 
         super().__init__(_SERVICE_UNIX_DOMAIN_SOCKET, ServiceRequestHandler)
 
@@ -91,6 +91,17 @@ class Service(socketserver.UnixDatagramServer):
         os.chmod(Service._SERVICE_LOCK_FILE, stat.S_IRUSR)
 
 
+    def setup_unix_domain_socket(self):
+
+        basedir = Path(_SERVICE_UNIX_DOMAIN_SOCKET).parent.parent
+        if not Check.is_valid_path(basedir):
+            raise TypeError
+
+        parent = Path(_SERVICE_UNIX_DOMAIN_SOCKET).parent
+        # FIXME: set the right permissions, user, etc
+        parent.mkdir()
+
+
     def terminate(self, signum, frame):
         threading.Thread(target=self.shutdown, daemon=True).start()
 
@@ -106,7 +117,7 @@ class Service(socketserver.UnixDatagramServer):
 
     def cleanup(self):
 
-        # Clean-up UNIX domain socket
+        # Clean-up UNIX domain socket and parent directory
         if not Check.is_valid_unix_domain_socket(self.server_address):
             raise TypeError
 
@@ -115,6 +126,14 @@ class Service(socketserver.UnixDatagramServer):
         except OSError:
             if os.path.exists(self.server_address):
                 raise
+
+        try:
+            parent = Path(self.server_address).parent
+            parent.rmdir()
+        except OSError:
+            if os.path.exists(self.server_address):
+                raise
+
 
         # Clean-up lock file
         if not Check.is_valid_file(Service._SERVICE_LOCK_FILE):

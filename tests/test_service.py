@@ -20,6 +20,7 @@ from detd import ServiceProxy
 from detd import StreamConfiguration
 from detd import TrafficSpecification
 
+from detd.service import _SERVICE_UNIX_DOMAIN_SOCKET
 
 from .common import *
 
@@ -63,7 +64,7 @@ def run_server(test_mode):
 
 
 def setup_server(test_mode):
-    uds_address = Service._SERVICE_LOCK_FILE
+    uds_address = _SERVICE_UNIX_DOMAIN_SOCKET
     server = multiprocessing.Process(target=run_server, args=(test_mode,))
     server.start()
     while not os.path.exists(uds_address):
@@ -98,7 +99,7 @@ class TestService(unittest.TestCase):
         self.server.terminate()
         self.server.join()
         try:
-            uds_address = '/tmp/uds_detd_server.sock'
+            uds_address = _SERVICE_UNIX_DOMAIN_SOCKET
             os.unlink(uds_address)
         except FileNotFoundError:
             pass

@@ -15,6 +15,7 @@ import unittest.mock
 
 
 from detd import Service
+from detd.service import _SERVICE_UNIX_DOMAIN_SOCKET
 
 
 from .common import *
@@ -70,7 +71,7 @@ class TestServiceStartup(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         try:
-            uds_address = '/tmp/uds_detd_server.sock'
+            uds_address = _SERVICE_UNIX_DOMAIN_SOCKET
             os.unlink(uds_address)
         except FileNotFoundError:
             pass
