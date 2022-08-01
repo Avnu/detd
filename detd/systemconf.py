@@ -154,15 +154,22 @@ class DeviceConfigurator:
 
     def setup(self, interface, eee="off"):
 
+        sysinfo = SystemInformation()
+
         ethtool = CommandEthtool()
 
         ethtool.set_eee(interface.name, eee)
         ethtool.set_features(interface.name, interface.device.features)
-        if interface.device.supports_split_channels:
+
+        if sysinfo.interface_supports_split_channels(interface):
             ethtool.set_split_channels(interface.name, interface.device.num_tx_queues, interface.device.num_rx_queues)
         else:
             ethtool.set_combined_channels(interface.name, interface.device.num_tx_queues)
+
         ethtool.set_ring(interface.name, interface.device.num_tx_ring_entries, interface.device.num_rx_ring_entries)
+
+
+
 
 
 
@@ -272,3 +279,46 @@ class SystemInformation:
         product = self.get_hex(filename)
 
         return "{}:{}".format(vendor, product)
+
+
+    def get_channels_information(self, interface):
+
+        ethtool = CommandEthtool()
+        output = ethtool.get_channels_information(interface.name)
+
+        template = """Channel parameters for {}:
+Pre-set maximums:
+RX:[ \t]+([0-9]+|n/a)
+TX:[ \t]+([0-9]+|n/a)
+Other:[ \t]+([0-9]+|n/a)
+Combined:[ \t]+([0-9]+|n/a)
+Current hardware settings:
+RX:[ \t]+([0-9]+|n/a)
+TX:[ \t]+([0-9]+|n/a)
+Other:[ \t]+([0-9]+|n/a)
+Combined:[ \t]+([0-9]+|n/a)""".format(interface.name)
+
+        regex = re.compile(template)
+        m = regex.match("\n".join(output))
+        if m:
+            max_rx = m.groups()[0]
+            if max_rx == 'n/a':
+                max_rx = 0
+            max_tx = m.groups()[1]
+            if max_tx == 'n/a':
+                max_tx = 0
+            #max_other = m.groups()[2]
+            #max_combined = m.groups()[3]
+            return max_rx, max_tx
+
+        raise RuntimeError("ethtool output does not include correct channels information for {}:\n{}".format(interface.name, "\n".join(output)))
+
+
+    def interface_supports_split_channels(self, interface):
+
+        max_rx, max_tx = self.get_channels_information(interface)
+
+        if max_rx == 0 or max_tx == 0:
+            return False
+
+        return True

@@ -11,6 +11,7 @@ import unittest
 from detd import CommandStringIpLinkSetVlan
 from detd import CommandStringIpLinkUnsetVlan
 from detd import CommandStringEthtoolFeatures
+from detd import CommandStringEthtoolGetChannelsInformation
 from detd import CommandStringEthtoolSetCombinedChannels
 from detd import CommandStringEthtoolSetSplitChannels
 from detd import CommandStringEthtoolSetRing
@@ -77,6 +78,15 @@ class TestCommandString(unittest.TestCase):
 
         self.assert_commandstring_equal(cmd, expected)
 
+
+    def test_ethtoolgetchannelsinformation(self):
+
+        interface_name = "eth0"
+
+        cmd = CommandStringEthtoolGetChannelsInformation(interface_name)
+        expected = 'ethtool --show-channels eth0'
+
+        self.assert_commandstring_equal(cmd, expected)
 
 
 

@@ -90,5 +90,35 @@ MODALIAS=pci:v00008086d00004BA0sv00008086sd00007270bc02sc00i18"""
             self.assertRaises(RuntimeError, sysinfo.get_pci_id, interface)
 
 
+    def test_getchannelsinformation_success(self):
+
+        sysinfo = SystemInformation()
+
+        interface = "eth0"
+
+        # Using a sequence of different numbers in order to check correct parsing
+        # E.g. the max and current values are inconsistent
+        channels_information = [
+            'Channel parameters for eth0:',
+            'Pre-set maximums:',
+            'RX:             1',
+            'TX:             2',
+            'Other:          3',
+            'Combined:       4',
+            'Current hardware settings:',
+            'RX:             5',
+            'TX:             6',
+            'Other:          7',
+            'Combined:       8',
+        ]
+
+
+        with mock.patch.object(CommandEthtool, 'get_channels_information', return_value=channels_information):
+            max_rx, max_tx = sysinfo.get_channels_information(interface)
+            self.assertEqual(max_rx, "1")
+            self.assertEqual(max_tx, "2")
+
+
+
 if __name__ == '__main__':
     unittest.main()

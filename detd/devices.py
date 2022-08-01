@@ -122,19 +122,6 @@ class Device:
         raise NotImplementedError("The handler class for the device must implement this function")
 
 
-    @property
-    def supports_split_channels(self):
-        '''Returns true if the device allows to independently configure the
-        Rx and Tx channels, false otherwise.
-
-        "Channel" follows the ethtool convention.
-
-        Subclass this when your device supports separated Rx and Tx channels.
-        '''
-
-        raise NotImplementedError("The handler class for the device must implement this function")
-
-
 
 
 class IntelMgbeEhl(Device):
@@ -190,10 +177,6 @@ class IntelMgbeEhl(Device):
 
         return True
 
-
-    @property
-    def supports_split_channels(self):
-        return True
 
 
 
@@ -273,9 +256,6 @@ class IntelI225(Device):
         return True
 
 
-    @property
-    def supports_split_channels(self):
-        return False
 
 
 class IntelI226(Device):

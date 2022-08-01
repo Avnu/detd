@@ -60,6 +60,14 @@ class CommandEthtool:
         self.run(cmd)
 
 
+    def get_channels_information(self, interface):
+        cmd = CommandStringEthtoolGetChannelsInformation(interface)
+
+        result = self.run(cmd)
+
+        return result.stdout.splitlines()
+
+
     def set_split_channels(self, interface, num_tx_queues, num_rx_queues):
         cmd = CommandStringEthtoolSetSplitChannels(interface, num_tx_queues, num_rx_queues)
 
@@ -203,7 +211,7 @@ class CommandStringEthtoolGetDriverInformation(CommandString):
 
 
 
-class CommandStringEthtoolGetChannelInformation(CommandString):
+class CommandStringEthtoolGetChannelsInformation(CommandString):
 
     def __init__(self, interface):
 
