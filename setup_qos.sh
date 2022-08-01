@@ -126,7 +126,7 @@ from detd import StreamConfiguration
 from detd import TrafficSpecification
 from detd import Interface
 from detd import Configuration
-from detd import Manager
+from detd import ServiceProxy
 
 interface_name = "$IFACE"
 interval = $PERIOD # ns
@@ -143,13 +143,16 @@ interface = Interface(interface_name)
 
 config = Configuration(interface, stream, traffic)
 
-manager = Manager()
+
+# Both Server() and ServiceProxy() point to the same UDS by default
+proxy = ServiceProxy()
 
 try:
-   vlan_iface, soprio = manager.add_talker(config)
+   vlan_iface, soprio = proxy.setup_talker(config)
 except:
    traceback.print_exc()
    sys.exit(1)
+
 
 print("{},{}".format(vlan_iface, soprio))
 sys.exit(0)
