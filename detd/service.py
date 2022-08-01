@@ -97,10 +97,6 @@ class Service(socketserver.UnixDatagramServer):
         if not Check.is_valid_path(basedir):
             raise TypeError
 
-        parent = Path(_SERVICE_UNIX_DOMAIN_SOCKET).parent
-        # FIXME: set the right permissions, user, etc
-        parent.mkdir()
-
 
     def terminate(self, signum, frame):
         threading.Thread(target=self.shutdown, daemon=True).start()
@@ -117,19 +113,12 @@ class Service(socketserver.UnixDatagramServer):
 
     def cleanup(self):
 
-        # Clean-up UNIX domain socket and parent directory
+        # Clean-up UNIX domain socket
         if not Check.is_valid_unix_domain_socket(self.server_address):
             raise TypeError
 
         try:
             os.unlink(self.server_address)
-        except OSError:
-            if os.path.exists(self.server_address):
-                raise
-
-        try:
-            parent = Path(self.server_address).parent
-            parent.rmdir()
         except OSError:
             if os.path.exists(self.server_address):
                 raise

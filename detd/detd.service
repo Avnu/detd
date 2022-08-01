@@ -3,6 +3,8 @@ Description=detd System Service
 
 [Service]
 ExecStart=/usr/bin/python3 -u /usr/bin/detd
+RuntimeDirectory=detd
+RuntimeDirectoryMode=0770
 
 [Install]
 WantedBy=multi-user.target
