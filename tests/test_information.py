@@ -71,24 +71,6 @@ class TestSystemInformation(unittest.TestCase):
             self.assertEqual(value, '8086')
 
 
-    def test_getpciid_parse_error(self):
-
-        uevent = """
-DRIVER=stmmaceth
-PCI_CLASS=20018
-PCI_SUBSYS_ID=8086:7270
-PCI_SLOT_NAME=0000:00:1d.1
-MODALIAS=pci:v00008086d00004BA0sv00008086sd00007270bc02sc00i18"""
-
-        with RunContext(self.mode):
-            sysinfo = SystemInformation()
-            interface = Interface("eth0")
-
-        mocked_open = mock.mock_open(read_data=uevent)
-        with mock.patch('builtins.open', mocked_open):
-            self.assertRaises(RuntimeError, sysinfo.get_pci_id, interface)
-
-
     def test_getchannelsinformation_success(self):
 
         # Using a sequence of different numbers in order to check correct parsing
