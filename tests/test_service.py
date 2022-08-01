@@ -12,18 +12,19 @@ import time
 import unittest
 import unittest.mock
 
+from pathlib import Path
 
-from detd import Configuration
-from detd import Interface
-from detd import Service
-from detd import ServiceProxy
-from detd import StreamConfiguration
-from detd import TrafficSpecification
-
-from detd.service import _SERVICE_UNIX_DOMAIN_SOCKET
+from detd import *
 
 from .common import *
 
+
+# We rely on systemd to create the directory during normal operation
+# but the test suite does not run with enough privileges to create
+# the directory /var/run/detd
+# Hence we change the location of the UDS to /var/tmp/detd/ and handle
+# its creation and removal in the tearUp and tearDown functions
+service._SERVICE_UNIX_DOMAIN_SOCKET = "/var/tmp/detd/detd_service.sock"
 
 
 def setup_configuration(mode):
@@ -64,7 +65,11 @@ def run_server(test_mode):
 
 
 def setup_server(test_mode):
-    uds_address = _SERVICE_UNIX_DOMAIN_SOCKET
+    uds_address = service._SERVICE_UNIX_DOMAIN_SOCKET
+    # We rely on systemd to create the directory during normal operation
+    # so we need to create it manually for the test suite to run
+    parent = Path(uds_address).parent
+    parent.mkdir()
     server = multiprocessing.Process(target=run_server, args=(test_mode,))
     server.start()
     while not os.path.exists(uds_address):
@@ -99,10 +104,15 @@ class TestService(unittest.TestCase):
         self.server.terminate()
         self.server.join()
         try:
-            uds_address = _SERVICE_UNIX_DOMAIN_SOCKET
+            uds_address = service._SERVICE_UNIX_DOMAIN_SOCKET
             os.unlink(uds_address)
         except FileNotFoundError:
             pass
+        # We rely on systemd to remove the directory during normal operation
+        # so we need to remove it manually to leave the system as we found it
+        parent = Path(uds_address).parent
+        parent.rmdir()
+
 
     def assertSoprioEqual(self, sock, soprio):
         actual = sock.getsockopt(socket.SOL_SOCKET, socket.SO_PRIORITY)
