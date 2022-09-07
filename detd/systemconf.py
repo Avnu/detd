@@ -74,6 +74,10 @@ class SystemConfigurator:
         self.vlan = VlanConfigurator()
         self.device = DeviceConfigurator()
 
+        # We track the VLAN ids configured. So when streams share the same VID,
+        # we do not configure it again.
+        self.already_configured_vids = []
+
 
     def args_valid(self, interface, mapping, scheduler, stream):
 
@@ -137,8 +141,12 @@ class SystemConfigurator:
         except subprocess.CalledProcessError:
             raise
 
+        if stream.vid in self.already_configured_vids:
+            return
+
         try:
             self.vlan.setup(interface, stream, mapping)
+            self.already_configured_vids.append(stream.vid)
         except subprocess.CalledProcessError:
             self.qdisc.unset(interface)
             raise
