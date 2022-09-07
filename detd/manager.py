@@ -385,7 +385,7 @@ class Interface:
 
 
 
-class Mapping():
+class MappingNaive():
 
     """
     A class mapping the hardware and system resources (socket priorities,
@@ -564,6 +564,239 @@ class Mapping():
 
 
 
+class Mapping():
+
+    """
+    A class mapping the hardware and system resources (socket priorities,
+    queues, etc) to implement specific traffic types, given a set of
+    conventions.
+
+    It deals with the following elements:
+    - Network traffic classes and traffic types (e.g. based on PCP)
+    - Linux traffic classes used by the tc infrastructure
+    - Socket priorities
+    - Queues used by the tc infrastructure, including device hardware queues
+
+    Different mappings are expected to be available by subclassing it. The
+    default class allows for Best Effort and up to 7 streams.
+
+    The conventions followed are:
+    - Two traffic types supported: Best Effort and Scheduled (Time Critical)
+    - Best Effort:
+      - Socket priority 0 (default)
+      - Linux tc Traffic Class 0
+      - PCP 0
+      - Hardware queues minimum 1, default all
+    - Scheduled
+      - Socket priorities 7 to 254
+      - Linux tc Traffic Classes 1 to max hw queues minus one
+      - PCP 1 to max hw queues minus one
+      - Hardware queues maximum all but one, default none
+    - Dynamics
+      - Traffic classes are static and can only be initialized once
+      - Schedule can be changed as oong as traffic classes are unmodified
+
+    This class is Linux specific.
+    """
+
+
+    def __init__(self, interface):
+
+        # FIXME: make the number of Tx queues a parameter, so things are not hardcoded
+
+        self.interface = interface
+
+
+        # Socket priorities
+
+        # Initialize socket priority mappings
+        # Socket prio 0 is configured as the default
+        # because Linux will use it as the default
+        # Socket prios 1 to 6 are not used in reservations
+        # because they can be set without CAP_NET_ADMIN (see man 7 socket)
+        # Socket prios 7 for 255 are available for reservation
+        # because their setup is restricted to CAP_NET_ADMIN
+        self.best_effort_socket_prio = 0
+
+        # Even though the socket prio assignments are static, we still need to
+        # return the specific socket prio when adding a talker
+        #self.available_socket_prios = [7, 8, 9, 10, 11, 12, 13]
+        self.available_socket_prios = list(range(7, 7 + self.interface.device.num_tx_queues - 1))
+
+
+        # Traffic classes
+
+        # Initialize best effort traffic type
+        # Use TC0 for BE for consistency with socket priority 0
+        self.best_effort_tc = 0
+
+        # Although the traffic classes are static, we still need to return the
+        # specific tc when adding a talker
+        #self.available_tcs = [1, 2, 3, 4, 5, 6, 7]
+        self.available_tcs = list(range(1, 1 + self.interface.device.num_tx_queues - 1))
+
+        # Assumes the BE mappings to socket prio 0 and TC 0
+        # See also the property soprio_to_tc
+        # Index: tc, Value: soprio
+        self.tc_to_soprio = [0, 7, 8, 9, 10, 11, 12, 13]
+
+
+        # PCPs
+
+        # We do not need to change the soprio to PCP mapping in runtime
+        # {soprio: pcp}
+        # FIXME: make all PCPs for streams 6 or 7
+        self.soprio_to_pcp = {
+            0: 0,
+            7: 1,
+            8: 2,
+            9: 3,
+            10: 4,
+            11: 5,
+            12: 6,
+            13: 7
+        }
+
+
+        # Tx Queues
+
+        # Index: traffic class
+        # [{offset:, numqueues:}, {}]
+
+        # We pre-assign all the queues for the expected traffic classes
+        # New traffic classes won't be assigned during runtime
+        num_tx_queues = self.interface.device.num_tx_queues
+        self.tc_to_hwq = [
+            {"offset":0, "num_queues":1},
+            {"offset":1, "num_queues":1},
+            {"offset":2, "num_queues":1},
+            {"offset":3, "num_queues":1},
+            {"offset":4, "num_queues":1},
+            {"offset":5, "num_queues":1},
+            {"offset":6, "num_queues":1},
+            {"offset":7, "num_queues":1},
+        ]
+
+        # Tx queues available to be assigned to streams
+        #self.available_tx_queues = [1, 2, 3, 4, 5, 6, 7]
+        self.available_tx_queues = list(range(1, 1 + self.interface.device.num_tx_queues - 1))
+
+
+    @property
+    def soprio_to_tc(self):
+        # First we assign all socket prios to traffic class 0 (Best Effort)
+        mapping = [0] * 16
+        # Then we assign those socket prios used by other traffic classes
+        for tc, soprio in enumerate(self.tc_to_soprio):
+            mapping[soprio] = tc
+
+        return mapping
+
+
+    def assign_and_map(self, pcp, traffics):
+
+        # Assign a socket priority for this stream
+        soprio = self.assign_soprio_and_map(pcp)
+
+        # Assign a traffic class to the new traffic and map
+        tc = self.assign_tc_and_map(soprio, traffics)
+
+        # Assign the queue indicated by the device
+        queue = self.assign_queue_and_map(tc)
+
+        return soprio, tc, queue
+
+
+    def unmap_and_free(self, soprio, tc, queue):
+        self.unmap_and_free_queue(queue)
+        self.unmap_and_free_tc(tc, soprio)
+        self.unmap_and_free_soprio(soprio)
+
+
+    def assign_soprio_and_map(self, pcp):
+        # We run out of socket prios to add new streams
+        if len(self.available_socket_prios) == 0:
+            raise IndexError
+
+        soprio = self.available_socket_prios.pop(0)
+
+        # Mapping already assign on class creation
+        #self.soprio_to_pcp[soprio] = pcp
+
+        return soprio
+
+
+    def unmap_and_free_soprio(self, soprio):
+        # Mapping is static, hence no unmapping possible
+        #del self.soprio_to_pcp[soprio]
+        self.available_socket_prios.append(soprio)
+
+
+    def assign_tc_and_map(self, soprio, traffics):
+        # We run out of traffic classes to add new streams
+        if len(self.available_tcs) == 0:
+            raise IndexError
+
+        tc = self.available_tcs.pop(0)
+        # The TC to soprio mapping is static
+        #self.tc_to_soprio.append(soprio)
+
+        return tc
+
+
+    def unmap_and_free_tc(self, tc, soprio):
+        # The TC to soprio mapping is static
+        #assert len(self.tc_to_soprio) > 1
+        #self.tc_to_soprio.remove(soprio)
+        # FIXME: put the tc again in the bucket
+        self.available_tcs.append(tc)
+
+
+    def assign_queue_and_map(self, tc):
+
+        # We run out of queues to add new streams
+        if len(self.available_tx_queues) == 0:
+            raise IndexError
+
+        queue = self.available_tx_queues.pop(0)
+
+        # Remove one queue from the best effort allocation
+        #self.tc_to_hwq[0]["num_queues"] = self.tc_to_hwq[0]["num_queues"] - 1
+
+        # Assign the allocated queue to the new traffic class
+        #new_offset = self.tc_to_hwq[0]["num_queues"]
+        #self.tc_to_hwq.insert(1, {"offset": new_offset, "num_queues": 1})
+
+        # Return the queue that is assigned to the provided traffic class
+
+        return queue
+
+
+    def unmap_and_free_queue(self, tc):
+        # XXX In the default mapper, this is a rollback function. E.g. that is
+        # not intended to dynamically add or remove streams. It should only
+        # be called immediately after having called assign_queue_and_map, when
+        # a follow-up operation fails and the system would be left in an
+        # inconsistent state.
+        # Hence, it makes some assumptions about the last item added to the
+        # mapping, that would not proceed in a general function to free the
+        # queue assigned to a given traffic class.
+
+        # There must be at least one traffic class available for best effort
+        if len(self.tc_to_hwq) == 1:
+            raise IndexError
+
+        #self.tc_to_hwq[0]["num_queues"] = self.tc_to_hwq[0]["num_queues"] + 1
+        #del self.tc_to_hwq[1]
+
+        # Add the queue number to the available tx queues
+        # FIXME: we need to calculate the tx queue by running through the assignment
+        #self.available_tx_queues.append(self.available_tx_queues[-1] + 1)
+        #raise NotImplementedError
+
+
+
+
 class Manager():
 
 
@@ -640,7 +873,7 @@ class InterfaceManager():
         except:
             # Leave the internal structures in a consistent state
             self.scheduler.remove(traffic)
-            self.mapping.unmap_and_free(soprio, queue)
+            self.mapping.unmap_and_free(soprio, traffic.tc, queue)
             raise
 
         # FIXME: generate the name to use for the VLAN inteface in the manager
