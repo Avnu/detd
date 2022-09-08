@@ -250,6 +250,25 @@ class Schedule(list):
             self.append(Slot(self[-1].end, self.period, traffic))
 
 
+    def conflicts_with_traffic(self, traffic):
+
+        if traffic.type == TrafficType.BEST_EFFORT:
+            return False
+
+        for slot in [s for s in self if s.traffic.type == TrafficType.SCHEDULED]:
+
+            # The scheduled traffic starts into a non BE slot
+            if traffic.start >= slot.start and traffic.start <= slot.end:
+                return True
+
+            # The scheduled traffic ends into a non BE slot
+            if traffic.end >= slot.start and traffic.end <= slot.end:
+                return True
+
+
+        return False
+
+
     def opens_gate_multiple_times_per_cycle(self):
         '''Returns True if any gate opens more than once over the same cycle.
 
@@ -329,6 +348,8 @@ class Scheduler:
 
 
     def add(self, traffic):
+        if self.schedule.conflicts_with_traffic(traffic):
+            raise ValueError("Traffic conflicts with existing schedule")
         self.traffics.append(traffic)
         self.reschedule()
 
@@ -343,7 +364,6 @@ class Scheduler:
             self.schedule = Schedule()
 
         else:
-            # FIXME: add check so there are no overlapping txoffsets
             scheduled = [t for t in self.traffics if t.type == TrafficType.SCHEDULED]
 
             self.schedule = Schedule()
