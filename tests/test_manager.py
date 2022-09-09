@@ -400,7 +400,6 @@ class TestManager(unittest.TestCase):
 
             config = self.setup_config(txoffset=500*1000)
             traffic = Traffic(TrafficType.SCHEDULED, config)
-            print(scheduler.schedule)
             res = scheduler.schedule.conflicts_with_traffic(traffic)
             self.assertEqual(res, False)
 
