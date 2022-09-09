@@ -18,6 +18,12 @@ from detd import *
 
 from .common import *
 
+from detd import setupRootLogger
+from detd import getLogger
+
+
+
+
 
 # We rely on systemd to create the directory during normal operation
 # but the test suite does not run with enough privileges to create
@@ -55,22 +61,23 @@ def setup_proxy():
     return proxy
 
 
-def run_server(test_mode):
+def run_server(test_mode, log_filename):
+
     if test_mode == TestMode.TARGET:
-        with Service() as srv:
+        with Service(log_filename=log_filename) as srv:
             srv.run()
     elif test_mode == TestMode.HOST:
-        with Service(test_mode=True) as srv:
+        with Service(test_mode=True, log_filename=log_filename) as srv:
             srv.run()
 
 
-def setup_server(test_mode):
+def setup_server(test_mode, log_filename):
     uds_address = service._SERVICE_UNIX_DOMAIN_SOCKET
     # We rely on systemd to create the directory during normal operation
     # so we need to create it manually for the test suite to run
     parent = Path(uds_address).parent
     parent.mkdir()
-    server = multiprocessing.Process(target=run_server, args=(test_mode,))
+    server = multiprocessing.Process(target=run_server, args=(test_mode,log_filename,))
     server.start()
     while not os.path.exists(uds_address):
         time.sleep(0.2)
@@ -88,6 +95,8 @@ class TestService(unittest.TestCase):
 
     def setUp(self):
 
+        setupRootLogger('./detd-server-unittest.log')
+
         env_var = os.getenv("DETD_TESTENV")
         if env_var == "HOST":
             self.mode = TestMode.HOST
@@ -96,7 +105,8 @@ class TestService(unittest.TestCase):
         else:
             self.mode = TestMode.HOST
 
-        self.server = setup_server(self.mode)
+        log_filename = './detd-server-unittest.log'
+        self.server = setup_server(self.mode, log_filename)
         self.proxy = setup_proxy()
 
 

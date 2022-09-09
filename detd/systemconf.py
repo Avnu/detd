@@ -58,6 +58,10 @@ from .tc import CommandTc
 
 from .common import Check
 
+from .logger import getLogger
+
+
+logger = getLogger(__name__)
 
 
 
@@ -70,6 +74,9 @@ class SystemConfigurator:
     """
 
     def __init__(self):
+
+        logger.info(f"Initializing {__class__.__name__}")
+
         self.qdisc = QdiscConfigurator()
         self.vlan = VlanConfigurator()
         self.device = DeviceConfigurator()
@@ -124,6 +131,8 @@ class SystemConfigurator:
 
 
     def setup(self, interface, mapping, scheduler, stream):
+
+        logger.info("Setting up platform and devices")
 
         if not self.args_valid(interface, mapping, scheduler, stream):
             raise TypeError

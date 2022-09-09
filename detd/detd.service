@@ -5,6 +5,8 @@ Description=detd System Service
 ExecStart=/usr/bin/python3 -u /usr/bin/detd
 RuntimeDirectory=detd
 RuntimeDirectoryMode=0770
+StandardOutput=append:/var/log/detd.log
+StandardError=append:/var/log/detd.log
 
 [Install]
 WantedBy=multi-user.target

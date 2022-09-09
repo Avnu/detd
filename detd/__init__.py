@@ -16,3 +16,4 @@ from .ip import *
 from .ethtool import *
 from .tc import *
 from .common import *
+from .logger import *

@@ -28,12 +28,14 @@ from .systemconf import SystemInformation
 from .common import Check
 from .devices import Device
 
-
+from .logger import getLogger
 
 
 s_to_ns = 1000 * 1000 * 1000
 Bytes_to_bits = 8
 
+
+logger = getLogger(__name__)
 
 
 
@@ -330,6 +332,9 @@ def lcm(numbers):
 class Scheduler:
 
     def __init__(self, mapping):
+
+        logger.info(f"Initializing {__class__.__name__}")
+
         self.schedule = Schedule()
 
         # traffics will hold all the traffics including best effort
@@ -348,6 +353,9 @@ class Scheduler:
 
 
     def add(self, traffic):
+
+        logger.info("Adding traffic to schedule")
+
         if self.schedule.conflicts_with_traffic(traffic):
             raise ValueError("Traffic conflicts with existing schedule")
         self.traffics.append(traffic)
@@ -622,6 +630,8 @@ class Mapping():
 
     def __init__(self, interface):
 
+        logger.info(f"Initializing {__class__.__name__}")
+
         # FIXME: make the number of Tx queues a parameter, so things are not hardcoded
 
         self.interface = interface
@@ -714,6 +724,8 @@ class Mapping():
 
 
     def assign_and_map(self, pcp, traffics):
+
+        logger.info("Assigning and mapping resources")
 
         # Assign a socket priority for this stream
         soprio = self.assign_soprio_and_map(pcp)
@@ -822,11 +834,15 @@ class Manager():
 
     def __init__(self):
 
+        logger.info(f"Initializing {__class__.__name__}")
+
         self.talker_manager = {}
         self.lock = threading.Lock()
 
 
     def add_talker(self, config):
+
+        logger.info("Adding talker to Manager")
 
         with self.lock:
 
@@ -841,6 +857,8 @@ class Manager():
 class InterfaceManager():
 
     def __init__(self, interface):
+
+        logger.info(f"Initializing {__class__.__name__}")
 
         self.interface = interface
         self.mapping = Mapping(self.interface)
@@ -868,6 +886,7 @@ class InterfaceManager():
             socket priority
         '''
 
+        logger.info("Adding talker to InterfaceManager")
 
         soprio, tc, queue = self.mapping.assign_and_map(config.stream.pcp, self.scheduler.traffics)
 

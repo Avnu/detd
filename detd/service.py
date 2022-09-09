@@ -50,10 +50,14 @@ from .systemconf import DeviceConfigurator
 from .systemconf import SystemInformation
 from .systemconf import CommandIp
 
-
+from .logger import setupRootLogger
+from .logger import getLogger
 
 
 _SERVICE_UNIX_DOMAIN_SOCKET='/var/run/detd/detd_service.sock'
+
+
+logger = getLogger(__name__)
 
 
 
@@ -62,7 +66,11 @@ class Service(socketserver.UnixDatagramServer):
 
     _SERVICE_LOCK_FILE='/var/lock/detd'
 
-    def __init__(self, test_mode=False):
+    def __init__(self, test_mode=False, log_filename=None):
+
+        setupRootLogger(log_filename)
+
+        logger.info("Initializing Service")
 
         # We create the lock file even before calling parent's constructor
         self.setup_lock_file()
@@ -82,6 +90,7 @@ class Service(socketserver.UnixDatagramServer):
     def setup_lock_file(self):
 
         if not Check.is_valid_path(Service._SERVICE_LOCK_FILE):
+            logger.error(f"{Service._SERVICE_LOCK_FILE} is not a valid path")
             raise TypeError
 
         with open(Service._SERVICE_LOCK_FILE, "x") as lock_file:
@@ -95,14 +104,20 @@ class Service(socketserver.UnixDatagramServer):
 
         basedir = Path(_SERVICE_UNIX_DOMAIN_SOCKET).parent.parent
         if not Check.is_valid_path(basedir):
+            logger.error(f"{basedir} is not a valid path")
             raise TypeError
 
 
     def terminate(self, signum, frame):
+
+        logger.info("Terminating Service")
+
         threading.Thread(target=self.shutdown, daemon=True).start()
 
 
     def run(self):
+
+        logger.info("Entering Service main loop")
 
         try:
             self.serve_forever()
@@ -115,22 +130,26 @@ class Service(socketserver.UnixDatagramServer):
 
         # Clean-up UNIX domain socket
         if not Check.is_valid_unix_domain_socket(self.server_address):
+            logger.error(f"{self.server_address} is not a valid UNIX domain socket")
             raise TypeError
 
         try:
             os.unlink(self.server_address)
         except OSError:
+            logger.error(f"Removing UNIX domain socket {self.server_address} failed")
             if os.path.exists(self.server_address):
                 raise
 
 
         # Clean-up lock file
         if not Check.is_valid_file(Service._SERVICE_LOCK_FILE):
+            logger.error(f"{Service.SERVICE_LOCK_FILE} is not a valid file")
             raise TypeError
 
         try:
             os.unlink(Service._SERVICE_LOCK_FILE)
         except OSError:
+            logger.error(f"Removing file {Service._SERVICE_LOCK_FILE} failed")
             if os.path.exists(Service._SERVICE_LOCK_FILE):
                 raise
 
@@ -141,6 +160,9 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
 
     def setup(self):
+
+        logger.info("============================== REQUEST DISPATCHED ==================================")
+        logger.info("Setting up ServiceRequestHandler")
 
         super().setup()
 
@@ -269,6 +291,8 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
 
     def handle(self):
+
+        logger.info("Handling request")
 
         request = self.receive_qos_request()
         if request.setup_socket == True:

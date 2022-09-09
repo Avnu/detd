@@ -82,7 +82,8 @@ class TestServiceStartup(unittest.TestCase):
         Service._SERVICE_LOCK_FILE = None
 
         with self.assertRaises(TypeError):
-            srv = Service()
+            log_filename = './detd-server-unittest.log'
+            srv = Service(log_filename=log_filename)
 
 
     def test_service_lifecycle_init_lock_path_is_relative(self):
@@ -92,7 +93,8 @@ class TestServiceStartup(unittest.TestCase):
             Service._SERVICE_LOCK_FILE = dst
 
             with self.assertRaises(TypeError):
-                srv = Service()
+                log_filename = './detd-server-unittest.log'
+                srv = Service(log_filename=log_filename)
 
             # Constructor raised an exception, hence no need to clean-up
 
@@ -102,7 +104,8 @@ class TestServiceStartup(unittest.TestCase):
 
         Service._SERVICE_LOCK_FILE = self.internal_lock_file
 
-        server = setup_server(self.mode)
+        log_filename = './detd-server-unittest.log'
+        server = setup_server(self.mode, log_filename)
 
         lock_file = Service._SERVICE_LOCK_FILE
         os.unlink(lock_file)
@@ -117,7 +120,8 @@ class TestServiceStartup(unittest.TestCase):
 
         Service._SERVICE_LOCK_FILE = self.internal_lock_file
 
-        server = setup_server(self.mode)
+        log_filename = './detd-server-unittest.log'
+        server = setup_server(self.mode, log_filename)
 
         from detd import service
         uds_address = service._SERVICE_UNIX_DOMAIN_SOCKET
