@@ -94,3 +94,18 @@ def traffic_helper(txoffset, interval):
 
 
     return Traffic(TrafficType.SCHEDULED, config)
+
+
+
+
+def setup_config(mode, interface_name="eth0", interval=20*1000*1000, size=1522,
+                       txoffset=250*1000, addr="7a:b9:ed:d6:d2:12", vid=3, pcp=6):
+
+    with RunContext(mode):
+        interface = Interface(interface_name)
+        traffic = TrafficSpecification(interval, size)
+        stream = StreamConfiguration(addr, vid, pcp, txoffset)
+
+        config = Configuration(interface, stream, traffic)
+
+    return config

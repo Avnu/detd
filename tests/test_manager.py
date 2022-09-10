@@ -25,6 +25,7 @@ from .common import *
 
 
 
+
 class TestManager(unittest.TestCase):
 
 
@@ -37,19 +38,6 @@ class TestManager(unittest.TestCase):
             self.mode = TestMode.TARGET
         else:
             self.mode = TestMode.HOST
-
-
-    def setup_config(self, interface_name="eth0", interval=20*1000*1000, size=1522,
-                           txoffset=250*1000, addr="7a:b9:ed:d6:d2:12", vid=3, pcp=6):
-
-        with RunContext(self.mode):
-            interface = Interface(interface_name)
-            traffic = TrafficSpecification(interval, size)
-            stream = StreamConfiguration(addr, vid, pcp, txoffset)
-
-            config = Configuration(interface, stream, traffic)
-
-        return config
 
 
     def assertMappingEqual(self, interface_name, manager,
@@ -69,7 +57,7 @@ class TestManager(unittest.TestCase):
 
     def test_add_talker_success(self):
 
-        config = self.setup_config()
+        config = setup_config(self.mode)
 
         with RunContext(self.mode):
             manager = Manager()
@@ -115,7 +103,7 @@ class TestManager(unittest.TestCase):
 
 
         # A first stream
-        config = self.setup_config()
+        config = setup_config(self.mode)
 
 
         with RunContext(self.mode):
@@ -133,7 +121,7 @@ class TestManager(unittest.TestCase):
 
 
         # A second stream
-        config = self.setup_config(interval=20*1000*1000, txoffset=600*1000)
+        config = setup_config(self.mode, interval=20*1000*1000, txoffset=600*1000)
 
         with RunContext(self.mode):
             vlan_interface, soprio = manager.add_talker(config)
@@ -150,7 +138,7 @@ class TestManager(unittest.TestCase):
 
         # Five more streams until we reach the maximum available number for 8 queues
         for txoffset_us in [800, 1000, 1400, 1800, 2200]:
-            config = self.setup_config(interval=20*1000*1000, txoffset=txoffset_us*1000)
+            config = setup_config(self.mode, interval=20*1000*1000, txoffset=txoffset_us*1000)
             with RunContext(self.mode):
                 vlan_interface, soprio = manager.add_talker(config)
 
@@ -165,7 +153,7 @@ class TestManager(unittest.TestCase):
                                 tc_to_soprio, soprio_to_pcp, tc_to_hwq)
 
         # We try to add one stream once we have exhausted the maximum number possible
-        config = self.setup_config(interval=20*1000*1000, txoffset=2600*1000)
+        config = setup_config(self.mode, interval=20*1000*1000, txoffset=2600*1000)
         self.assertRaises(IndexError, manager.add_talker, config)
 
 
@@ -173,7 +161,7 @@ class TestManager(unittest.TestCase):
 
     def test_add_talker_qdisc_error(self):
 
-        config = self.setup_config()
+        config = setup_config(self.mode)
 
         with RunContext(self.mode, qdisc_exc=subprocess.CalledProcessError(1, "tc")):
             manager = Manager()
@@ -183,7 +171,7 @@ class TestManager(unittest.TestCase):
 
     def test_add_talker_vlan_error(self):
 
-        config = self.setup_config()
+        config = setup_config(self.mode)
 
         with RunContext(self.mode, vlan_exc=subprocess.CalledProcessError(1, "ip")):
             manager = Manager()
@@ -193,7 +181,7 @@ class TestManager(unittest.TestCase):
 
     def test_add_talker_device_error(self):
 
-        config = self.setup_config()
+        config = setup_config(self.mode)
 
         with RunContext(self.mode, device_exc=subprocess.CalledProcessError(1, "ethtool")):
             manager = Manager()
@@ -375,11 +363,11 @@ class TestManager(unittest.TestCase):
             mapping = Mapping(interface)
             scheduler = Scheduler(mapping)
 
-            config = self.setup_config(txoffset=100*1000)
+            config = setup_config(self.mode, txoffset=100*1000)
             traffic = Traffic(TrafficType.SCHEDULED, config)
             scheduler.add(traffic)
 
-            config = self.setup_config(txoffset=100*1000)
+            config = setup_config(self.mode, txoffset=100*1000)
             traffic = Traffic(TrafficType.SCHEDULED, config)
             res = scheduler.schedule.conflicts_with_traffic(traffic)
             self.assertEqual(res, True)
@@ -394,11 +382,11 @@ class TestManager(unittest.TestCase):
             mapping = Mapping(interface)
             scheduler = Scheduler(mapping)
 
-            config = self.setup_config(txoffset=100*1000)
+            config = setup_config(self.mode, txoffset=100*1000)
             traffic = Traffic(TrafficType.SCHEDULED, config)
             scheduler.add(traffic)
 
-            config = self.setup_config(txoffset=500*1000)
+            config = setup_config(self.mode, txoffset=500*1000)
             traffic = Traffic(TrafficType.SCHEDULED, config)
             res = scheduler.schedule.conflicts_with_traffic(traffic)
             self.assertEqual(res, False)
@@ -413,11 +401,11 @@ class TestManager(unittest.TestCase):
             mapping = Mapping(interface)
             scheduler = Scheduler(mapping)
 
-            config = self.setup_config(txoffset=100*1000)
+            config = setup_config(self.mode, txoffset=100*1000)
             traffic = Traffic(TrafficType.SCHEDULED, config)
             scheduler.add(traffic)
 
-            config = self.setup_config(txoffset=99*1000)
+            config = setup_config(self.mode, txoffset=99*1000)
             traffic = Traffic(TrafficType.SCHEDULED, config)
             conflict = scheduler.schedule.conflicts_with_traffic(traffic)
             self.assertEqual(conflict, True)
@@ -432,11 +420,11 @@ class TestManager(unittest.TestCase):
             mapping = Mapping(interface)
             scheduler = Scheduler(mapping)
 
-            config = self.setup_config(txoffset=100*1000)
+            config = setup_config(self.mode, txoffset=100*1000)
             traffic = Traffic(TrafficType.SCHEDULED, config)
             scheduler.add(traffic)
 
-            config = self.setup_config(txoffset=110*1000)
+            config = setup_config(self.mode, txoffset=110*1000)
             traffic = Traffic(TrafficType.SCHEDULED, config)
             res = scheduler.schedule.conflicts_with_traffic(traffic)
             self.assertEqual(res, True)
