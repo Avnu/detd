@@ -30,7 +30,9 @@ from detd import getLogger
 # the directory /var/run/detd
 # Hence we change the location of the UDS to /var/tmp/detd/ and handle
 # its creation and removal in the tearUp and tearDown functions
-service._SERVICE_UNIX_DOMAIN_SOCKET = "/var/tmp/detd/detd_service.sock"
+UNIX_DOMAIN_SOCKET = "/var/tmp/detd/detd_service.sock"
+service._SERVICE_UNIX_DOMAIN_SOCKET = UNIX_DOMAIN_SOCKET
+proxy._SERVICE_UNIX_DOMAIN_SOCKET   = UNIX_DOMAIN_SOCKET
 
 
 def setup_configuration(mode):
