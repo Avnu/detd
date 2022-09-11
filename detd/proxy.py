@@ -41,8 +41,6 @@ class ServiceProxy:
 
         self.uds_address = _SERVICE_UNIX_DOMAIN_SOCKET
 
-        self.setup_socket()
-
 
     def __del__(self):
         self.sock.close()
@@ -123,8 +121,10 @@ class ServiceProxy:
 
     def setup_talker_socket(self, configuration):
 
+        self.setup_socket()
         self.send_qos_request(configuration, setup_socket=True)
         status, sock = self.receive_qos_socket_response()
+        self.sock.close()
 
         if not status.ok:
             # FIXME handle error
@@ -135,8 +135,10 @@ class ServiceProxy:
 
     def setup_talker(self, configuration):
 
+        self.setup_socket()
         self.send_qos_request(configuration, setup_socket=False)
         response = self.receive_qos_response()
+        self.sock.close()
 
         if not response.ok:
             # FIXME handle error
