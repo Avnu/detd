@@ -44,21 +44,8 @@ class TestConfiguration(unittest.TestCase):
             seed(1)
             interface_name = "eth0{}".format(random())
 
-            interval = 20 * 1000 * 1000 # ns
-            size = 1522                 # Bytes
-
-            txoffset = 250 * 1000       # ns
-            addr = "7a:b9:ed:d6:d2:12"
-            vid = 3
-            pcp = 6
-
-            interface = Interface(interface_name)
-            traffic = TrafficSpecification(interval, size)
-            stream = StreamConfiguration(addr, vid, pcp, txoffset)
-
-
             with self.assertRaises(TypeError):
-                config = Configuration(interface, stream, traffic)
+                interface = Interface(interface_name)
 
 
     def test_configuration_wrong_dmac(self):

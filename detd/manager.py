@@ -43,9 +43,6 @@ class Configuration:
 
     def __init__(self, interface, stream, traffic):
 
-        if not Check.is_interface(interface.name):
-            raise TypeError("Invalid interface")
-
         if stream.txoffset > traffic.interval:
             raise TypeError("Invalid TxOffset, it exceeds Interval")
 
@@ -399,6 +396,11 @@ class Scheduler:
 class Interface:
 
     def __init__(self, name):
+
+        if not Check.is_interface(name):
+            logger.error(f"{name} is not a valid network interface name")
+            raise TypeError(f"{name} is not a valid network interface name")
+
         self.name = name
 
         sysinfo = SystemInformation()
