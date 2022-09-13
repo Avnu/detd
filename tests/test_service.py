@@ -18,8 +18,8 @@ from detd import *
 
 from .common import *
 
-from detd import setupRootLogger
-from detd import getLogger
+from detd import setup_root_logger
+from detd import get_logger
 
 
 
@@ -97,7 +97,7 @@ class TestService(unittest.TestCase):
 
     def setUp(self):
 
-        setupRootLogger('./detd-server-unittest.log')
+        setup_root_logger('./detd-server-unittest.log')
 
         env_var = os.getenv("DETD_TESTENV")
         if env_var == "HOST":

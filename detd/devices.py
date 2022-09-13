@@ -34,9 +34,13 @@ running host based tests.
 """
 
 
+from .logger import get_logger
 
 
 Gbps_to_bps = 1000 * 1000 * 1000
+
+
+logger = get_logger(__name__)
 
 
 
@@ -154,6 +158,9 @@ class IntelMgbeEhl(Device):
     # ethtool --set-rxfh-indir ${INTERFACE} equal 2
 
     def __init__(self, pci_id):
+
+        logger.info(f"Initializing {__class__.__name__}")
+
         super().__init__(IntelMgbeEhl.NUM_TX_QUEUES, IntelMgbeEhl.NUM_RX_QUEUES)
 
         self.features['rxvlan'] = 'off'
@@ -187,6 +194,9 @@ class IntelMgbeTgl(Device):
     PCI_IDS = ['8086:A0AC']
 
     def __init__(self, pci_id):
+
+        logger.info(f"Initializing {__class__.__name__}")
+
         raise NotImplementedError("Handler class for Tiger Lake UP3's integrated TSN controller not yet implemented")
 
 
@@ -195,6 +205,9 @@ class IntelMgbeTglH(Device):
     PCI_IDS = ['8086:A0AC', '8086:43AC', '8086:43A2']
 
     def __init__(self, pci_id):
+
+        logger.info(f"Initializing {__class__.__name__}")
+
         raise NotImplementedError("Handler class for Tiger Lake H's integrated TSN controller not yet implemented")
 
 
@@ -203,6 +216,9 @@ class IntelMgbeAdl(Device):
     PCI_IDS = ['8086:7AAC', '8086:7AAD', '8086:54AC']
 
     def __init__(self, pci_id):
+
+        logger.info(f"Initializing {__class__.__name__}")
+
         raise NotImplementedError("Handler class for Alder Lake's integrated TSN controller not yet implemented")
 
 
@@ -224,6 +240,9 @@ class IntelI225(Device):
 
 
     def __init__(self, pci_id):
+
+        logger.info(f"Initializing {__class__.__name__}")
+
         super().__init__(IntelI225.NUM_TX_QUEUES, IntelI225.NUM_RX_QUEUES)
 
         if pci_id in IntelI225.PCI_IDS_NON_TSN:
@@ -269,6 +288,9 @@ class IntelI226(Device):
     PCI_IDS = PCI_IDS_VALID + PCI_IDS_UNPROGRAMMED
 
     def __init__(self, pci_id):
+
+        logger.info(f"Initializing {__class__.__name__}")
+
         raise NotImplementedError("Handler class for i226 TSN Ethernet controller not yet implemented")
 
 
@@ -283,4 +305,7 @@ class IntelI210(Device):
     PCI_IDS = PCI_IDS_VALID + PCI_IDS_UNPROGRAMMED
 
     def __init__(self, pci_id):
+
+        logger.info(f"Initializing {__class__.__name__}")
+
         raise NotImplementedError("Handler class for i210 Ethernet controller not yet implemented")

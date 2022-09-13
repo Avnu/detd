@@ -28,14 +28,14 @@ from .systemconf import SystemInformation
 from .common import Check
 from .devices import Device
 
-from .logger import getLogger
+from .logger import get_logger
 
 
 s_to_ns = 1000 * 1000 * 1000
 Bytes_to_bits = 8
 
 
-logger = getLogger(__name__)
+logger = get_logger(__name__)
 
 
 
@@ -354,6 +354,7 @@ class Scheduler:
         logger.info("Adding traffic to schedule")
 
         if self.schedule.conflicts_with_traffic(traffic):
+            logger.error(f"Traffic conflicts with schedule: {self.schedule}")
             raise ValueError("Traffic conflicts with existing schedule")
         self.traffics.append(traffic)
         self.reschedule()
@@ -930,6 +931,7 @@ class InterfaceManager():
             self.runner.setup(self.interface, self.mapping, self.scheduler, config.stream)
         except:
             # Leave the internal structures in a consistent state
+            logger.error("Error applying the configuration on the system")
             self.scheduler.remove(traffic)
             self.mapping.unmap_and_free(soprio, traffic.tc, queue)
             raise RuntimeError("Error applying the configuration on the system")

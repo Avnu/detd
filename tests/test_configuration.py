@@ -17,6 +17,10 @@ from detd import TrafficSpecification
 from detd import Interface
 from detd import Configuration
 
+from detd import setup_root_logger
+
+
+
 import os
 
 from .common import *
@@ -26,6 +30,8 @@ class TestConfiguration(unittest.TestCase):
 
 
     def setUp(self):
+
+        setup_root_logger('./detd-server-unittest.log')
 
         env_var = os.getenv("DETD_TESTENV")
         if env_var == "HOST":

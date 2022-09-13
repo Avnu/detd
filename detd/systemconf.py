@@ -58,10 +58,10 @@ from .tc import CommandTc
 
 from .common import Check
 
-from .logger import getLogger
+from .logger import get_logger
 
 
-logger = getLogger(__name__)
+logger = get_logger(__name__)
 
 
 

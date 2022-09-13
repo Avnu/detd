@@ -45,14 +45,14 @@ from .systemconf import DeviceConfigurator
 from .systemconf import SystemInformation
 from .systemconf import CommandIp
 
-from .logger import setupRootLogger
-from .logger import getLogger
+from .logger import setup_root_logger
+from .logger import get_logger
 
 
 _SERVICE_UNIX_DOMAIN_SOCKET='/var/run/detd/detd_service.sock'
 
 
-logger = getLogger(__name__)
+logger = get_logger(__name__)
 
 
 
@@ -63,8 +63,9 @@ class Service(socketserver.UnixDatagramServer):
 
     def __init__(self, test_mode=False, log_filename=None):
 
-        setupRootLogger(log_filename)
+        setup_root_logger(log_filename)
 
+        logger.info(" * * * detd Service starting * * *")
         logger.info("Initializing Service")
 
         # We create the lock file even before calling parent's constructor
@@ -122,6 +123,8 @@ class Service(socketserver.UnixDatagramServer):
 
 
     def cleanup(self):
+
+        logger.info("Cleaning up Service")
 
         # Clean-up UNIX domain socket
         if not Check.is_valid_unix_domain_socket(self.server_address):
@@ -295,8 +298,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
                 sock = self.setup_talker_socket(request)
                 ok = True
             except Exception as ex:
-                logger.error("Exception raised while setting up a talker socket")
-                logger.error(ex)
+                logger.exception("Exception raised while setting up a talker socket")
 
             if not ok:
                 sock = None
@@ -304,8 +306,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
             try:
                 self.send_qos_socket_response(ok, sock)
             except Exception as ex:
-                logger.error("Exception raised while sending the QoS response after setting up a talker socket")
-                logger.error(ex)
+                logger.exception("Exception raised while sending the QoS response after setting up a talker socket")
 
             self.mock_socket_cleanup(sock)
 
@@ -316,8 +317,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
                 vlan_interface, soprio = self.setup_talker(request)
                 ok = True
             except Exception as ex:
-                logger.error("Exception raised while setting up a talker")
-                logger.error(ex)
+                logger.exception("Exception raised while setting up a talker")
 
             if not ok:
                 vlan_interface = None
@@ -326,5 +326,4 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
             try:
                 self.send_qos_response(ok, vlan_interface, soprio)
             except Exception as ex:
-                logger.error("Exception raised while sending the QoS response after setting up a talker")
-                logger.error(ex)
+                logger.exception("Exception raised while sending the QoS response after setting up a talker")

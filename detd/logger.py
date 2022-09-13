@@ -9,10 +9,10 @@
 Allows for centralized logging for all modules.
 
 The program entry point must set up the root logger by using the function
-setupRootLogger.
+setup_root_logger.
 
-Then, every module requiring logging should call getLogger(__name__), and then use the
-regular Python3 logging API on it.
+Then, every module requiring logging should call get_logger(__name__), and then
+use the regular Python3 logging API on it.
 """
 
 
@@ -20,7 +20,7 @@ regular Python3 logging API on it.
 
 import logging
 
-def setupRootLogger(filename=None):
+def setup_root_logger(filename=None):
 
     # Setup root logger
     logger = logging.getLogger()
@@ -38,5 +38,5 @@ def setupRootLogger(filename=None):
 
 
 
-def getLogger(name):
+def get_logger(name):
     return logging.getLogger(name)
