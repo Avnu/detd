@@ -50,6 +50,7 @@ class ServiceProxy:
 
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         self.sock.bind("")
+        self.sock.connect(self.uds_address)
 
 
     def send(self, message):
