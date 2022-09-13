@@ -237,7 +237,7 @@ class TestManager(unittest.TestCase):
         with RunContext(self.mode, qdisc_exc=subprocess.CalledProcessError(1, "tc")):
             manager = Manager()
 
-            self.assertRaises(subprocess.CalledProcessError, manager.add_talker, config)
+            self.assertRaises(RuntimeError, manager.add_talker, config)
 
 
     def test_add_talker_vlan_error(self):
@@ -247,7 +247,7 @@ class TestManager(unittest.TestCase):
         with RunContext(self.mode, vlan_exc=subprocess.CalledProcessError(1, "ip")):
             manager = Manager()
 
-            self.assertRaises(subprocess.CalledProcessError, manager.add_talker, config)
+            self.assertRaises(RuntimeError, manager.add_talker, config)
 
 
     def test_add_talker_device_error(self):
@@ -257,7 +257,7 @@ class TestManager(unittest.TestCase):
         with RunContext(self.mode, device_exc=subprocess.CalledProcessError(1, "ethtool")):
             manager = Manager()
 
-            self.assertRaises(subprocess.CalledProcessError, manager.add_talker, config)
+            self.assertRaises(RuntimeError, manager.add_talker, config)
 
 
     def test_mappingnaive_assignqueueandmap(self):
