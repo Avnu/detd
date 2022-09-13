@@ -128,8 +128,7 @@ class ServiceProxy:
         self.sock.close()
 
         if not status.ok:
-            # FIXME handle error
-            return None
+            raise RuntimeError("The configuration could not be applied")
 
         return sock
 
@@ -142,8 +141,7 @@ class ServiceProxy:
         self.sock.close()
 
         if not response.ok:
-            # FIXME handle error
-            return None
+            raise RuntimeError("The configuration could not be applied")
 
         vlan_interface = response.vlan_interface
         soprio = response.socket_priority
