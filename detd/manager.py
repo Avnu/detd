@@ -848,7 +848,8 @@ class Manager():
         with self.lock:
 
             if not config.interface.name in self.talker_manager:
-                self.talker_manager[config.interface.name] = InterfaceManager(config.interface)
+                interface_manager = InterfaceManager(config.interface)
+                self.talker_manager[config.interface.name] = interface_manager
 
             return self.talker_manager[config.interface.name].add_talker(config)
 
