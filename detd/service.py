@@ -117,6 +117,9 @@ class Service(socketserver.UnixDatagramServer):
 
         try:
             self.serve_forever()
+        except Exception as ex:
+            logger.exception("Exception while in Server main loop")
+            raise
         finally:
             self.server_close()
             self.cleanup()
