@@ -40,11 +40,9 @@ class TestManager(unittest.TestCase):
             self.mode = TestMode.HOST
 
 
-    def assertMappingEqual(self, interface_name, manager,
+    def assertMappingEqual(self, mapping,
                            available_socket_prios, available_tcs, available_tx_queues,
                            tc_to_soprio, soprio_to_pcp, tc_to_hwq):
-
-        mapping = manager.talker_manager[interface_name].mapping
 
         self.assertEqual(mapping.available_socket_prios, available_socket_prios)
         self.assertEqual(mapping.available_tcs, available_tcs)
@@ -105,7 +103,6 @@ class TestManager(unittest.TestCase):
         # A first stream
         config = setup_config(self.mode)
 
-
         with RunContext(self.mode):
             vlan_interface, soprio = manager.add_talker(config)
 
@@ -115,7 +112,7 @@ class TestManager(unittest.TestCase):
         available_socket_prios = [8, 9, 10, 11, 12, 13]
         available_tcs = [2, 3, 4, 5, 6, 7]
         available_tx_queues = [2, 3, 4, 5, 6, 7]
-        self.assertMappingEqual(interface_name, manager,
+        self.assertMappingEqual(manager.talker_manager[interface_name].mapping,
                                 available_socket_prios, available_tcs, available_tx_queues,
                                 tc_to_soprio, soprio_to_pcp, tc_to_hwq)
 
@@ -132,7 +129,7 @@ class TestManager(unittest.TestCase):
         available_socket_prios = [9, 10, 11, 12, 13]
         available_tcs = [3, 4, 5, 6, 7]
         available_tx_queues = [3, 4, 5, 6, 7]
-        self.assertMappingEqual(interface_name, manager,
+        self.assertMappingEqual(manager.talker_manager[interface_name].mapping,
                                 available_socket_prios, available_tcs, available_tx_queues,
                                 tc_to_soprio, soprio_to_pcp, tc_to_hwq)
 
@@ -148,13 +145,87 @@ class TestManager(unittest.TestCase):
         available_socket_prios = []
         available_tcs = []
         available_tx_queues = []
-        self.assertMappingEqual(interface_name, manager,
+        self.assertMappingEqual(manager.talker_manager[interface_name].mapping,
                                 available_socket_prios, available_tcs, available_tx_queues,
                                 tc_to_soprio, soprio_to_pcp, tc_to_hwq)
 
         # We try to add one stream once we have exhausted the maximum number possible
         config = setup_config(self.mode, interval=20*1000*1000, txoffset=2600*1000)
         self.assertRaises(IndexError, manager.add_talker, config)
+
+
+    def test_remove_max_talkers_success_and_error(self):
+
+        interface_name = "eth0"
+
+        # These three mappings are expected to remain immutable
+        tc_to_soprio = [0, 7, 8, 9, 10, 11, 12, 13]
+        soprio_to_pcp = {
+            0: 0,
+            7: 1,
+            8: 2,
+            9: 3,
+            10: 4,
+            11: 5,
+            12: 6,
+            13: 7
+        }
+        tc_to_hwq = [
+            {"offset":0, "num_queues":1},
+            {"offset":1, "num_queues":1},
+            {"offset":2, "num_queues":1},
+            {"offset":3, "num_queues":1},
+            {"offset":4, "num_queues":1},
+            {"offset":5, "num_queues":1},
+            {"offset":6, "num_queues":1},
+            {"offset":7, "num_queues":1},
+        ]
+
+        with RunContext(self.mode):
+            manager = Manager()
+
+        # Add seven streams until we reach the maximum available number for 8 queues
+        for txoffset_us in [200, 400, 800, 1000, 1400, 1800, 2200]:
+            config = setup_config(self.mode, interval=20*1000*1000, txoffset=txoffset_us*1000)
+            with RunContext(self.mode):
+                vlan_interface, soprio = manager.add_talker(config)
+
+        self.assertEqual(vlan_interface, "eth0.3")
+        self.assertEqual(soprio, 13)
+
+        available_socket_prios = []
+        available_tcs = []
+        available_tx_queues = []
+        self.assertMappingEqual(manager.talker_manager[interface_name].mapping,
+                                available_socket_prios, available_tcs, available_tx_queues,
+                                tc_to_soprio, soprio_to_pcp, tc_to_hwq)
+
+        mapping = manager.talker_manager[interface_name].mapping
+
+        # Remove seventh stream
+        soprio = 13
+        tc = 7
+        queue = 7
+        mapping.unmap_and_free(soprio, tc, queue)
+        available_socket_prios = [13]
+        available_tcs = [7]
+        available_tx_queues = [7]
+        self.assertMappingEqual(manager.talker_manager[interface_name].mapping,
+                                available_socket_prios, available_tcs, available_tx_queues,
+                                tc_to_soprio, soprio_to_pcp, tc_to_hwq)
+
+
+        # Remove sixth stream
+        soprio = 12
+        tc = 6
+        queue = 6
+        mapping.unmap_and_free(soprio, tc, queue)
+        available_socket_prios = [12, 13]
+        available_tcs = [6, 7]
+        available_tx_queues = [6, 7]
+        self.assertMappingEqual(manager.talker_manager[interface_name].mapping,
+                                available_socket_prios, available_tcs, available_tx_queues,
+                                tc_to_soprio, soprio_to_pcp, tc_to_hwq)
 
 
 
@@ -198,51 +269,51 @@ class TestManager(unittest.TestCase):
             tc = None
 
             mapping = MappingNaive(interface)
-            expected_mapping = [ {"offset":0, "num_queues":8} ]
-            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+            expected_tc_to_hwq_mapping = [ {"offset":0, "num_queues":8} ]
+            self.assertEqual(mapping.tc_to_hwq, expected_tc_to_hwq_mapping)
 
             mapping.assign_queue_and_map(tc)
-            expected_mapping = [
+            expected_tc_to_hwq_mapping = [
                 {"offset":0, "num_queues":7},
                 {"offset":7, "num_queues":1}]
-            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+            self.assertEqual(mapping.tc_to_hwq, expected_tc_to_hwq_mapping)
 
             mapping.assign_queue_and_map(tc)
-            expected_mapping = [
+            expected_tc_to_hwq_mapping = [
                 {"offset":0, "num_queues":6},
                 {"offset":6, "num_queues":1},
                 {"offset":7, "num_queues":1}]
-            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+            self.assertEqual(mapping.tc_to_hwq, expected_tc_to_hwq_mapping)
 
             mapping.assign_queue_and_map(tc)
-            expected_mapping = [
+            expected_tc_to_hwq_mapping = [
                 {"offset":0, "num_queues":5},
                 {"offset":5, "num_queues":1},
                 {"offset":6, "num_queues":1},
                 {"offset":7, "num_queues":1}]
-            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+            self.assertEqual(mapping.tc_to_hwq, expected_tc_to_hwq_mapping)
 
             mapping.assign_queue_and_map(tc)
-            expected_mapping = [
+            expected_tc_to_hwq_mapping = [
                 {"offset":0, "num_queues":4},
                 {"offset":4, "num_queues":1},
                 {"offset":5, "num_queues":1},
                 {"offset":6, "num_queues":1},
                 {"offset":7, "num_queues":1}]
-            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+            self.assertEqual(mapping.tc_to_hwq, expected_tc_to_hwq_mapping)
 
             mapping.assign_queue_and_map(tc)
-            expected_mapping = [
+            expected_tc_to_hwq_mapping = [
                 {"offset":0, "num_queues":3},
                 {"offset":3, "num_queues":1},
                 {"offset":4, "num_queues":1},
                 {"offset":5, "num_queues":1},
                 {"offset":6, "num_queues":1},
                 {"offset":7, "num_queues":1}]
-            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+            self.assertEqual(mapping.tc_to_hwq, expected_tc_to_hwq_mapping)
 
             mapping.assign_queue_and_map(tc)
-            expected_mapping = [
+            expected_tc_to_hwq_mapping = [
                 {"offset":0, "num_queues":2},
                 {"offset":2, "num_queues":1},
                 {"offset":3, "num_queues":1},
@@ -250,10 +321,10 @@ class TestManager(unittest.TestCase):
                 {"offset":5, "num_queues":1},
                 {"offset":6, "num_queues":1},
                 {"offset":7, "num_queues":1}]
-            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+            self.assertEqual(mapping.tc_to_hwq, expected_tc_to_hwq_mapping)
 
             mapping.assign_queue_and_map(tc)
-            expected_mapping = [
+            expected_tc_to_hwq_mapping = [
                 {"offset":0, "num_queues":1},
                 {"offset":1, "num_queues":1},
                 {"offset":2, "num_queues":1},
@@ -262,7 +333,7 @@ class TestManager(unittest.TestCase):
                 {"offset":5, "num_queues":1},
                 {"offset":6, "num_queues":1},
                 {"offset":7, "num_queues":1}]
-            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+            self.assertEqual(mapping.tc_to_hwq, expected_tc_to_hwq_mapping)
 
             with self.assertRaises(IndexError):
                 mapping.assign_queue_and_map(tc)
@@ -284,7 +355,7 @@ class TestManager(unittest.TestCase):
             mapping.assign_queue_and_map(tc)
             mapping.assign_queue_and_map(tc)
             mapping.assign_queue_and_map(tc)
-            expected_mapping = [
+            expected_tc_to_hwq_mapping = [
                 {"offset":0, "num_queues":1},
                 {"offset":1, "num_queues":1},
                 {"offset":2, "num_queues":1},
@@ -293,10 +364,10 @@ class TestManager(unittest.TestCase):
                 {"offset":5, "num_queues":1},
                 {"offset":6, "num_queues":1},
                 {"offset":7, "num_queues":1}]
-            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+            self.assertEqual(mapping.tc_to_hwq, expected_tc_to_hwq_mapping)
 
             mapping.unmap_and_free_queue(tc)
-            expected_mapping = [
+            expected_tc_to_hwq_mapping = [
                 {"offset":0, "num_queues":2},
                 {"offset":2, "num_queues":1},
                 {"offset":3, "num_queues":1},
@@ -304,51 +375,51 @@ class TestManager(unittest.TestCase):
                 {"offset":5, "num_queues":1},
                 {"offset":6, "num_queues":1},
                 {"offset":7, "num_queues":1}]
-            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+            self.assertEqual(mapping.tc_to_hwq, expected_tc_to_hwq_mapping)
 
             mapping.unmap_and_free_queue(tc)
-            expected_mapping = [
+            expected_tc_to_hwq_mapping = [
                 {"offset":0, "num_queues":3},
                 {"offset":3, "num_queues":1},
                 {"offset":4, "num_queues":1},
                 {"offset":5, "num_queues":1},
                 {"offset":6, "num_queues":1},
                 {"offset":7, "num_queues":1}]
-            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+            self.assertEqual(mapping.tc_to_hwq, expected_tc_to_hwq_mapping)
 
             mapping.unmap_and_free_queue(tc)
-            expected_mapping = [
+            expected_tc_to_hwq_mapping = [
                 {"offset":0, "num_queues":4},
                 {"offset":4, "num_queues":1},
                 {"offset":5, "num_queues":1},
                 {"offset":6, "num_queues":1},
                 {"offset":7, "num_queues":1}]
-            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+            self.assertEqual(mapping.tc_to_hwq, expected_tc_to_hwq_mapping)
 
             mapping.unmap_and_free_queue(tc)
-            expected_mapping = [
+            expected_tc_to_hwq_mapping = [
                 {"offset":0, "num_queues":5},
                 {"offset":5, "num_queues":1},
                 {"offset":6, "num_queues":1},
                 {"offset":7, "num_queues":1}]
-            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+            self.assertEqual(mapping.tc_to_hwq, expected_tc_to_hwq_mapping)
 
             mapping.unmap_and_free_queue(tc)
-            expected_mapping = [
+            expected_tc_to_hwq_mapping = [
                 {"offset":0, "num_queues":6},
                 {"offset":6, "num_queues":1},
                 {"offset":7, "num_queues":1}]
-            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+            self.assertEqual(mapping.tc_to_hwq, expected_tc_to_hwq_mapping)
 
             mapping.unmap_and_free_queue(tc)
-            expected_mapping = [
+            expected_tc_to_hwq_mapping = [
                 {"offset":0, "num_queues":7},
                 {"offset":7, "num_queues":1}]
-            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+            self.assertEqual(mapping.tc_to_hwq, expected_tc_to_hwq_mapping)
 
             mapping.unmap_and_free_queue(tc)
-            expected_mapping = [ {"offset":0, "num_queues":8} ]
-            self.assertEqual(mapping.tc_to_hwq, expected_mapping)
+            expected_tc_to_hwq_mapping = [ {"offset":0, "num_queues":8} ]
+            self.assertEqual(mapping.tc_to_hwq, expected_tc_to_hwq_mapping)
 
             with self.assertRaises(IndexError):
                 mapping.unmap_and_free_queue(tc)

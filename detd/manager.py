@@ -670,24 +670,38 @@ class Mapping():
         # Assumes the BE mappings to socket prio 0 and TC 0
         # See also the property soprio_to_tc
         # Index: tc, Value: soprio
-        self.tc_to_soprio = [0, 7, 8, 9, 10, 11, 12, 13]
+        # E.g. with 8 traffic classes:
+        # self.tc_to_soprio = [0, 7, 8, 9, 10, 11, 12, 13]
+        self.tc_to_soprio = [0]
+
+        num_tx_queues = self.interface.device.num_tx_queues
+        for i in range(num_tx_queues - 1):
+            self.tc_to_soprio.append(7 + i)
 
 
         # PCPs
 
         # We do not need to change the soprio to PCP mapping in runtime
         # {soprio: pcp}
+        # E.g.:
+        # self.soprio_to_pcp = {
+        #    0: 0,
+        #    7: 1,
+        #    8: 2,
+        #    9: 3,
+        #   10: 4,
+        #   11: 5,
+        #   12: 6,
+        #   13: 7
+        # }
+        #
         # FIXME: make all PCPs for streams 6 or 7
-        self.soprio_to_pcp = {
-            0: 0,
-            7: 1,
-            8: 2,
-            9: 3,
-            10: 4,
-            11: 5,
-            12: 6,
-            13: 7
-        }
+
+        pcp = 0
+        self.soprio_to_pcp = {}
+        for soprio in self.tc_to_soprio:
+            self.soprio_to_pcp[soprio] = pcp
+            pcp = pcp + 1
 
 
         # Tx Queues
@@ -695,19 +709,24 @@ class Mapping():
         # Index: traffic class
         # [{offset:, numqueues:}, {}]
 
+        # self.tc_to_hwq = [
+        #    {"offset":0, "num_queues":1},
+        #    {"offset":1, "num_queues":1},
+        #    {"offset":2, "num_queues":1},
+        #    {"offset":3, "num_queues":1},
+        #    {"offset":4, "num_queues":1},
+        #    {"offset":5, "num_queues":1},
+        #    {"offset":6, "num_queues":1},
+        #    {"offset":7, "num_queues":1},
+        # ]
+
         # We pre-assign all the queues for the expected traffic classes
         # New traffic classes won't be assigned during runtime
         num_tx_queues = self.interface.device.num_tx_queues
-        self.tc_to_hwq = [
-            {"offset":0, "num_queues":1},
-            {"offset":1, "num_queues":1},
-            {"offset":2, "num_queues":1},
-            {"offset":3, "num_queues":1},
-            {"offset":4, "num_queues":1},
-            {"offset":5, "num_queues":1},
-            {"offset":6, "num_queues":1},
-            {"offset":7, "num_queues":1},
-        ]
+
+        self.tc_to_hwq = []
+        for i in range(num_tx_queues):
+            self.tc_to_hwq.append({"offset":i, "num_queues":1})
 
         # Tx queues available to be assigned to streams
         #self.available_tx_queues = [1, 2, 3, 4, 5, 6, 7]
@@ -748,85 +767,65 @@ class Mapping():
 
 
     def assign_soprio_and_map(self, pcp):
-        # We run out of socket prios to add new streams
+
+        # We ran out of socket prios to add new streams
         if len(self.available_socket_prios) == 0:
             raise IndexError
 
         soprio = self.available_socket_prios.pop(0)
 
-        # Mapping already assign on class creation
-        #self.soprio_to_pcp[soprio] = pcp
+        # The mapping was already done in the constructor
 
         return soprio
 
 
     def unmap_and_free_soprio(self, soprio):
-        # Mapping is static, hence no unmapping possible
-        #del self.soprio_to_pcp[soprio]
-        self.available_socket_prios.append(soprio)
+        # Mapping is static, hence no unmapping required
+        self.available_socket_prios.insert(0, soprio)
 
 
     def assign_tc_and_map(self, soprio, traffics):
-        # We run out of traffic classes to add new streams
+        # We ran out of traffic classes to add new streams
         if len(self.available_tcs) == 0:
             raise IndexError
 
         tc = self.available_tcs.pop(0)
-        # The TC to soprio mapping is static
-        #self.tc_to_soprio.append(soprio)
+
+        # The TC to soprio mapping is static, hence no need to change it
 
         return tc
 
 
     def unmap_and_free_tc(self, tc, soprio):
-        # The TC to soprio mapping is static
-        #assert len(self.tc_to_soprio) > 1
-        #self.tc_to_soprio.remove(soprio)
-        # FIXME: put the tc again in the bucket
-        self.available_tcs.append(tc)
+
+        # The TC to soprio mapping is static, hence no need to change it
+
+        self.available_tcs.insert(0, tc)
 
 
     def assign_queue_and_map(self, tc):
 
-        # We run out of queues to add new streams
+        # We ran out of queues to add new streams
         if len(self.available_tx_queues) == 0:
-            raise IndexError
+            raise IndexError("All available Tx queues are allocated already")
 
         queue = self.available_tx_queues.pop(0)
 
-        # Remove one queue from the best effort allocation
-        #self.tc_to_hwq[0]["num_queues"] = self.tc_to_hwq[0]["num_queues"] - 1
-
-        # Assign the allocated queue to the new traffic class
-        #new_offset = self.tc_to_hwq[0]["num_queues"]
-        #self.tc_to_hwq.insert(1, {"offset": new_offset, "num_queues": 1})
-
-        # Return the queue that is assigned to the provided traffic class
+        # The hardware queue to traffic class is static, hence no need to change it
 
         return queue
 
 
-    def unmap_and_free_queue(self, tc):
-        # XXX In the default mapper, this is a rollback function. E.g. that is
-        # not intended to dynamically add or remove streams. It should only
-        # be called immediately after having called assign_queue_and_map, when
-        # a follow-up operation fails and the system would be left in an
-        # inconsistent state.
-        # Hence, it makes some assumptions about the last item added to the
-        # mapping, that would not proceed in a general function to free the
-        # queue assigned to a given traffic class.
+    def unmap_and_free_queue(self, queue):
 
         # There must be at least one traffic class available for best effort
         if len(self.tc_to_hwq) == 1:
             raise IndexError
 
-        #self.tc_to_hwq[0]["num_queues"] = self.tc_to_hwq[0]["num_queues"] + 1
-        #del self.tc_to_hwq[1]
+        self.available_tx_queues.insert(0, queue)
 
-        # Add the queue number to the available tx queues
-        # FIXME: we need to calculate the tx queue by running through the assignment
-        #self.available_tx_queues.append(self.available_tx_queues[-1] + 1)
-        #raise NotImplementedError
+        # The hardware queue to traffic class is static, hence no need to change it
+
 
 
 
@@ -890,15 +889,30 @@ class InterfaceManager():
 
         logger.info("Adding talker to InterfaceManager")
 
+
+        # Assign resources
         soprio, tc, queue = self.mapping.assign_and_map(config.stream.pcp, self.scheduler.traffics)
 
         traffic = Traffic(TrafficType.SCHEDULED, config)
         traffic.tc = tc
-        self.scheduler.add(traffic)
+
+
+        # Add stream to schedule
+        try:
+            self.scheduler.add(traffic)
+        except Exception as ex:
+            logger.exception(f"Error while adding traffic to schedule:\n{self.scheduler.schedule}")
+            self.mapping.unmap_and_free(soprio, traffic.tc, queue)
+            raise
+
+
+        # Make sure that the target device is able to implement the resulting schedule
         if not self.interface.device.supports_schedule(self.scheduler.schedule):
             # FIXME: add the limitations in the devices.py class handling the device
             # and then print the docstrings when this error happens
-            print(self.scheduler.schedule)
+            logger.error(f"The device associated to the network interface does not support the schedule:\n{self.scheduler.schedule}")
+            self.scheduler.remove(traffic)
+            self.mapping.unmap_and_free(soprio, traffic.tc, queue)
             raise TypeError("The device associated to the network interface does not support the resulting schedule")
 
 
@@ -909,13 +923,15 @@ class InterfaceManager():
         if config.stream.base_time is None:
             self.update_base_time(config)
 
+
+        # Configure the system
         try:
             self.runner.setup(self.interface, self.mapping, self.scheduler, config.stream)
         except:
             # Leave the internal structures in a consistent state
             self.scheduler.remove(traffic)
             self.mapping.unmap_and_free(soprio, traffic.tc, queue)
-            raise
+            raise RuntimeError("Error applying the configuration on the system")
 
         # FIXME: generate the name to use for the VLAN inteface in the manager
         # instead of in the command string class.
