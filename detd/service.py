@@ -33,11 +33,12 @@ from unittest import mock
 from .ipc_pb2 import StreamQosRequest
 from .ipc_pb2 import StreamQosResponse
 
-from .manager import StreamConfiguration
-from .manager import TrafficSpecification
 from .manager import Interface
-from .manager import Configuration
 from .manager import Manager
+
+from .scheduler import Configuration
+from .scheduler import StreamConfiguration
+from .scheduler import TrafficSpecification
 
 from .systemconf import Check
 from .systemconf import QdiscConfigurator

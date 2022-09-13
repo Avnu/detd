@@ -4,6 +4,7 @@
 # Authors:
 #   Hector Blanco Alcaine
 
+import os
 import unittest
 
 from detd import Mapping
@@ -20,6 +21,19 @@ from .common import *
 
 
 class TestSchedulerMethods(unittest.TestCase):
+
+
+    def setUp(self):
+
+        env_var = os.getenv("DETD_TESTENV")
+        if env_var == "HOST":
+            self.mode = TestMode.HOST
+        elif env_var == "TARGET":
+            self.mode = TestMode.TARGET
+        else:
+            self.mode = TestMode.HOST
+
+
 
 
     def assert_slot(self, scheduler, index, start, end):
@@ -285,6 +299,84 @@ class TestSchedulerMethods(unittest.TestCase):
 
             self.assert_schedule_empty(scheduler.schedule)
 
+
+
+
+
+    def test_schedule_conflictswithtraffic_matchfull(self):
+
+        with RunContext(self.mode):
+            interface_name = "eth0"
+            interface = Interface(interface_name)
+            mapping = Mapping(interface)
+            scheduler = Scheduler(mapping)
+
+            config = setup_config(self.mode, txoffset=100*1000)
+            traffic = Traffic(TrafficType.SCHEDULED, config)
+            scheduler.add(traffic)
+
+            config = setup_config(self.mode, txoffset=100*1000)
+            traffic = Traffic(TrafficType.SCHEDULED, config)
+            res = scheduler.schedule.conflicts_with_traffic(traffic)
+            self.assertEqual(res, True)
+
+
+
+
+    def test_schedule_conflictswithtraffic_nomatch(self):
+
+        with RunContext(self.mode):
+            interface_name = "eth0"
+            interface = Interface(interface_name)
+            mapping = Mapping(interface)
+            scheduler = Scheduler(mapping)
+
+            config = setup_config(self.mode, txoffset=100*1000)
+            traffic = Traffic(TrafficType.SCHEDULED, config)
+            scheduler.add(traffic)
+
+            config = setup_config(self.mode, txoffset=500*1000)
+            traffic = Traffic(TrafficType.SCHEDULED, config)
+            res = scheduler.schedule.conflicts_with_traffic(traffic)
+            self.assertEqual(res, False)
+
+
+
+    def test_schedule_conflictswithtraffic_leftmatch(self):
+
+        with RunContext(self.mode):
+            interface_name = "eth0"
+            interface = Interface(interface_name)
+            mapping = Mapping(interface)
+            scheduler = Scheduler(mapping)
+
+            config = setup_config(self.mode, txoffset=100*1000)
+            traffic = Traffic(TrafficType.SCHEDULED, config)
+            scheduler.add(traffic)
+
+            config = setup_config(self.mode, txoffset=99*1000)
+            traffic = Traffic(TrafficType.SCHEDULED, config)
+            conflict = scheduler.schedule.conflicts_with_traffic(traffic)
+            self.assertEqual(conflict, True)
+
+
+
+    def test_schedule_conflictswithtraffic_rightmatch(self):
+
+        with RunContext(self.mode):
+            interface_name = "eth0"
+            interface = Interface(interface_name)
+            mapping = Mapping(interface)
+            scheduler = Scheduler(mapping)
+
+            config = setup_config(self.mode, txoffset=100*1000)
+            traffic = Traffic(TrafficType.SCHEDULED, config)
+            scheduler.add(traffic)
+
+            config = setup_config(self.mode, txoffset=110*1000)
+            traffic = Traffic(TrafficType.SCHEDULED, config)
+            res = scheduler.schedule.conflicts_with_traffic(traffic)
+            self.assertEqual(res, True)
 
 
 if __name__ == '__main__':

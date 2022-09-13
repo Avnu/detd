@@ -12,6 +12,7 @@ from .devices import *
 from .service import *
 from .proxy import *
 from .manager import *
+from .scheduler import *
 from .systemconf import *
 from .ip import *
 from .ethtool import *
