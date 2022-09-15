@@ -60,13 +60,14 @@ In a little bit more detail:
     * Interface to use
     * Stream configuration: txoffset, DMAC, VID,PCP
     * Traffic specification: Interval in nanoseconds, Bytes to transmit
-2. **Integrates all the inputs and generates the gating schedule**
+2. **Detects and loads the specific network device handler based on the interface name**
+3. **Integrates all the inputs and generates the gating schedule**
     * It is able to generate very complex taprio configurations with just the stream and traffic information
-3. **Generates the commands implementing that configuration**
+4. **Generates the commands implementing that configuration**
     * taprio offload mode supported
-4. **Applies the configuration by running the commands**
+5. **Applies the configuration by running the commands**
     * When one of the commands fail, it is able to roll back the previous one to leave the system in a well-known state.
-5. **Provides the stream handlers to the caller application**
+6. **Provides the stream handlers to the caller application**
     * The basic implementation provides the VLAN interface name (e.g. eth0.3) and the socket prio to use to the calling application
     * The plan is to return a fully configured socket. The included client-server example is already implementing part of that flow.
 
@@ -97,37 +98,74 @@ See [Contributing](README.md#contributing) :)
 
 ## Examples
 
-### Setup a talker stream using detd functions from python
+### Setup a talker from python
 
-This example is not setting up or connecting to the daemon. It is intended to show the functions called by the daemon to set up a talker.
+The following code will connect to the detd service and configure the specified stream.
 
-The following code:
 ```python
-interface_name = "eth0"
-interval = 20 * 1000 * 1000 # ns for 20 ms
-size = 1522                 # Bytes
-
-txoffset = 250 * 1000       # ns for 250 us
-addr = "7a:b9:ed:d6:d2:12"
-vid = 3
-pcp = 6
+from detd import *
 
 
-interface = Interface(interface_name)
-traffic = TrafficSpecification(interval, size)
-stream = StreamConfiguration(addr, vid, pcp, txoffset)
 
-config = Configuration(interface, stream, traffic)
+def setup_stream_config():
+
+    interface_name = "eno1"
+    interval = 20 * 1000 * 1000 # ns
+    size = 1522                 # Bytes
+
+    txoffset = 250 * 1000       # ns
+    addr = "03:C0:FF:EE:FF:4E"
+    vid = 3
+    pcp = 6
+    interface = Interface(interface_name)
+    stream = StreamConfiguration(addr, vid, pcp, txoffset)
+    traffic = TrafficSpecification(interval, size)
+
+    config = Configuration(interface, stream, traffic)
+
+    return config
 
 
-manager = Manager()
-manager.add_talker(config)
+
+
+proxy = ServiceProxy()
+
+config = setup_stream_config()
+response = proxy.add_talker(config)
+
+print(response)
 ```
 
-Will first generate all the required commands, like e.g.:
+This example adds the talker and then prints the VLAN configured interface and socket priority that the calling application should use to send data through that stream:
+```bash
+('eno1.3', 7)
+```
+
+The behaviour can be inspected in the log file /var/log/detd.log:
+```bash
+[2022-09-15 18:18:29,608 -     INFO]    detd.service             __init__() -  * * * detd Service starting * * *
+[2022-09-15 18:18:29,608 -     INFO]    detd.service             __init__() - Initializing Service
+[2022-09-15 18:18:29,609 -     INFO]    detd.manager             __init__() - Initializing Manager
+[2022-09-15 18:18:29,609 -     INFO]    detd.service                  run() - Entering Service main loop
+[2022-09-15 18:18:34,173 -     INFO]    detd.service                setup() - ============================== REQUEST DISPATCHED ==================================
+[2022-09-15 18:18:34,173 -     INFO]    detd.service                setup() - Setting up ServiceRequestHandler
+[2022-09-15 18:18:34,173 -     INFO]    detd.service               handle() - Handling request
+[2022-09-15 18:18:34,178 -     INFO]    detd.devices             __init__() - Initializing IntelMgbeEhl
+[2022-09-15 18:18:34,178 -     INFO]    detd.manager           add_talker() - Adding talker to Manager
+[2022-09-15 18:18:34,178 -     INFO]    detd.manager             __init__() - Initializing InterfaceManager
+[2022-09-15 18:18:34,178 -     INFO]    detd.mapping             __init__() - Initializing Mapping
+[2022-09-15 18:18:34,179 -     INFO] detd.systemconf             __init__() - Initializing SystemConfigurator
+[2022-09-15 18:18:34,179 -     INFO]  detd.scheduler             __init__() - Initializing Scheduler
+[2022-09-15 18:18:34,179 -     INFO]    detd.manager           add_talker() - Adding talker to InterfaceManager
+[2022-09-15 18:18:34,179 -     INFO]    detd.mapping       assign_and_map() - Assigning and mapping resources
+[2022-09-15 18:18:34,179 -     INFO]  detd.scheduler                  add() - Adding traffic to schedule
+[2022-09-15 18:18:34,179 -     INFO] detd.systemconf                setup() - Setting up platform and devices
+```
+
+detd code uses high level constructs. Only in the final step it translates to specific command calls. For the example above, such commands would be:
 ```
 tc qdisc replace
-         dev       eth0
+         dev       eno1
          parent    root
          taprio
          num_tc    2
@@ -141,8 +179,8 @@ tc qdisc replace
 
 
 ip link add
-        link     eth0
-        name     eth0.3
+        link     eno1
+        name     eno1.3
         type     vlan
         protocol 802.1Q
         id       3
@@ -151,10 +189,6 @@ ip link add
 
 ethtool --set-eee eth0 eee off
 ```
-
-To finally apply them.
-
-
 
 
 
@@ -180,50 +214,38 @@ Example:
 ```
 
 
-### Setup a talker stream through a system-wide service (without pre-configured socket)
 
-Please refer to [tests/test_service.py](tests/test_service.py) for a working test case showcasing this functionality. The relevant snippets are displayed below.
 
-Spawn the server and wait for the Unix-Domain socket to be available:
+### Setup a talker stream using detd functions from python
+
+Although it is not the intended use case, you could also call the detd classes from ad-hoc applications. Please note that in this case there is no connection to any service.
+
 ```python
-def run_server():
-  with Service() as srv:
-    srv.run()
+interface_name = "eth0"
+interval = 20 * 1000 * 1000 # ns for 20 ms
+size = 1522                 # Bytes
 
-def setup_server():
-    uds_address = '/tmp/uds_detd_server.sock'
-    server = multiprocessing.Process(target=run_server)
-    server.start()
-    while not os.path.exists(uds_address):
-        time.sleep(0.2)
+txoffset = 250 * 1000       # ns for 250 us
+addr = "7a:b9:ed:d6:d2:12"
+vid = 3
+pcp = 6
 
-    return server
+
+interface = Interface(interface_name)
+traffic = TrafficSpecification(interval, size)
+stream = StreamConfiguration(addr, vid, pcp, txoffset)
+
+config = Configuration(interface, stream, traffic)
+
+
+manager = Manager()
+manager.add_talker(config)
 ```
 
-Initialize the interface, stream and traffic objects to be requested.
-```python
-def setup_configuration():
+The only relevant change in the code above is using the class Manager instead of ServiceProxy to add the talker.
 
-    interface_name = "eth0"
-    interval = 20 * 1000 * 1000 # ns
-    size = 1522                 # Bytes
 
-    txoffset = 250 * 1000       # ns
-    addr = "03:C0:FF:EE:FF"
-    vid = 3
-    pcp = 6
-    stream = StreamConfiguration(addr, vid, pcp, txoffset)
-    traffic = TrafficSpecification(interval, size)
 
-    return interface_name, stream, traffic
-```
-
-Create a proxy object and get the configuration:
-```python
-# Both Server() and ServiceProxy() point to the same UDS by default
-proxy = ServiceProxy()
-vlan_interface, soprio = proxy.setup_talker(interface_name, stream, traffic)
-```
 
 ## Regression testing
 
@@ -293,6 +315,19 @@ cd tools
 apt install /tmp/detd_*deb
 ```
 
+Upon installation, the service is started by systemd, with logging redirected to /var/log/detd.log:
+```bash
+tail /var/log/detd.log
+[2022-09-14 23:02:28,780 -     INFO]    detd.service             __init__() -  * * * detd Service starting * * *
+[2022-09-14 23:02:28,780 -     INFO]    detd.service             __init__() - Initializing Service
+[2022-09-14 23:02:28,780 -     INFO]    detd.manager             __init__() - Initializing Manager
+[2022-09-14 23:02:28,780 -     INFO]    detd.service                  run() - Entering Service main loop
+```
+
+At this point the service is ready to receive requests.
+
+
+
 #### pip
 
 Dependencies:
@@ -332,8 +367,7 @@ OK (skipped=2)
 
 * Linux integration
   * RPM packaging
-  * Move the UDS from /tmp to the right location
-    * Also involves providing the installation instructions, e.g. to set the right ownerships
+  * Add UDS ownership and permissions to packaging and documentation
 
 * Developer Experience
   * "detd-in-a-container"
@@ -342,8 +376,6 @@ OK (skipped=2)
   * Make setup_qos.sh interface more compact
     * Instead of --address AB:CD:EF:FE:DC:BA --vid 3 --pcp 6
     * Use --stream AB:CD:EF:FE:DC:BA/3/6 and parse inside the string
-  * Add support for setup_qos.sh to interact with the daemon
-    * E.g. currently it calls detd functions as if it were a library
   * Specialized diagnostics exception when initial configuration fails
     * Providing information about "usual suspects" in a consolidated way. E.g. time synch offsets.
 
@@ -397,7 +429,6 @@ OK (skipped=2)
     * detd would offer the most sane default, but still allow to override it
   * Cover basic interaction with TSN network configuration mechanisms
     * E.g. start enabling to load the configuration from a text file
-  * Add logging capabilities
   * Add diagnostics mode
     * Retrieve and collect runtime information about time synchronization, qdisc errors, etc
 
