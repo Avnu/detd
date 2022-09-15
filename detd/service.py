@@ -169,11 +169,11 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         super().setup()
 
         if self.server.test_mode:
-            self.setup_talker = self._mock_setup_talker
-            self.setup_talker_socket = self._mock_setup_talker_socket
+            self.add_talker = self._mock_add_talker
+            self.add_talker_socket = self._mock_add_talker_socket
         else:
-            self.setup_talker = self._setup_talker
-            self.setup_talker_socket = self._setup_talker_socket
+            self.add_talker = self._add_talker
+            self.add_talker_socket = self._add_talker_socket
 
 
     def send(self, msg):
@@ -225,7 +225,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         self.send_fd(message, fd)
 
 
-    def _setup_talker(self, request):
+    def _add_talker(self, request):
         addr = request.dmac
         vid = request.vid
         pcp = request.pcp
@@ -245,7 +245,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         return vlan_interface, soprio
 
 
-    def _mock_setup_talker(self, request):
+    def _mock_add_talker(self, request):
 
         with mock.patch.object(QdiscConfigurator,  'setup', return_value=None), \
              mock.patch.object(CommandIp,   'run', return_value=None), \
@@ -271,12 +271,12 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         return vlan_interface, soprio
 
 
-    def _setup_talker_socket(self, request):
+    def _add_talker_socket(self, request):
         # FIXME: complete once manager implements setup socket
         raise
 
 
-    def _mock_setup_talker_socket(self, request):
+    def _mock_add_talker_socket(self, request):
         # FIXME: modify once manager implements setup socket
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_PRIORITY, 6)
@@ -299,7 +299,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
             # Currently manager only supports non-socket config
             try:
                 ok = False
-                sock = self.setup_talker_socket(request)
+                sock = self.add_talker_socket(request)
                 ok = True
             except Exception as ex:
                 logger.exception("Exception raised while setting up a talker socket")
@@ -318,7 +318,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         elif request.setup_socket == False:
             try:
                 ok = False
-                vlan_interface, soprio = self.setup_talker(request)
+                vlan_interface, soprio = self.add_talker(request)
                 ok = True
             except Exception as ex:
                 logger.exception("Exception raised while setting up a talker")

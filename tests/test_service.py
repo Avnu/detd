@@ -131,11 +131,11 @@ class TestService(unittest.TestCase):
         self.assertEqual(actual, soprio)
 
 
-    def test_service_setup_talker_socket(self):
+    def test_service_add_talker_socket(self):
 
         configuration = setup_configuration(self.mode)
 
-        sock = self.proxy.setup_talker_socket(configuration)
+        sock = self.proxy.add_talker_socket(configuration)
 
         # XXX currently this is just testing that the socket priority
         # configured by the server is correctly propagated with SCM_RIGHTS
@@ -144,11 +144,11 @@ class TestService(unittest.TestCase):
         sock.close()
 
 
-    def test_service_setup_talker(self):
+    def test_service_add_talker(self):
 
         configuration = setup_configuration(self.mode)
 
-        vlan_interface, soprio = self.proxy.setup_talker(configuration)
+        vlan_interface, soprio = self.proxy.add_talker(configuration)
 
         self.assertEqual(vlan_interface, "eth0.3")
         self.assertEqual(soprio, 7)

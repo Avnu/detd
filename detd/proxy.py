@@ -120,7 +120,7 @@ class ServiceProxy:
         return response, s
 
 
-    def setup_talker_socket(self, configuration):
+    def add_talker_socket(self, configuration):
 
         self.setup_socket()
         self.send_qos_request(configuration, setup_socket=True)
@@ -133,7 +133,7 @@ class ServiceProxy:
         return sock
 
 
-    def setup_talker(self, configuration):
+    def add_talker(self, configuration):
 
         self.setup_socket()
         self.send_qos_request(configuration, setup_socket=False)
