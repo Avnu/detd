@@ -31,7 +31,7 @@ def setup_root_logger(filename=None):
     else:
         handler = logging.FileHandler(filename)
 
-    formatter = logging.Formatter('[%(asctime)s - %(levelname)8s] %(name)15s %(funcName)20s() - %(message)s')
+    formatter = logging.Formatter('[{asctime} - {levelname:>8}] {name:>15} {funcName:>20}() - {message}', style='{')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
