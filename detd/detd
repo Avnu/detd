@@ -4,12 +4,6 @@
 # Authors:
 #   Hector Blanco Alcaine
 
-import multiprocessing
-import os
-import sys
-import time
-
-
 from detd import Service
 
 
