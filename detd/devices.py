@@ -34,6 +34,9 @@ running host based tests.
 """
 
 
+import enum
+
+
 from .logger import get_logger
 
 
@@ -42,6 +45,13 @@ Gbps_to_bps = 1000 * 1000 * 1000
 
 logger = get_logger(__name__)
 
+
+
+
+class Capability(enum.Enum):
+    Qbv = 0
+    Qbu = 1
+    LTC = 2
 
 
 
@@ -60,6 +70,8 @@ class Device:
         num_tx_queues: number of Tx queues
         num_rx_queues: number of Rx queues
         """
+
+        self.capabilities = []
 
         self.num_tx_queues = num_tx_queues
         self.num_rx_queues = num_rx_queues
@@ -126,6 +138,9 @@ class Device:
         raise NotImplementedError("The handler class for the device must implement this function")
 
 
+    def supports_qbv(self):
+        return Capability.Qbv in self.capabilities
+
 
 
 class IntelMgbeEhl(Device):
@@ -162,6 +177,8 @@ class IntelMgbeEhl(Device):
         logger.info(f"Initializing {__class__.__name__}")
 
         super().__init__(IntelMgbeEhl.NUM_TX_QUEUES, IntelMgbeEhl.NUM_RX_QUEUES)
+
+        self.capabilities = [Capability.Qbv]
 
         self.features['rxvlan'] = 'off'
         self.features['hw-tc-offload'] = 'on'
@@ -227,6 +244,8 @@ class IntelI225(Device):
     NUM_TX_QUEUES = 4
     NUM_RX_QUEUES = 4
 
+    CAPABILITIES = [Capability.Qbv]
+
     # Devices supporting TSN: i225-LM, i225-IT
     PCI_IDS_VALID = ['8086:0D9F', '8086:15F2']
 
@@ -250,6 +269,8 @@ class IntelI225(Device):
 
         if pci_id in IntelI225.PCI_IDS_UNPROGRAMMED:
             raise "The flash image in this i225 device is empty, or the NVM configuration loading failed."
+
+        self.capabilities = [Capability.Qbv]
 
         self.features['rxvlan'] = 'off'
         #self.features['hw-tc-offload'] = 'on'
