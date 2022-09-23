@@ -68,6 +68,14 @@ class CommandEthtool:
         return result.stdout.splitlines()
 
 
+    def get_information(self, interface):
+        cmd = CommandStringEthtoolGetInformation(interface.name)
+
+        result = self.run(cmd)
+
+        return result.stdout.splitlines()
+
+
     def set_split_channels(self, interface):
         cmd = CommandStringEthtoolSetSplitChannels(interface.name, interface.device.num_tx_queues, interface.device.num_rx_queues)
 
@@ -216,6 +224,19 @@ class CommandStringEthtoolGetChannelsInformation(CommandString):
     def __init__(self, interface):
 
         template = 'ethtool --show-channels $interface'
+
+        params = {'interface' : interface}
+
+        super().__init__(template, params)
+
+
+
+
+class CommandStringEthtoolGetInformation(CommandString):
+
+    def __init__(self, interface):
+
+        template = 'ethtool $interface'
 
         params = {'interface' : interface}
 

@@ -120,10 +120,24 @@ class InterfaceManager():
         logger.info("Adding talker to InterfaceManager")
 
 
+        # Retrieve device rate
+        sysinfo = SystemInformation()
+        try:
+            # XXX If we call directly ethtool after a previous call, some
+            # devices may return "Unknown!" speed. This code has to be moved
+            # to the device plugins, and customize the timeout there.
+            import time
+            time.sleep(1)
+            rate = sysinfo.get_rate(self.interface)
+        except RuntimeError:
+            logger.exception("Error while retrieveing device rate")
+            raise
+
+
         # Assign resources
         soprio, tc, queue = self.mapping.assign_and_map(config.stream.pcp, self.scheduler.traffics)
 
-        traffic = Traffic(TrafficType.SCHEDULED, config)
+        traffic = Traffic(rate, TrafficType.SCHEDULED, config)
         traffic.tc = tc
 
 
@@ -164,7 +178,7 @@ class InterfaceManager():
             self.mapping.unmap_and_free(soprio, traffic.tc, queue)
             raise RuntimeError("Error applying the configuration on the system")
 
-        # FIXME: generate the name to use for the VLAN inteface in the manager
+        # FIXME: generate the name to use for the VLAN interface in the manager
         # instead of in the command string class.
 
         vlan_interface = "{}.{}".format(self.interface.name, config.stream.vid)

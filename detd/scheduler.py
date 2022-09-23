@@ -105,7 +105,7 @@ Only one gate open at the same time
 '''
 class Traffic:
 
-    def __init__(self, traffic_type=TrafficType.BEST_EFFORT, config=None):
+    def __init__(self, rate, traffic_type=TrafficType.BEST_EFFORT, config=None):
 
         self.type = traffic_type
         if traffic_type == TrafficType.SCHEDULED:
@@ -117,7 +117,6 @@ class Traffic:
             self.pcp = config.stream.pcp
             self.tc = None
             # Pre-calculate to improve readability
-            rate = config.interface.device.rate
             self.length = (self.size * Bytes_to_bits) / (rate / s_to_ns)
             self.end = self.start + self.length
 

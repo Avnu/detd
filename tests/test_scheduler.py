@@ -311,12 +311,14 @@ class TestSchedulerMethods(unittest.TestCase):
             mapping = Mapping(interface)
             scheduler = Scheduler(mapping)
 
-            config = setup_config(self.mode, txoffset=100*1000)
-            traffic = Traffic(TrafficType.SCHEDULED, config)
+            txoffset = 100 * us_to_ns
+            interval = 20 * ms_to_ns
+            traffic = traffic_helper(txoffset, interval)
             scheduler.add(traffic)
 
-            config = setup_config(self.mode, txoffset=100*1000)
-            traffic = Traffic(TrafficType.SCHEDULED, config)
+            txoffset = 100 * us_to_ns
+            interval = 20 * ms_to_ns
+            traffic = traffic_helper(txoffset, interval)
             res = scheduler.schedule.conflicts_with_traffic(traffic)
             self.assertEqual(res, True)
 
@@ -331,12 +333,14 @@ class TestSchedulerMethods(unittest.TestCase):
             mapping = Mapping(interface)
             scheduler = Scheduler(mapping)
 
-            config = setup_config(self.mode, txoffset=100*1000)
-            traffic = Traffic(TrafficType.SCHEDULED, config)
+            txoffset = 100 * us_to_ns
+            interval = 20 * ms_to_ns
+            traffic = traffic_helper(txoffset, interval)
             scheduler.add(traffic)
 
-            config = setup_config(self.mode, txoffset=500*1000)
-            traffic = Traffic(TrafficType.SCHEDULED, config)
+            txoffset = 500 * us_to_ns
+            interval = 20 * ms_to_ns
+            traffic = traffic_helper(txoffset, interval)
             res = scheduler.schedule.conflicts_with_traffic(traffic)
             self.assertEqual(res, False)
 
@@ -350,12 +354,14 @@ class TestSchedulerMethods(unittest.TestCase):
             mapping = Mapping(interface)
             scheduler = Scheduler(mapping)
 
-            config = setup_config(self.mode, txoffset=100*1000)
-            traffic = Traffic(TrafficType.SCHEDULED, config)
+            txoffset = 100 * us_to_ns
+            interval = 20 * ms_to_ns
+            traffic = traffic_helper(txoffset, interval)
             scheduler.add(traffic)
 
-            config = setup_config(self.mode, txoffset=99*1000)
-            traffic = Traffic(TrafficType.SCHEDULED, config)
+            txoffset = 99 * us_to_ns
+            interval = 20 * ms_to_ns
+            traffic = traffic_helper(txoffset, interval)
             conflict = scheduler.schedule.conflicts_with_traffic(traffic)
             self.assertEqual(conflict, True)
 
@@ -369,12 +375,14 @@ class TestSchedulerMethods(unittest.TestCase):
             mapping = Mapping(interface)
             scheduler = Scheduler(mapping)
 
-            config = setup_config(self.mode, txoffset=100*1000)
-            traffic = Traffic(TrafficType.SCHEDULED, config)
+            txoffset = 100 * us_to_ns
+            interval = 20 * ms_to_ns
+            traffic = traffic_helper(txoffset, interval)
             scheduler.add(traffic)
 
-            config = setup_config(self.mode, txoffset=110*1000)
-            traffic = Traffic(TrafficType.SCHEDULED, config)
+            txoffset = 110 * us_to_ns
+            interval = 20 * ms_to_ns
+            traffic = traffic_helper(txoffset, interval)
             res = scheduler.schedule.conflicts_with_traffic(traffic)
             self.assertEqual(res, True)
 

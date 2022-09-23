@@ -30,6 +30,7 @@ s_to_ns = 1000 * 1000 * 1000
 ms_to_ns = 1000 * 1000
 us_to_ns = 1000
 Gbps_to_bps = 1000 * 1000 * 1000
+Mbps_to_bps = 1000 * 1000
 
 
 class TestMode:
@@ -51,6 +52,7 @@ class RunContext(AbstractContextManager):
             self.device_conf_mock = mock.patch.object(CommandEthtool, 'run', side_effect=device_exc)
             self.device_pci_id_mock = mock.patch.object(SystemInformation, 'get_pci_id', return_value=('8086:4B30'))
             self.device_channels_mock = mock.patch.object(SystemInformation, 'get_channels_information', return_value=(8,8))
+            self.device_rate_mock = mock.patch.object(SystemInformation, 'get_rate', return_value=1000 * Mbps_to_bps)
 
 
     def __enter__(self):
@@ -61,6 +63,7 @@ class RunContext(AbstractContextManager):
             self.device_conf_mock.start()
             self.device_pci_id_mock.start()
             self.device_channels_mock.start()
+            self.device_rate_mock.start()
 
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -71,6 +74,7 @@ class RunContext(AbstractContextManager):
             self.device_conf_mock.stop()
             self.device_pci_id_mock.stop()
             self.device_channels_mock.stop()
+            self.device_rate_mock.stop()
 
 
 
@@ -92,8 +96,9 @@ def traffic_helper(txoffset, interval):
     interface = Interface(interface_name)
     config = Configuration(interface, stream, traffic)
 
+    rate = 1 * Gbps_to_bps
 
-    return Traffic(TrafficType.SCHEDULED, config)
+    return Traffic(rate, TrafficType.SCHEDULED, config)
 
 
 

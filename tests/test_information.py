@@ -101,6 +101,104 @@ class TestSystemInformation(unittest.TestCase):
             self.assertEqual(max_tx, "2")
 
 
+    def test_getrate_success(self):
+        device_info = [
+            'Settings for eth0:',
+            '        Supported ports: [ TP    MII ]',
+            '        Supported link modes:   10baseT/Full',
+            '                                100baseT/Full',
+            '                                1000baseT/Full',
+            '        Supported pause frame use: Symmetric Receive-only',
+            '        Supports auto-negotiation: Yes',
+            '        Supported FEC modes: Not reported',
+            '        Advertised link modes:  10baseT/Full',
+            '                                100baseT/Full',
+            '                                1000baseT/Full',
+            '        Advertised pause frame use: Symmetric Receive-only',
+            '        Advertised auto-negotiation: Yes',
+            '        Advertised FEC modes: Not reported',
+            '        Link partner advertised link modes:  10baseT/Full',
+            '                                             100baseT/Full',
+            '                                             1000baseT/Full',
+            '        Link partner advertised pause frame use: No',
+            '        Link partner advertised auto-negotiation: Yes',
+            '        Link partner advertised FEC modes: Not reported',
+            '        Speed: 1000Mb/s',
+            '        Duplex: Full',
+            '        Auto-negotiation: on',
+            '        master-slave cfg: preferred slave',
+            '        master-slave status: slave',
+            '        Port: Twisted Pair',
+            '        PHYAD: 1',
+            '        Transceiver: external',
+            '        MDI-X: Unknown',
+            '        Supports Wake-on: ubgs',
+            '        Wake-on: d',
+            '        SecureOn password: 00:00:00:00:00:00',
+            '        Current message level: 0x0000003f (63)',
+            '                               drv probe link timer ifdown ifup',
+            '        Link detected: yes',
+      ]
+
+
+        with RunContext(self.mode):
+            sysinfo = SystemInformation()
+            interface = Interface("eth0")
+
+        with mock.patch.object(CommandEthtool, 'get_information', return_value=device_info):
+            rate = sysinfo.get_rate(interface)
+            self.assertEqual(rate, 1000 * 1000 * 1000)
+
+
+    def test_getrate_unknown(self):
+        device_info = [
+            'Settings for eth0:',
+            '        Supported ports: [ TP    MII ]',
+            '        Supported link modes:   10baseT/Full',
+            '                                100baseT/Full',
+            '                                1000baseT/Full',
+            '        Supported pause frame use: Symmetric Receive-only',
+            '        Supports auto-negotiation: Yes',
+            '        Supported FEC modes: Not reported',
+            '        Advertised link modes:  10baseT/Full',
+            '                                100baseT/Full',
+            '                                1000baseT/Full',
+            '        Advertised pause frame use: Symmetric Receive-only',
+            '        Advertised auto-negotiation: Yes',
+            '        Advertised FEC modes: Not reported',
+            '        Link partner advertised link modes:  10baseT/Full',
+            '                                             100baseT/Full',
+            '                                             1000baseT/Full',
+            '        Link partner advertised pause frame use: No',
+            '        Link partner advertised auto-negotiation: Yes',
+            '        Link partner advertised FEC modes: Not reported',
+            '        Speed: Unknown!',
+            '        Duplex: Full',
+            '        Auto-negotiation: on',
+            '        master-slave cfg: preferred slave',
+            '        master-slave status: slave',
+            '        Port: Twisted Pair',
+            '        PHYAD: 1',
+            '        Transceiver: external',
+            '        MDI-X: Unknown',
+            '        Supports Wake-on: ubgs',
+            '        Wake-on: d',
+            '        SecureOn password: 00:00:00:00:00:00',
+            '        Current message level: 0x0000003f (63)',
+            '                               drv probe link timer ifdown ifup',
+            '        Link detected: yes',
+      ]
+
+
+        with RunContext(self.mode):
+            sysinfo = SystemInformation()
+            interface = Interface("eth0")
+
+        with mock.patch.object(CommandEthtool, 'get_information', return_value=device_info):
+            self.assertRaises(RuntimeError, sysinfo.get_rate, interface)
+
+
+
 
 if __name__ == '__main__':
     unittest.main()

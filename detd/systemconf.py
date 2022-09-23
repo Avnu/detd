@@ -57,6 +57,7 @@ from .ethtool import CommandEthtool
 from .tc import CommandTc
 
 from .common import Check
+from .common import Mbps_to_bps
 
 from .logger import get_logger
 
@@ -343,3 +344,26 @@ Combined:[ \t]+([0-9]+|n/a)""".format(interface.name)
             return False
 
         return True
+
+
+    def get_rate(self, interface):
+
+        ethtool = CommandEthtool()
+        output = ethtool.get_information(interface)
+
+        template = "^[ \t]+Speed: ([0-9]+|Unknown!)Mb/s$"
+
+        regex = re.compile(template)
+        for line in output:
+            m = regex.match(line)
+            if m:
+                if m == "Unknown!":
+                    raise RuntimeError("ethtool reported Unknown speed")
+                rate = m.groups()[0]
+                return int(rate) * Mbps_to_bps
+
+        raise RuntimeError("ethtool output does not include correct information for {}:\n{}".format(interface.name, "\n".join(output)))
+
+
+        # FIXME: Implement actual extraction via ethtool
+#        return 1 * Gbps_to_bps
