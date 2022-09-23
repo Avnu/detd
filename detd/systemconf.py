@@ -363,7 +363,3 @@ Combined:[ \t]+([0-9]+|n/a)""".format(interface.name)
                 return int(rate) * Mbps_to_bps
 
         raise RuntimeError("ethtool output does not include correct information for {}:\n{}".format(interface.name, "\n".join(output)))
-
-
-        # FIXME: Implement actual extraction via ethtool
-#        return 1 * Gbps_to_bps
