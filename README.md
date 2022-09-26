@@ -386,8 +386,6 @@ OK (skipped=2)
   * Add support for taprio "txtime-assist" mode (aka txtime offload mode) in CommandTc, plus unit tests
 
 * Device support
-  * Retrieve interface speed via ethtool
-    * E.g. currently it is hardcoded
   * Add more constraints to the device specific checks
     * E.g. maximum cycle or slot lengths for the schedule checks.
   * Autodetect the number of Tx and Rx queues
@@ -397,7 +395,7 @@ OK (skipped=2)
   * Split device features into rx_features and tx_features
     * So e.g. only tx_features are applied when setting up the talker
   * Add i226 support
-    * For guidance and examples, please refer to [detd/devices.py](detd/devices.py) module documentation
+    * For guidance and examples, please refer to [detd.devices](detd/devices/__init__.py) package documentation
   * Add support for more devices
   * Generic device support
     * E.g. just fall-back to software taprio and etf. Depends on launch-time support
@@ -442,7 +440,7 @@ OK (skipped=2)
 
 * Device support
   * Add support for more devices
-    * For guidance and examples, please refer to [detd/devices.py](detd/devices.py) module documentation
+    * For guidance and examples, please refer to [detd.devices](detd/devices/__init__.py) package documentation
   * Add listener stream setup
     * VLAN tag configuration
     * DMAC subscription

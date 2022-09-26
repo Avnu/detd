@@ -4,16 +4,14 @@
 # Authors:
 #   Hector Blanco Alcaine
 
-import unittest
-from unittest.mock import patch
-from unittest import mock
-
 import os
+import unittest
+
+from detd.devices import device
 
 from .common import *
 
 
-from detd import Device
 
 
 class TestDevice(unittest.TestCase):
@@ -32,7 +30,7 @@ class TestDevice(unittest.TestCase):
     def test_from_pci_id(self):
 
         for pci_id in [ '8086:4B30', '8086:4B31', '8086:4B32' ]:
-            device = Device.from_pci_id(pci_id)
+            instantiated_device = device.from_pci_id(pci_id)
 
 
 

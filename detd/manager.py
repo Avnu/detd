@@ -23,11 +23,11 @@ import time
 from .scheduler import Scheduler
 from .scheduler import Traffic
 from .scheduler import TrafficType
-from .systemconf import SystemConfigurator
 from .systemconf import SystemInformation
 from .mapping import Mapping
 from .common import Check
-from .devices import Device
+
+from .devices import device
 
 from .logger import get_logger
 
@@ -54,7 +54,16 @@ class Interface:
         # SystemConfiguration consistent (e.g. they all accept Interface as
         # the representation for a network interface)
         pci_id = sysinfo.get_pci_id(self)
-        self.device = Device.from_pci_id(pci_id)
+        self.device = device.from_pci_id(pci_id)
+
+
+    @property
+    def rate(self):
+        return self.device.get_rate(self)
+
+
+    def setup(self, mapping, scheduler, stream):
+        self.device.setup(self, mapping, scheduler, stream)
 
 
 
@@ -93,10 +102,6 @@ class InterfaceManager():
 
         self.interface = interface
         self.mapping = Mapping(self.interface)
-
-        self.runner = SystemConfigurator()
-
-        # Best effort traffic gets socket prio 0, the default
         self.scheduler = Scheduler(self.mapping)
 
 
@@ -121,16 +126,10 @@ class InterfaceManager():
 
 
         # Retrieve device rate
-        sysinfo = SystemInformation()
         try:
-            # XXX If we call directly ethtool after a previous call, some
-            # devices may return "Unknown!" speed. This code has to be moved
-            # to the device plugins, and customize the timeout there.
-            import time
-            time.sleep(1)
-            rate = sysinfo.get_rate(self.interface)
+           rate = self.interface.rate
         except RuntimeError:
-            logger.exception("Error while retrieveing device rate")
+            logger.exception("Error while retrieving device rate")
             raise
 
 
@@ -170,7 +169,7 @@ class InterfaceManager():
 
         # Configure the system
         try:
-            self.runner.setup(self.interface, self.mapping, self.scheduler, config.stream)
+            self.interface.setup(self.mapping, self.scheduler, config.stream)
         except:
             # Leave the internal structures in a consistent state
             logger.error("Error applying the configuration on the system")

@@ -8,7 +8,6 @@
 # See https://github.com/pypa/setuptools/pull/1753
 #__version__ = "0.1.dev0"
 
-from .devices import *
 from .service import *
 from .proxy import *
 from .manager import *
