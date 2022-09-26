@@ -159,9 +159,10 @@ class CommandStringTcTaprioOffloadUnset(CommandString):
 
     def __init__(self, interface):
 
-        template = '''tc qdisc del
-                               dev $interface
-                               root'''
+        template = '''
+           tc qdisc del
+              dev $interface
+              root'''
 
         params = {"interface" : interface}
 
