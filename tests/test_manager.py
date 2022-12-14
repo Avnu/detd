@@ -138,7 +138,8 @@ class TestManager(unittest.TestCase):
 
         # We try to add one stream once we have exhausted the maximum number possible
         config = setup_config(self.mode, interval=20*1000*1000, txoffset=2600*1000)
-        self.assertRaises(IndexError, manager.add_talker, config)
+        with RunContext(self.mode):
+            self.assertRaises(IndexError, manager.add_talker, config)
 
 
     def test_remove_max_talkers_success_and_error(self):
