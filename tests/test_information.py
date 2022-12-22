@@ -76,7 +76,7 @@ class TestSystemInformation(unittest.TestCase):
         # Using a sequence of different numbers in order to check correct parsing
         # E.g. the max and current values are inconsistent
         channels_information = [
-            'Channel parameters for eth0:',
+            'Channel parameters for eth1:',
             'Pre-set maximums:',
             'RX:             1',
             'TX:             2',
@@ -93,7 +93,7 @@ class TestSystemInformation(unittest.TestCase):
 
         with RunContext(self.mode):
             sysinfo = SystemInformation()
-            interface = Interface("eth0")
+            interface = Interface("eth1")
 
         with mock.patch.object(CommandEthtool, 'get_channels_information', return_value=channels_information):
             max_rx, max_tx = sysinfo.get_channels_information(interface)

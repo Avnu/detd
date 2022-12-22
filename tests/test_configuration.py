@@ -45,13 +45,11 @@ class TestConfiguration(unittest.TestCase):
 
     def test_configuration_wrong_interface(self):
 
-        with RunContext(self.mode):
+        seed(1)
+        interface_name = "eth0{}".format(random())
 
-            seed(1)
-            interface_name = "eth0{}".format(random())
-
-            with self.assertRaises(TypeError):
-                interface = Interface(interface_name)
+        with self.assertRaises(TypeError):
+            interface = Interface(interface_name)
 
 
     def test_configuration_wrong_dmac(self):

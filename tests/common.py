@@ -22,6 +22,7 @@ from detd import SystemInformation
 from detd import CommandEthtool
 from detd import CommandTc
 from detd import CommandIp
+from detd import Check
 
 from contextlib import AbstractContextManager
 
@@ -53,6 +54,7 @@ class RunContext(AbstractContextManager):
             self.device_pci_id_mock = mock.patch.object(SystemInformation, 'get_pci_id', return_value=('8086:4B30'))
             self.device_channels_mock = mock.patch.object(SystemInformation, 'get_channels_information', return_value=(8,8))
             self.device_rate_mock = mock.patch.object(SystemInformation, 'get_rate', return_value=1000 * Mbps_to_bps)
+            self.check_is_interface = mock.patch.object(Check, 'is_interface', return_value=True)
 
 
     def __enter__(self):
@@ -64,6 +66,7 @@ class RunContext(AbstractContextManager):
             self.device_pci_id_mock.start()
             self.device_channels_mock.start()
             self.device_rate_mock.start()
+            self.check_is_interface.start()
 
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -75,6 +78,7 @@ class RunContext(AbstractContextManager):
             self.device_pci_id_mock.stop()
             self.device_channels_mock.stop()
             self.device_rate_mock.stop()
+            self.check_is_interface.stop()
 
 
 
