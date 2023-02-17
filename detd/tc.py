@@ -127,7 +127,7 @@ def gatemask_to_hex(bitmask):
 
 class CommandStringTcTaprioOffloadSet(CommandString):
 
-    def __init__(self, interface, num_tc, soprio_to_tc, tc_to_hwq, base_time, sched_entries):
+    def __init__(self, interface, num_tc, soprio_to_tc, tc_to_hwq, base_time, sched_entries, flags = "0x2"):
 
         template = '''
            tc qdisc replace
@@ -139,7 +139,7 @@ class CommandStringTcTaprioOffloadSet(CommandString):
                     queues    $tc_to_hwq
                     base-time $base_time
                     $sched_entries
-                    flags     0x2'''
+                    flags     $flags'''
 
         params = {
             'interface'     : interface,
@@ -147,7 +147,8 @@ class CommandStringTcTaprioOffloadSet(CommandString):
             'soprio_to_tc'  : soprio_to_tc,
             'tc_to_hwq'     : tc_to_hwq,
             'base_time'     : base_time,
-            'sched_entries' : sched_entries
+            'sched_entries' : sched_entries,
+            'flags'         : flags
         }
 
         super().__init__(template, params)
