@@ -5,6 +5,7 @@ import setuptools.command.build_py
 from distutils.spawn import find_executable
 import subprocess
 from subprocess import check_call
+import errno
 
 
 
