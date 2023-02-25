@@ -305,6 +305,25 @@ cd detd
 
 ### Installation
 
+* Runtime dependencies (Debian / Ubuntu)
+  * ethtool
+  * iproute2
+  * python3-protobuf
+  * python3
+  * cgroup-tools (Optional)
+
+* Build dependencies (Debian / Ubuntu)
+  * protobuf-compiler
+  * python3-all
+  * python3-protobuf
+  * python3-setuptools
+
+* Packaging dependencies (Debian / Ubuntu)
+  * debmake
+  * debhelper-compat
+  * dh-python
+
+
 #### deb package
 
 A convenience script [package_debian.sh](tools/package_debian.sh) is provided to generate a deb file for easier installation on Debian-based distributions. It generates a deb file and stores it in /tmp.
@@ -329,10 +348,6 @@ At this point the service is ready to receive requests.
 
 
 #### pip
-
-Dependencies:
-* python3
-* python3-protobuf
 
 The release process and security checks for the current release were conducted over the following specific versions:
 * python 3.8.10
