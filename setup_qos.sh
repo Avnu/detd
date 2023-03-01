@@ -148,7 +148,7 @@ config = Configuration(interface, stream, traffic)
 proxy = ServiceProxy()
 
 try:
-   vlan_iface, soprio = proxy.setup_talker(config)
+   vlan_iface, soprio = proxy.add_talker(config)
 except:
    traceback.print_exc()
    sys.exit(1)
@@ -175,8 +175,10 @@ function run_command () {
 
    # Setup net_prio:rt control group
    if [[ ! -d /sys/fs/cgroup/net_prio ]]; then
-      echo "/sys/fs/cgroup/net_prio does not exist! Aborting."
-      exit 1
+      echo "The directory /sys/fs/cgroup/net_prio does not exist"
+      echo "Creating directory /sys/fs/cgroup/net_prio"
+
+      mkdir /sys/fs/cgroup/netprio
    fi
 
    OUTPUT=`mount | grep '/sys/fs/cgroup/net_cls,net_prio type cgroup'`
