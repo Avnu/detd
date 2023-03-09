@@ -55,9 +55,27 @@ class CommandTc:
         cmd = CommandStringTcTaprioOffloadUnset(interface.name)
 
         self.run(cmd)
+    
+    
+    def set_taprio_software(self, interface, mapping, scheduler, base_time):
+
+        # E.g. len(set([0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]))
+        num_tc = len(set(mapping.soprio_to_tc))
+        soprio_to_tc = transform_soprio_to_tc(mapping.soprio_to_tc)
+        tc_to_hwq = transform_tc_to_hwq(mapping.tc_to_hwq)
+        schedule = extract_schedule(scheduler)
+        sched_entries = transform_sched_entries(schedule)
+        cmd = CommandStringTcTaprioSoftwareSet(interface.name, num_tc, soprio_to_tc, tc_to_hwq, base_time, sched_entries)
+
+        self.run(cmd)
 
 
+    def unset_taprio_software(self, interface):
 
+        cmd = CommandStringTcTaprioOffloadUnset(interface.name)
+
+        self.run(cmd)
+        
 
 def num_tc(soprio_to_tc):
     return len(set(soprio_to_tc))
@@ -127,7 +145,7 @@ def gatemask_to_hex(bitmask):
 
 class CommandStringTcTaprioOffloadSet(CommandString):
 
-    def __init__(self, interface, num_tc, soprio_to_tc, tc_to_hwq, base_time, sched_entries, flags = "0x2"):
+    def __init__(self, interface, num_tc, soprio_to_tc, tc_to_hwq, base_time, sched_entries):
 
         template = '''
            tc qdisc replace
@@ -139,7 +157,7 @@ class CommandStringTcTaprioOffloadSet(CommandString):
                     queues    $tc_to_hwq
                     base-time $base_time
                     $sched_entries
-                    flags     $flags'''
+                    flags     0x2'''
 
         params = {
             'interface'     : interface,
@@ -147,8 +165,7 @@ class CommandStringTcTaprioOffloadSet(CommandString):
             'soprio_to_tc'  : soprio_to_tc,
             'tc_to_hwq'     : tc_to_hwq,
             'base_time'     : base_time,
-            'sched_entries' : sched_entries,
-            'flags'         : flags
+            'sched_entries' : sched_entries
         }
 
         super().__init__(template, params)
@@ -166,5 +183,34 @@ class CommandStringTcTaprioOffloadUnset(CommandString):
               root'''
 
         params = {"interface" : interface}
+
+        super().__init__(template, params)
+        
+        
+class CommandStringTcTaprioSoftwareSet(CommandString):
+
+    def __init__(self, interface, num_tc, soprio_to_tc, tc_to_hwq, base_time, sched_entries):
+
+        template = '''
+           tc qdisc replace
+                    dev       $interface
+                    parent    root
+                    taprio
+                    num_tc    $num_tc
+                    map       $soprio_to_tc
+                    queues    $tc_to_hwq
+                    base-time $base_time
+                    $sched_entries
+                    flags     0x0
+                    clockid CLOCK_TAI'''
+
+        params = {
+            'interface'     : interface,
+            'num_tc'        : num_tc,
+            'soprio_to_tc'  : soprio_to_tc,
+            'tc_to_hwq'     : tc_to_hwq,
+            'base_time'     : base_time,
+            'sched_entries' : sched_entries
+        }
 
         super().__init__(template, params)
