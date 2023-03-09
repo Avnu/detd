@@ -9,7 +9,7 @@
 """
 
 
-
+import time
 
 from ..logger import get_logger
 
@@ -44,6 +44,14 @@ class IntelI210(Device):
         self.capabilities = []
        # raise NotImplementedError("Handler class for i210 Ethernet controller not yet implemented")
 
+        self.features['rxvlan'] = 'off'
+        
+
+        # self.num_tx_ring_entries and self.num_rx_ring_entries
+        # Provides the number of ring entries for Tx and Rx rings.
+        # Currently, the code just passes the value to ethtool's --set-ring.
+        self.num_tx_ring_entries = 1024
+        self.num_rx_ring_entries = 1024
 
     def get_rate(self, interface):
 
@@ -60,10 +68,4 @@ class IntelI210(Device):
 
     def supports_schedule(self, schedule):
 
-        if schedule.opens_gate_multiple_times_per_cycle():
-            return False
-
-        # FIXME: check additional constraints, like maximum cycle time
-
         return True
-
