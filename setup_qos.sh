@@ -19,6 +19,14 @@ function usage () {
 }
 
 
+function check_root () {
+
+   if [ `id --user` -ne 0 ]; then
+      echo "This script must be run as root! Aborting."
+      exit 1
+   fi
+
+}
 
 function parse_args () {
 
@@ -202,6 +210,8 @@ function run_command () {
 
 }
 
+
+check_root
 
 parse_args "$@"
 check_args
