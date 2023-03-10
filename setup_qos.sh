@@ -178,10 +178,11 @@ function run_command () {
       echo "The directory /sys/fs/cgroup/net_prio does not exist"
       echo "Creating directory /sys/fs/cgroup/net_prio"
 
-      mkdir /sys/fs/cgroup/netprio
+      mkdir /sys/fs/cgroup/net_prio
    fi
 
-   OUTPUT=`mount | grep '/sys/fs/cgroup/net_cls,net_prio type cgroup'`
+   OUTPUT=`mountpoint /sys/fs/cgroup/net_prio`
+
    if [ $? -ne 0 ]; then
       echo "Mounting net_prio cgroup at /sys/fs/cgroup/net_prio"
       mount -t cgroup -o net_prio none /sys/fs/cgroup/net_prio
