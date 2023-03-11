@@ -1,10 +1,8 @@
-Welcome to detd's documentation!
-================================
+detd Software Documentation
+===========================
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
+.. contents:: Table of Contents
+   :local:
 
 
 Architecture
@@ -57,3 +55,15 @@ The steps involved are as follows:
       #. QdiscConfigurator: performs the Linux Queuing Discipline configuration
 
       #. VlanConfigurator: configures VLAN id and priority settings
+
+
+
+
+API Reference
+-------------
+
+.. autosummary::
+   :toctree: _autosummary
+   :recursive:
+
+   detd
