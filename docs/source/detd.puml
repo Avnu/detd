@@ -1,0 +1,31 @@
+@startuml
+
+entity Caller
+boundary Proxy
+box detd
+  control Service
+  entity Manager
+  entity InterfaceManager
+  entity Mapping
+  entity Scheduler
+  entity Interface
+  entity SystemConfigurator
+  entity DeviceConfigurator
+  entity QdiscConfigurator
+  entity VlanConfigurator
+end box
+
+
+Caller -> Proxy : add_talker(config)
+Proxy -> Service : send_qos_request(config)
+Service -> Manager : add_talker(config)
+Manager -> InterfaceManager : add_talker(config)
+InterfaceManager -> Mapping : assign_and_map(config, scheduler)
+InterfaceManager -> Scheduler : add(traffic)
+InterfaceManager -> Interface : setup(mapping, scheduler, stream)
+Interface -> SystemConfigurator : setup(interface, mapping, scheduler, stream)
+SystemConfigurator -> DeviceConfigurator : setup(interface, eee)
+SystemConfigurator -> QdiscConfigurator : setup(interface, mapping, scheduler, stream)
+SystemConfigurator -> VlanConfigurator : setup(interface, stream, mapping)
+
+@enduml
