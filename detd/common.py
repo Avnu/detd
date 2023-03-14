@@ -181,3 +181,35 @@ class CommandString(collections.UserString):
         data = template.substitute(params).replace('\n', '')
 
         super().__init__(data)
+
+        
+class Options:
+    """Methods to assign parameters to passs into one convenient Object.
+       Used for: Passing parameters in Python script for manual customization of the qdisc. """
+    def __init__(self):
+        
+        self.qdiscmap = None
+        self.flag = None
+        
+        
+    def set_qdiscmap(self, qdiscmap):
+        if valid_qdiscmap(qdiscmap)
+            self.qdiscmap = qdiscmap
+        
+        
+    def set_taprio_flag(self, flag):
+        if valid_flag(flag):
+            self.flag = flag
+        
+           
+def valid_qdiscmap(qdiscmap)
+    if re.match(r'^[0-8]( [0-8]){15}$', qdiscmap):
+        return True
+    return False
+
+
+def valid_flag(flag):
+    if re.match(r'0x[0-2]$', flag):
+        return True
+    return False
+        
