@@ -76,6 +76,38 @@ class CommandTc:
 
         self.run(cmd)
         
+        
+    def set_taprio_txassist(self, interface, mapping, scheduler, base_time):
+
+        # E.g. len(set([0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]))
+        num_tc = len(set(mapping.soprio_to_tc))
+        soprio_to_tc = transform_soprio_to_tc(mapping.soprio_to_tc)
+        tc_to_hwq = transform_tc_to_hwq(mapping.tc_to_hwq)
+        schedule = extract_schedule(scheduler)
+        sched_entries = transform_sched_entries(schedule)
+        handle = "100"
+        txtime-delay = "500000"
+        cmd = CommandStringTcTaprioTxassistSet(interface.name, num_tc, soprio_to_tc, tc_to_hwq, base_time, sched_entries, handle, txtime-delay)
+
+        self.run(cmd)
+
+
+    def unset_taprio_txassist(self, interface):
+
+        cmd = CommandStringTcTaprioOffloadUnset(interface.name)
+
+        self.run(cmd)
+        
+        
+    def install_etf(self, interface):
+        
+        parent = "100:1"
+        delta = "500000"
+        
+        cmd = CommandStringTcEtfInstall(interface.name, parent, delta)
+        
+        self.run(cmd)
+        
 
 def num_tc(soprio_to_tc):
     return len(set(soprio_to_tc))
@@ -214,3 +246,62 @@ class CommandStringTcTaprioSoftwareSet(CommandString):
         }
 
         super().__init__(template, params)
+        
+        
+class CommandStringTcTaprioTxassistSet(CommandString):
+
+    def __init__(self, interface, num_tc, soprio_to_tc, tc_to_hwq, base_time, sched_entries, handle, txtime-delay):
+
+        template = '''
+           tc qdisc replace
+                    dev       $interface
+                    parent    root
+                    handle    $handle
+                    taprio
+                    num_tc    $num_tc
+                    map       $soprio_to_tc
+                    queues    $tc_to_hwq
+                    base-time $base_time
+                    $sched_entries
+                    flags     0x1
+                    txtime-delay $txtime-delay
+                    clockid CLOCK_TAI'''
+                    #Might want to make handle 100 into handle $handleID or something similar
+                    #And potentially txtime-delay 500000 to txtime-delay $txtime-delay
+        params = {
+            'interface'     : interface,
+            'handle'        : handle
+            'num_tc'        : num_tc,
+            'soprio_to_tc'  : soprio_to_tc,
+            'tc_to_hwq'     : tc_to_hwq,
+            'base_time'     : base_time,
+            'sched_entries' : sched_entries,
+            'txtime-delay'  : txtime-delay
+        }
+
+        super().__init__(template, params)
+        
+        
+class CommandStringTcEtfInstall(CommandString):
+
+    def __init__(self, interface, parent, delta):
+
+        template = '''
+           tc qdisc replace
+                    dev       $interface
+                    parent    $parent
+                    etf
+                    clockid   CLOCK_TAI
+                    delta     $delta
+                    offload
+                    skip_sock_check'''
+                    
+        params = {
+            'interface'     : interface,
+            'parent'        : parent,
+            'delta'         : delta
+        }
+
+        super().__init__(template, params)
+
+
