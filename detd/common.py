@@ -193,7 +193,7 @@ class Options:
         
         
     def set_qdiscmap(self, qdiscmap):
-        if valid_qdiscmap(qdiscmap)
+        if valid_qdiscmap(qdiscmap):
             self.qdiscmap = qdiscmap
         
         
@@ -202,7 +202,8 @@ class Options:
             self.flag = flag
         
            
-def valid_qdiscmap(qdiscmap)
+            
+def valid_qdiscmap(qdiscmap):
     if re.match(r'^[0-8]( [0-8]){15}$', qdiscmap):
         return True
     return False

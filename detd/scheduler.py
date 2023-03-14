@@ -36,7 +36,7 @@ logger = get_logger(__name__)
 
 class Configuration:
 
-    def __init__(self, interface, stream, traffic):
+    def __init__(self, interface, stream, traffic, options = none):
 
         if stream.txoffset > traffic.interval:
             raise TypeError("Invalid TxOffset, it exceeds Interval")
@@ -44,6 +44,7 @@ class Configuration:
         self.interface = interface
         self.stream = stream
         self.traffic = traffic
+        self.options = options
 
 
 class StreamConfiguration:

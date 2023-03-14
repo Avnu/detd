@@ -86,8 +86,8 @@ class CommandTc:
         schedule = extract_schedule(scheduler)
         sched_entries = transform_sched_entries(schedule)
         handle = "100"
-        txtime-delay = "500000"
-        cmd = CommandStringTcTaprioTxassistSet(interface.name, num_tc, soprio_to_tc, tc_to_hwq, base_time, sched_entries, handle, txtime-delay)
+        txtime_delay = "500000"
+        cmd = CommandStringTcTaprioTxassistSet(interface.name, num_tc, soprio_to_tc, tc_to_hwq, base_time, sched_entries, handle, txtime_delay)
 
         self.run(cmd)
 
@@ -250,7 +250,7 @@ class CommandStringTcTaprioSoftwareSet(CommandString):
         
 class CommandStringTcTaprioTxassistSet(CommandString):
 
-    def __init__(self, interface, num_tc, soprio_to_tc, tc_to_hwq, base_time, sched_entries, handle, txtime-delay):
+    def __init__(self, interface, num_tc, soprio_to_tc, tc_to_hwq, base_time, sched_entries, handle, txtime_delay):
 
         template = '''
            tc qdisc replace
@@ -264,19 +264,19 @@ class CommandStringTcTaprioTxassistSet(CommandString):
                     base-time $base_time
                     $sched_entries
                     flags     0x1
-                    txtime-delay $txtime-delay
+                    txtime_delay $txtime_delay
                     clockid CLOCK_TAI'''
                     #Might want to make handle 100 into handle $handleID or something similar
-                    #And potentially txtime-delay 500000 to txtime-delay $txtime-delay
+                    #And potentially txtime_delay 500000 to txtime_delay $txtime_delay
         params = {
             'interface'     : interface,
-            'handle'        : handle
+            'handle'        : handle,
             'num_tc'        : num_tc,
             'soprio_to_tc'  : soprio_to_tc,
             'tc_to_hwq'     : tc_to_hwq,
             'base_time'     : base_time,
             'sched_entries' : sched_entries,
-            'txtime-delay'  : txtime-delay
+            'txtime_delay'  : txtime_delay
         }
 
         super().__init__(template, params)
