@@ -13,6 +13,7 @@ import time
 
 from ..logger import get_logger
 
+from .device import Capability
 from .device import Device
 
 
@@ -26,6 +27,8 @@ class IntelI210(Device):
 
     NUM_TX_QUEUES = 4
     NUM_RX_QUEUES = 4
+    
+    CAPABILITIES  = [Capability.LTC]
 
     PCI_IDS_VALID = ['8086:1533', '8086:1536', '8086:1537', '8086:1538', '8086:157B',
                      '8086:157C', '8086:15F6']
@@ -41,11 +44,9 @@ class IntelI210(Device):
 
         super().__init__(IntelI210.NUM_TX_QUEUES, IntelI210.NUM_RX_QUEUES)
 
-        self.capabilities = []
-       # raise NotImplementedError("Handler class for i210 Ethernet controller not yet implemented")
+        self.capabilities = [Capability.LTC]
 
         self.features['rxvlan'] = 'off'
-        
 
         # self.num_tx_ring_entries and self.num_rx_ring_entries
         # Provides the number of ring entries for Tx and Rx rings.

@@ -129,3 +129,7 @@ class Device:
 
     def supports_qbv(self):
         return Capability.Qbv in self.capabilities
+
+    
+    def supports_ltc(self):
+        return Capability.LTC in self.capabilities
