@@ -131,7 +131,7 @@ class SystemConfigurator:
         return True
 
 
-    def setup(self, interface, mapping, scheduler, stream):
+    def setup_talker(self, interface, mapping, scheduler, stream):
 
         logger.info("Setting up platform and devices")
 
@@ -139,7 +139,7 @@ class SystemConfigurator:
             raise TypeError
 
         try:
-            self.device.setup(interface, eee="off")
+            self.device.setup_talker(interface, eee="off")
         except subprocess.CalledProcessError:
             # FIXME add device restore
             raise
@@ -147,7 +147,7 @@ class SystemConfigurator:
         # FIXME: consider other exceptions, e.g. TypeError
         try:
             # FIXME add qdisc reset
-            self.qdisc.setup(interface, mapping, scheduler, stream.base_time)
+            self.qdisc.setup_talker(interface, mapping, scheduler, stream.base_time)
         except subprocess.CalledProcessError:
             raise
 
@@ -155,7 +155,7 @@ class SystemConfigurator:
             return
 
         try:
-            self.vlan.setup(interface, stream, mapping)
+            self.vlan.setup_talker(interface, stream, mapping)
             self.already_configured_vids.append(stream.vid)
         except subprocess.CalledProcessError:
             self.qdisc.unset(interface)
@@ -170,7 +170,7 @@ class DeviceConfigurator:
         pass
 
 
-    def setup(self, interface, eee="off"):
+    def setup_talker(self, interface, eee="off"):
 
         sysinfo = SystemInformation()
 
@@ -198,7 +198,7 @@ class VlanConfigurator:
         pass
 
 
-    def setup(self, interface, stream, mapping):
+    def setup_talker(self, interface, stream, mapping):
         ip = CommandIp()
 
         ip.set_vlan(interface, stream, mapping)
@@ -218,7 +218,7 @@ class QdiscConfigurator:
         pass
 
 
-    def setup(self, interface, mapping, scheduler, base_time):
+    def setup_talker(self, interface, mapping, scheduler, base_time):
         tc = CommandTc()
 
         if interface.device.supports_qbv():

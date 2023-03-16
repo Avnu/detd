@@ -62,8 +62,8 @@ class Interface:
         return self.device.get_rate(self)
 
 
-    def setup(self, mapping, scheduler, stream):
-        self.device.setup(self, mapping, scheduler, stream)
+    def setup_talker(self, mapping, scheduler, stream):
+        self.device.setup_talker(self, mapping, scheduler, stream)
 
 
 
@@ -169,7 +169,7 @@ class InterfaceManager():
 
         # Configure the system
         try:
-            self.interface.setup(self.mapping, self.scheduler, config.stream)
+            self.interface.setup_talker(self.mapping, self.scheduler, config.stream)
         except:
             # Leave the internal structures in a consistent state
             logger.error("Error applying the configuration on the system")

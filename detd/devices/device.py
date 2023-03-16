@@ -85,11 +85,11 @@ class Device:
         self.features = {}
 
 
-    def setup(self, interface, mapping, scheduler, stream):
+    def setup_talker(self, interface, mapping, scheduler, stream):
         '''Performs the configuration of the talker stream provided.
         '''
 
-        self.systemconf.setup(interface, mapping, scheduler, stream)
+        self.systemconf.setup_talker(interface, mapping, scheduler, stream)
 
 
     def get_rate(self, interface):

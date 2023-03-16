@@ -161,12 +161,12 @@ class Service(socketserver.UnixDatagramServer):
 class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
 
-    def setup(self):
+    def setup_talker(self):
 
         logger.info("============================== REQUEST DISPATCHED ==================================")
         logger.info("Setting up ServiceRequestHandler")
 
-        super().setup()
+        super().setup_talker()
 
         if self.server.test_mode:
             self.add_talker = self._mock_add_talker
