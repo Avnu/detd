@@ -247,9 +247,9 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
     def _mock_add_talker(self, request):
 
-        with mock.patch.object(QdiscConfigurator,  'setup', return_value=None), \
+        with mock.patch.object(QdiscConfigurator,  'setup_talker', return_value=None), \
              mock.patch.object(CommandIp,   'run', return_value=None), \
-             mock.patch.object(DeviceConfigurator, 'setup', return_value=None), \
+             mock.patch.object(DeviceConfigurator, 'setup_talker', return_value=None), \
              mock.patch.object(SystemInformation,  'get_pci_id', return_value=('8086:4B30')), \
              mock.patch.object(SystemInformation,  'get_rate', return_value=1000 * 1000 * 1000), \
              mock.patch.object(Check,  'is_interface', return_value=True):
