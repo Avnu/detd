@@ -161,12 +161,12 @@ class Service(socketserver.UnixDatagramServer):
 class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
 
-    def setup_talker(self):
+    def setup(self):
 
         logger.info("============================== REQUEST DISPATCHED ==================================")
         logger.info("Setting up ServiceRequestHandler")
 
-        super().setup_talker()
+        super().setup()
 
         if self.server.test_mode:
             self.add_talker = self._mock_add_talker
@@ -247,9 +247,9 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
     def _mock_add_talker(self, request):
 
-        with mock.patch.object(QdiscConfigurator,  'setup_talker', return_value=None), \
+        with mock.patch.object(QdiscConfigurator,  'setup', return_value=None), \
              mock.patch.object(CommandIp,   'run', return_value=None), \
-             mock.patch.object(DeviceConfigurator, 'setup_talker', return_value=None), \
+             mock.patch.object(DeviceConfigurator, 'setup', return_value=None), \
              mock.patch.object(SystemInformation,  'get_pci_id', return_value=('8086:4B30')), \
              mock.patch.object(SystemInformation,  'get_rate', return_value=1000 * 1000 * 1000), \
              mock.patch.object(Check,  'is_interface', return_value=True):
