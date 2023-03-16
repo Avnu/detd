@@ -218,7 +218,7 @@ class QdiscConfigurator:
         pass
 
 
-    def setup(self, interface, mapping, scheduler, base_time):
+    def setup_talker(self, interface, mapping, scheduler, base_time):
         tc = CommandTc()
 
         if interface.device.supports_qbv():
