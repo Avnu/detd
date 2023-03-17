@@ -20,3 +20,17 @@ message StreamQosResponse {
 	string  vlan_interface = 2;
 	uint32  socket_priority = 3;
 }
+
+
+message StreamListenerQosRequest {
+	string interface = 1;
+	string dmac = 2;
+	uint32 vid = 3;
+	uint32 pcp = 4;
+}
+
+message StreamListenerQosResponse {
+	bool    ok = 1;
+	string  vlan_interface = 2;
+	uint32  socket_priority = 3;
+}

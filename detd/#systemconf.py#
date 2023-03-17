@@ -204,7 +204,7 @@ class VlanConfigurator:
         ip.set_vlan(interface, stream, mapping)
 
 
-    def unset(self, interface, stream):
+p    def unset(self, interface, stream):
         ip = CommandIp()
 
         ip.unset_vlan(interface, stream)
