@@ -289,9 +289,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         addr = request.dmac
         vid = request.vid
         pcp = request.pcp
-        txoffset = request.txmin
-        interval = request.period
-        size = request.size
+
         interface_name = request.interface
 
         interface = Interface(interface_name)
