@@ -125,13 +125,9 @@ class ServiceProxy:
     def send_listener_qos_request(self, configuration, setup_socket):
         request = StreamListenerQosRequest()
         request.interface = configuration.interface.name
-        request.period = configuration.traffic.interval
-        request.size = configuration.traffic.size
         request.dmac = configuration.stream.addr
         request.vid = configuration.stream.vid
         request.pcp = configuration.stream.pcp
-        request.txmin = configuration.stream.txoffset
-        request.txmax = configuration.stream.txoffset
         request.setup_socket = setup_socket
 
         message = request.SerializeToString()
