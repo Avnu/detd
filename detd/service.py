@@ -32,6 +32,8 @@ from unittest import mock
 
 from .ipc_pb2 import StreamQosRequest
 from .ipc_pb2 import StreamQosResponse
+from .ipc_pb2 import StreamListenerQosRequest
+from .ipc_pb2 import StreamListenerQosResponse
 
 from .manager import Interface
 from .manager import Manager
@@ -225,6 +227,42 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         self.send_fd(message, fd)
 
 
+    def receive_qos_request(self):
+
+        data = self.packet
+        request = StreamQosRequest()
+        request.ParseFromString(data)
+
+        return request
+
+
+    def build_listener_qos_response(self, ok, vlan_interface=None, soprio=None, fd=None):
+        response = StreamListenerQosResponse()
+
+        response.ok = ok
+
+        if response.ok:
+            if fd is None:
+                response.vlan_interface = vlan_interface
+                response.socket_priority = soprio
+
+        message = response.SerializePartialToString()
+        return message
+
+
+
+    def send_listener_qos_response(self, ok, vlan_interface, soprio):
+
+        message = self.build_Listener_qos_response(ok, vlan_interface, soprio)
+        self.send(message)
+
+
+    def send_listener_qos_socket_response(self, ok, fd):
+
+        message = self.build_Listener_qos_response(ok, fd=fd)
+        self.send_fd(message, fd)
+
+
     def _add_talker(self, request):
         addr = request.dmac
         vid = request.vid
@@ -328,9 +366,15 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
             vlan_interface, soprio = self.server.manager.add_talker(config)
 
         return vlan_interface, soprio
+    
+    def _mock_add_talker_socket(self, request):
+        # FIXME: modify once manager implements setup socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_PRIORITY, 6)
+        s.bind(("127.0.0.1", 20001))
+        return s
 
-
-
+    
     def mock_socket_cleanup(self, socket):
         socket.close()
 
