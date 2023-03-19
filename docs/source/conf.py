@@ -28,10 +28,14 @@ author = 'Héctor Blanco Alcaine'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-        'sphinx.ext.autodoc',
-        'sphinx.ext.autosummary',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
+    'sphinxcontrib.plantuml',
 ]
 autosummary_generate = True
+
+plantuml = 'java -Djava.awt.headless=true -jar /usr/share/plantuml/plantuml.jar'
+plantuml_output_format = 'png'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
