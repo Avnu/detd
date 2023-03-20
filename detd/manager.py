@@ -65,6 +65,9 @@ class Interface:
     def setup_talker(self, mapping, scheduler, stream):
         self.device.setup_talker(self, mapping, scheduler, stream)
 
+    def setup_listener(self, stream):
+        self.device.setup_listener(self, stream)
+
 
 
 
@@ -82,6 +85,18 @@ class Manager():
     def add_talker(self, config):
 
         logger.info("Adding talker to Manager")
+
+        with self.lock:
+
+            if not config.interface.name in self.talker_manager:
+                interface_manager = InterfaceManager(config.interface)
+                self.talker_manager[config.interface.name] = interface_manager
+
+            return self.talker_manager[config.interface.name].add_talker(config)
+
+    def add_listener(self, config):
+
+        logger.info("Adding listener to Manager")
 
         with self.lock:
 
@@ -183,7 +198,44 @@ class InterfaceManager():
         vlan_interface = "{}.{}".format(self.interface.name, config.stream.vid)
         return vlan_interface, soprio
 
+    def add_listener(self, config):
+        '''
+        Performs the local configuration for the configuration provided
+        and returns the associated VLAN interface and socket priority
 
+
+        Parameters:
+
+            config: configuration
+
+
+        Returns:
+
+            VLAN interface
+            socket priority
+        '''
+
+        logger.info("Adding talker to InterfaceManager")
+
+
+        # Retrieve device rate
+        try:
+           rate = self.interface.rate
+        except RuntimeError:
+            logger.exception("Error while retrieving device rate")
+            raise
+
+        # Configure the system
+            self.interface.setup_listener(config.stream)
+        except RuntimeError:
+            logger.error("Error applying the configuration on the system")
+            raise
+
+        vlan_interface = "{}.{}".format(self.interface.name, config.stream.vid)
+        return vlan_interface, soprio
+
+
+    
     # Unfortunately, not all devices accept base_time in the future, or base_time
     # in the past, throwing errors if the wrong choice is taken. This method
     # avoids those problems by setting a base_time according to each device
