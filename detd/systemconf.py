@@ -162,6 +162,38 @@ class SystemConfigurator:
             raise
 
 
+    def setup_listener(self, interface, stream):
+
+        logger.info("Setting up platform and devices")
+
+        if not self.args_valid(interface, stream):
+            raise TypeError
+
+        try:
+            self.device.setup_listener(interface, eee="off")
+        except subprocess.CalledProcessError:
+            # FIXME add device restore
+            raise
+
+        #this is the important difference
+        # FIXME: consider other exceptions, e.g. TypeError
+        try:
+            # FIXME add qdisc reset
+            self.qdisc.setup(interface, mapping, scheduler, stream.base_time)
+        except subprocess.CalledProcessError:
+            raise
+
+        if stream.vid in self.already_configured_vids:
+            return
+
+        try:
+            self.vlan.setup_talker(interface, stream, mapping)
+            self.already_configured_vids.append(stream.vid)
+        except subprocess.CalledProcessError:
+            self.qdisc.unset(interface)
+            raise
+
+
 
 
 class DeviceConfigurator:
@@ -171,6 +203,22 @@ class DeviceConfigurator:
 
 
     def setup_talker(self, interface, eee="off"):
+
+        sysinfo = SystemInformation()
+
+        ethtool = CommandEthtool()
+
+        ethtool.set_eee(interface, eee)
+        ethtool.set_features(interface)
+
+        if sysinfo.interface_supports_split_channels(interface):
+            ethtool.set_split_channels(interface)
+        else:
+            ethtool.set_combined_channels(interface)
+
+        ethtool.set_rings(interface)
+
+    def setup_listener(self, interface, eee="off"):
 
         sysinfo = SystemInformation()
 
