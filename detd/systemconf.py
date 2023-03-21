@@ -221,7 +221,7 @@ class QdiscConfigurator:
     def setup(self, interface, mapping, scheduler, base_time, options):
         tc = CommandTc()
 
-        if options is None or options.flag is None:
+        if options.flag not in ["0x0","0x1","0x2"]:
             if interface.device.supports_qbv():
                 tc.set_taprio_offload(interface, mapping, scheduler, base_time)
             elif interface.device.supports_ltc():
@@ -235,7 +235,7 @@ class QdiscConfigurator:
                 tc.set_taprio_txassist(interface, mapping, scheduler, base_time)
             else:
                 tc.set_taprio_software(interface, mapping, scheduler, base_time)
-            #TODO: pass parameters from options in some way so taprio gets set up with the custom input
+            
 
     def unset(self, interface):
         tc = CommandTc()
