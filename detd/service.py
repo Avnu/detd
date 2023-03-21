@@ -238,6 +238,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
         options = Options()
         options.flag = request.flag
+        options.qdiscmap = request.qdiscmap
         interface = Interface(interface_name)
         stream = StreamConfiguration(addr, vid, pcp, txoffset)
         traffic = TrafficSpecification(interval, size)

@@ -188,8 +188,8 @@ class Options:
        Used for: Passing parameters in Python script for manual customization of the qdisc. """
     def __init__(self):
         
-        self.qdiscmap = None
-        self.flag = None
+        self.qdiscmap = "nomap"
+        self.flag = "noflag"
         
         
     def set_qdiscmap(self, qdiscmap):
