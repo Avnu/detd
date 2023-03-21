@@ -226,6 +226,7 @@ class QdiscConfigurator:
                 tc.set_taprio_offload(interface, mapping, scheduler, base_time)
             elif interface.device.supports_ltc():
                 tc.set_taprio_txassist(interface, mapping, scheduler, base_time)
+                tc.install_etf(interface)
             else:
                 tc.set_taprio_software(interface, mapping, scheduler, base_time)
         else:
@@ -233,6 +234,7 @@ class QdiscConfigurator:
                 tc.set_taprio_offload(interface, mapping, scheduler, base_time)
             elif interface.device.supports_ltc() and options.flag == "0x1":
                 tc.set_taprio_txassist(interface, mapping, scheduler, base_time)
+                tc.install_etf(interface)
             else:
                 tc.set_taprio_software(interface, mapping, scheduler, base_time)
             
