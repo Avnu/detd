@@ -39,13 +39,12 @@ logger = get_logger(__name__)
 
 class Interface:
 
-    def __init__(self, name, options = None):
+    def __init__(self, name):
 
         if not Check.is_interface(name):
             logger.error(f"{name} is not a valid network interface name")
             raise TypeError(f"{name} is not a valid network interface name")
             
-        self.options = options
         self.name = name
 
         sysinfo = SystemInformation()
