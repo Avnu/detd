@@ -93,6 +93,11 @@ class CommandEthtool:
 
         self.run(cmd)
 
+    def set_features_ingress(self, interface):
+        cmd = CommandStringEthtoolFeatures(interface.name, interface.device.features)
+
+        self.run(cmd)
+
 
 def check_eee(eee):
     if eee not in ["on", "off"]:

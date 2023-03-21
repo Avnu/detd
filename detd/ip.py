@@ -44,9 +44,21 @@ class CommandIp:
 
         self.run(str(cmd))
 
+    def set_vlan_ingress(self, interface, stream, mapping):
+
+        soprio_to_pcp = transform_soprio_to_pcp(mapping.soprio_to_pcp)
+        cmd = CommandStringIpLinkSetVlanIngress(interface.name, stream.vid, soprio_to_pcp)
+
+        self.run(str(cmd))
+        
 
     def unset_vlan(self, interface, stream):
         cmd = CommandStringIpLinkUnsetVlan(interface.name, stream.vid)
+
+        self.run(str(cmd))
+
+    def subscribe_multicast(self):
+        cmd = "ip maddr add <STREAM_DMAC> eth0"
 
         self.run(str(cmd))
 
@@ -86,6 +98,28 @@ class CommandStringIpLinkSetVlan (CommandString):
         super().__init__(template, params)
 
 
+
+class CommandStringIpLinkSetVlanIngress (CommandString):
+
+    def __init__(self, device, vid, soprio_to_pcp):
+
+        template = '''
+            ip link add
+                    link     $device
+                    name     $device.$id
+                    type     vlan
+                    protocol 802.1Q
+                    id       $id
+                    egress   $soprio_to_pcp
+                    ingress  0:0 1:1 2:2 3:3 4:4 5:5 6:7 7:7'''
+
+        params = {
+            'device'        : device,
+            'id'            : vid,
+            'soprio_to_pcp' : soprio_to_pcp
+        }
+
+        super().__init__(template, params)
 
 
 class CommandStringIpLinkUnsetVlan (CommandString):

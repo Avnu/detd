@@ -221,12 +221,14 @@ class DeviceConfigurator:
     def setup_listener(self, interface, eee="off"):
 
         sysinfo = SystemInformation()
-
+        ip = CommandIp()
         ethtool = CommandEthtool()
 
         ethtool.set_eee(interface, eee)
-        ethtool.set_features(interface)
+        ethtool.set_features_ingress(interface)
 
+        ip.subscribe_multicast()
+        
         if sysinfo.interface_supports_split_channels(interface):
             ethtool.set_split_channels(interface)
         else:
@@ -250,6 +252,11 @@ class VlanConfigurator:
         ip = CommandIp()
 
         ip.set_vlan(interface, stream, mapping)
+
+    def setup_talker(self, interface, stream, mapping):
+        ip = CommandIp()
+
+        ip.set_vlan_ingress(interface, stream, mapping)
 
 
     def unset(self, interface, stream):
