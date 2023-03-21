@@ -275,7 +275,7 @@ class CommandStringTcTaprioTxassistSet(CommandString):
             'tc_to_hwq'     : tc_to_hwq,
             'base_time'     : base_time,
             'sched_entries' : sched_entries,
-            'txtime-delay'  : txtime_delay
+            'txtime_delay'  : txtime_delay
         }
 
         super().__init__(template, params)
