@@ -12,6 +12,7 @@ message StreamQosRequest {
 	uint32 txmax = 8;
 	bool   setup_socket = 9;
 	uint32 basetime = 10;
+	string flag = 11;
 }
 
 

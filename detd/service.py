@@ -46,6 +46,8 @@ from .systemconf import DeviceConfigurator
 from .systemconf import SystemInformation
 from .systemconf import CommandIp
 
+from .common import Options
+
 from .logger import setup_root_logger
 from .logger import get_logger
 
@@ -248,11 +250,13 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         size = request.size
         interface_name = request.interface
 
+        options = Options()
+        options.flag = request.flag
         interface = Interface(interface_name)
         stream = StreamConfiguration(addr, vid, pcp, txoffset)
         traffic = TrafficSpecification(interval, size)
 
-        config = Configuration(interface, stream, traffic)
+        config = Configuration(interface, stream, traffic, options)
 
         vlan_interface, soprio = self.server.manager.add_talker(config)
 

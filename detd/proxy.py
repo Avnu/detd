@@ -94,6 +94,7 @@ class ServiceProxy:
         request.txmin = configuration.stream.txoffset
         request.txmax = configuration.stream.txoffset
         request.setup_socket = setup_socket
+        request.flag = configuration.options.flag
 
         message = request.SerializeToString()
         self.send(message)
