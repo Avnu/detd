@@ -264,10 +264,9 @@ class CommandStringTcTaprioTxassistSet(CommandString):
                     base-time $base_time
                     $sched_entries
                     flags     0x1
-                    txtime_delay $txtime_delay
+                    txtime-delay $txtime_delay
                     clockid CLOCK_TAI'''
-                    #Might want to make handle 100 into handle $handleID or something similar
-                    #And potentially txtime_delay 500000 to txtime_delay $txtime_delay
+                    
         params = {
             'interface'     : interface,
             'handle'        : handle,
@@ -276,7 +275,7 @@ class CommandStringTcTaprioTxassistSet(CommandString):
             'tc_to_hwq'     : tc_to_hwq,
             'base_time'     : base_time,
             'sched_entries' : sched_entries,
-            'txtime_delay'  : txtime_delay
+            'txtime-delay'  : txtime_delay
         }
 
         super().__init__(template, params)
