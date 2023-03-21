@@ -245,13 +245,14 @@ class Mapping():
     """
 
 
-    def __init__(self, interface):
+    def __init__(self, interface, options = None):
 
         logger.info(f"Initializing {__class__.__name__}")
 
         # FIXME: make the number of Tx queues a parameter, so things are not hardcoded
 
         self.interface = interface
+        self.options = options
 
 
         # Socket priorities
@@ -355,8 +356,11 @@ class Mapping():
         # Then we assign those socket prios used by other traffic classes
         for tc, soprio in enumerate(self.tc_to_soprio):
             mapping[soprio] = tc
-
-        return mapping
+        
+        if self.options is None:
+            return mapping
+        else:
+            return [int(x) for x in self.options.qdiscmap.split()]
 
 
     def assign_and_map(self, pcp, traffics):

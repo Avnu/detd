@@ -13,6 +13,7 @@ message StreamQosRequest {
 	bool   setup_socket = 9;
 	uint32 basetime = 10;
 	string flag = 11;
+	string qdiscmap = 12;
 }
 
 

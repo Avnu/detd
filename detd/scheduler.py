@@ -47,7 +47,6 @@ class Configuration:
         self.traffic = traffic
         if options is None:
             self.options = Options()
-            self.options.flag = "noflag"
         else:
             self.options = options
 
