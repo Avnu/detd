@@ -336,7 +336,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
         config = Configuration(interface, stream, traffic)
 
-        vlan_interface, soprio = self.server.manager.add_talker(config)
+        vlan_interface, soprio = self.server.manager.add_listener(config)
 
         return vlan_interface, soprio
 
