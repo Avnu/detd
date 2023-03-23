@@ -137,7 +137,7 @@ class ServiceProxy:
     def receive_listener_qos_response(self):
         message = self.recv()
 
-        response = StreamListenerQosResponse()
+        response = StreamQosResponse()
         response.ParseFromString(message)
 
         return response
@@ -188,7 +188,7 @@ class ServiceProxy:
 
         self.setup_socket()
         self.send_qos_listener_request(configuration, setup_socket=True)
-        status, sock = self.receive_qos_listener_socket_response()
+        status, sock = self.receive_listener_qos_socket_response()
         self.sock.close()
 
         if not status.ok:
