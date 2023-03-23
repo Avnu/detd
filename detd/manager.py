@@ -215,7 +215,7 @@ class InterfaceManager():
             socket priority
         '''
 
-        logger.info("Adding talker to InterfaceManager")
+        logger.info("Adding listener to InterfaceManager")
 
 
         # Retrieve device rate
