@@ -27,6 +27,7 @@ message StreamListenerQosRequest {
 	string dmac = 2;
 	uint32 vid = 3;
 	uint32 pcp = 4;
+	bool   setup_socket = 9;
 }
 
 message StreamListenerQosResponse {
