@@ -143,7 +143,7 @@ class ServiceProxy:
         return response
 
 
-    def receive_qos_listener_socket_response(self):
+    def receive_listener_qos_socket_response(self):
         sock = self.sock
 
         message, fds = self.recv_fd(1024)
@@ -200,7 +200,7 @@ class ServiceProxy:
     def add_listener(self, configuration):
 
         self.setup_socket()
-        self.send_qos_listener_request(configuration, setup_socket=False)
+        self.send_listener_qos_request(configuration, setup_socket=False)
         response = self.receive_qos_listener_response()
         self.sock.close()
 
