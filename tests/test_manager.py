@@ -46,10 +46,13 @@ class TestManager(unittest.TestCase):
 
         with RunContext(self.mode):
             manager = Manager()
-            vlan_interface, soprio = manager.add_talker(config)
+            vlan_interface, soprio, txoffsetmin, txoffsetmax = manager.add_talker(config)
 
         self.assertEqual(vlan_interface, "eth0.3")
         self.assertEqual(soprio, 7)
+
+        self.assertEqual(txoffsetmin, config.stream.txoffset-config.interface.device.hardware_delay_max)
+        self.assertEqual(txoffsetmax, config.stream.txoffset-config.interface.device.hardware_delay_min)
 
 
     def test_add_max_talkers_success_and_error(self):
@@ -91,10 +94,13 @@ class TestManager(unittest.TestCase):
         config = setup_config(self.mode)
 
         with RunContext(self.mode):
-            vlan_interface, soprio = manager.add_talker(config)
+            vlan_interface, soprio, txoffsetmin, txoffsetmax = manager.add_talker(config)
 
         self.assertEqual(vlan_interface, "eth0.3")
         self.assertEqual(soprio, 7)
+
+        self.assertEqual(txoffsetmin, config.stream.txoffset-config.interface.device.hardware_delay_max)
+        self.assertEqual(txoffsetmax, config.stream.txoffset-config.interface.device.hardware_delay_min)
 
         available_socket_prios = [8, 9, 10, 11, 12, 13]
         available_tcs = [2, 3, 4, 5, 6, 7]
@@ -108,10 +114,13 @@ class TestManager(unittest.TestCase):
         config = setup_config(self.mode, interval=20*1000*1000, txoffset=600*1000)
 
         with RunContext(self.mode):
-            vlan_interface, soprio = manager.add_talker(config)
+            vlan_interface, soprio, txoffsetmin, txoffsetmax = manager.add_talker(config)
 
         self.assertEqual(vlan_interface, "eth0.3")
         self.assertEqual(soprio, 8)
+
+        self.assertEqual(txoffsetmin, config.stream.txoffset-config.interface.device.hardware_delay_max)
+        self.assertEqual(txoffsetmax, config.stream.txoffset-config.interface.device.hardware_delay_min)
 
         available_socket_prios = [9, 10, 11, 12, 13]
         available_tcs = [3, 4, 5, 6, 7]
@@ -124,10 +133,13 @@ class TestManager(unittest.TestCase):
         for txoffset_us in [800, 1000, 1400, 1800, 2200]:
             config = setup_config(self.mode, interval=20*1000*1000, txoffset=txoffset_us*1000)
             with RunContext(self.mode):
-                vlan_interface, soprio = manager.add_talker(config)
+                vlan_interface, soprio, txoffsetmin, txoffsetmax = manager.add_talker(config)
 
         self.assertEqual(vlan_interface, "eth0.3")
         self.assertEqual(soprio, 13)
+
+        self.assertEqual(txoffsetmin, config.stream.txoffset-config.interface.device.hardware_delay_max)
+        self.assertEqual(txoffsetmax, config.stream.txoffset-config.interface.device.hardware_delay_min)
 
         available_socket_prios = []
         available_tcs = []
@@ -176,10 +188,13 @@ class TestManager(unittest.TestCase):
         for txoffset_us in [200, 400, 800, 1000, 1400, 1800, 2200]:
             config = setup_config(self.mode, interval=20*1000*1000, txoffset=txoffset_us*1000)
             with RunContext(self.mode):
-                vlan_interface, soprio = manager.add_talker(config)
+                vlan_interface, soprio, txoffsetmin, txoffsetmax = manager.add_talker(config)
 
         self.assertEqual(vlan_interface, "eth0.3")
         self.assertEqual(soprio, 13)
+
+        self.assertEqual(txoffsetmin, config.stream.txoffset-config.interface.device.hardware_delay_max)
+        self.assertEqual(txoffsetmax, config.stream.txoffset-config.interface.device.hardware_delay_min)
 
         available_socket_prios = []
         available_tcs = []

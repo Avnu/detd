@@ -32,6 +32,9 @@ class IntelMgbeEhl(Device):
     NUM_TX_QUEUES = 8
     NUM_RX_QUEUES = 8
 
+    HARDWARE_DELAY_MIN = 1000
+    HARDWARE_DELAY_MAX = 2000
+
     # PCI IDs associated to the host. This is Intel Elkhart Lake specific.
     PCI_IDS_HOST = [ '8086:4B30', '8086:4B31', '8086:4B32']
 
@@ -55,7 +58,7 @@ class IntelMgbeEhl(Device):
 
         logger.info(f"Initializing {__class__.__name__}")
 
-        super().__init__(IntelMgbeEhl.NUM_TX_QUEUES, IntelMgbeEhl.NUM_RX_QUEUES)
+        super().__init__(IntelMgbeEhl.NUM_TX_QUEUES, IntelMgbeEhl.NUM_RX_QUEUES, IntelMgbeEhl.HARDWARE_DELAY_MIN, IntelMgbeEhl.HARDWARE_DELAY_MAX)
 
         self.capabilities = [Capability.Qbv]
 

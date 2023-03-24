@@ -28,6 +28,10 @@ class IntelI225(Device):
 
     CAPABILITIES = [Capability.Qbv]
 
+    #Placeholder MAC+PHY latency
+    HARDWARE_LATENCY_MIN = 1000
+    HARDWARE_LATENCY_MAX = 2000
+
     # Devices supporting TSN: i225-LM, i225-IT
     PCI_IDS_VALID = ['8086:0D9F', '8086:15F2']
 
@@ -44,7 +48,7 @@ class IntelI225(Device):
 
         logger.info(f"Initializing {__class__.__name__}")
 
-        super().__init__(IntelI225.NUM_TX_QUEUES, IntelI225.NUM_RX_QUEUES)
+        super().__init__(IntelI225.NUM_TX_QUEUES, IntelI225.NUM_RX_QUEUES, IntelI225.HARDWARE_LATENCY_MIN, IntelI225.HARDWARE_LATENCY_MAX)
 
         if pci_id in IntelI225.PCI_IDS_NON_TSN:
             raise "This i225 device does not support TSN."
