@@ -147,5 +147,7 @@ class ServiceProxy:
 
         vlan_interface = response.vlan_interface
         soprio = response.socket_priority
+        txoffsetmin = response.txminmac
+        txoffsetmax = response.txmaxmac
 
-        return vlan_interface, soprio
+        return vlan_interface, soprio, txoffsetmin, txoffsetmax

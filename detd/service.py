@@ -200,7 +200,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         return request
 
 
-    def build_qos_response(self, ok, vlan_interface=None, soprio=None, fd=None):
+    def build_qos_response(self, ok, vlan_interface=None, soprio=None, txoffsetmin=None, txoffsetmax=None, fd=None):
         response = StreamQosResponse()
 
         response.ok = ok
@@ -209,15 +209,17 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
             if fd is None:
                 response.vlan_interface = vlan_interface
                 response.socket_priority = soprio
+                response.txminmac = txoffsetmin
+                response.txmaxmac = txoffsetmax
 
         message = response.SerializePartialToString()
         return message
 
 
 
-    def send_qos_response(self, ok, vlan_interface, soprio):
+    def send_qos_response(self, ok, vlan_interface, soprio, txoffsetmin, txoffsetmax):
 
-        message = self.build_qos_response(ok, vlan_interface, soprio)
+        message = self.build_qos_response(ok, vlan_interface, soprio, txoffsetmin, txoffsetmax)
         self.send(message)
 
 
@@ -245,9 +247,9 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
         config = Configuration(interface, stream, traffic, options)
 
-        vlan_interface, soprio = self.server.manager.add_talker(config)
+        vlan_interface, soprio, txoffsetmin, txoffsetmax = self.server.manager.add_talker(config)
 
-        return vlan_interface, soprio
+        return vlan_interface, soprio, txoffsetmin, txoffsetmax
 
 
     def _mock_add_talker(self, request):
@@ -273,9 +275,9 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
             config = Configuration(interface, stream, traffic)
 
-            vlan_interface, soprio = self.server.manager.add_talker(config)
+            vlan_interface, soprio, txoffsetmin, txoffsetmax = self.server.manager.add_talker(config)
 
-        return vlan_interface, soprio
+        return vlan_interface, soprio, txoffsetmin, txoffsetmax
 
 
     def _add_talker_socket(self, request):
@@ -325,7 +327,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         elif request.setup_socket == False:
             try:
                 ok = False
-                vlan_interface, soprio = self.add_talker(request)
+                vlan_interface, soprio, txoffsetmin, txoffsetmax = self.add_talker(request)
                 ok = True
             except Exception as ex:
                 logger.exception("Exception raised while setting up a talker")
@@ -333,8 +335,10 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
             if not ok:
                 vlan_interface = None
                 soprio = None
+                txoffsetmin = None
+                txoffsetmax = None
 
             try:
-                self.send_qos_response(ok, vlan_interface, soprio)
+                self.send_qos_response(ok, vlan_interface, soprio, txoffsetmin, txoffsetmax)
             except Exception as ex:
                 logger.exception("Exception raised while sending the QoS response after setting up a talker")

@@ -148,10 +148,12 @@ class TestService(unittest.TestCase):
 
         configuration = setup_configuration(self.mode)
 
-        vlan_interface, soprio = self.proxy.add_talker(configuration)
+        vlan_interface, soprio, txoffsetmin, txoffsetmax = self.proxy.add_talker(configuration)
 
         self.assertEqual(vlan_interface, "eth1.3")
         self.assertEqual(soprio, 7)
+        self.assertEqual(txoffsetmin, configuration.stream.txoffset-configuration.interface.device.hardware_delay_max)
+        self.assertEqual(txoffsetmax, configuration.stream.txoffset-configuration.interface.device.hardware_delay_min)
 
 
 
