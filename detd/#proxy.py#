@@ -67,7 +67,7 @@ class ServiceProxy:
 #            self.sock.close()
 
 
-    def recv(self):
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            def recv(self):
         message, addr = self.sock.recvfrom(1024)
 
         return message
