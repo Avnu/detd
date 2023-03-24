@@ -163,12 +163,12 @@ class Service(socketserver.UnixDatagramServer):
 class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
 
-    def setup(self):
+    def setup_talker(self):
 
         logger.info("============================== REQUEST DISPATCHED ==================================")
         logger.info("Setting up ServiceRequestHandler")
 
-        super().setup()
+        super().setup_talker()
 
         if self.server.test_mode:
             self.add_talker = self._mock_add_talker
@@ -176,6 +176,20 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         else:
             self.add_talker = self._add_talker
             self.add_talker_socket = self._add_talker_socket
+
+    def setup_listener(self):
+
+        logger.info("============================== REQUEST DISPATCHED ==================================")
+        logger.info("Setting up ServiceRequestHandler (listener)")
+
+        super().setup_listener()
+
+        if self.server.test_mode:
+            self.add_listener = self._mock_add_listener
+            self.add_listener_socket = self._mock_add_listener_socket
+        else:
+            self.add_listener = self._add_listener
+            self.add_listener_socket = self._add_listener_socket
 
 
     def send(self, msg):
