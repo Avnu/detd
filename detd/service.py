@@ -168,7 +168,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         logger.info("============================== REQUEST DISPATCHED ==================================")
         logger.info("Setting up ServiceRequestHandler")
 
-        super().setup_listener()
+        super().setup()
 
         if self.server.test_mode:
             self.add_talker = self._mock_add_talker
