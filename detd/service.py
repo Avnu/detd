@@ -344,6 +344,11 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
         return vlan_interface, soprio
 
+    def _add_listener_socket(self, request):
+        # FIXME: complete once manager implements setup socket
+        raise
+
+    
     def _mock_add_listener(self, request):
 
         with mock.patch.object(QdiscConfigurator,  'setup', return_value=None), \
