@@ -163,31 +163,21 @@ class Service(socketserver.UnixDatagramServer):
 class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
 
-    def setup_talker(self):
+    def setup(self): #this does not run, causing a problem in handle()
 
         logger.info("============================== REQUEST DISPATCHED ==================================")
         logger.info("Setting up ServiceRequestHandler")
 
-        super().setup_talker()
+        super().setup_listener()
 
         if self.server.test_mode:
             self.add_talker = self._mock_add_talker
             self.add_talker_socket = self._mock_add_talker_socket
-        else:
-            self.add_talker = self._add_talker
-            self.add_talker_socket = self._add_talker_socket
-
-    def setup_listener(self):
-
-        logger.info("============================== REQUEST DISPATCHED ==================================")
-        logger.info("Setting up ServiceRequestHandler (listener)")
-
-        super().setup_listener()
-
-        if self.server.test_mode:
             self.add_listener = self._mock_add_listener
             self.add_listener_socket = self._mock_add_listener_socket
         else:
+            self.add_talker = self._add_talker
+            self.add_talker_socket = self._add_talker_socket
             self.add_listener = self._add_listener
             self.add_listener_socket = self._add_listener_socket
 
@@ -381,7 +371,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
         return vlan_interface, soprio
     
-    def _mock_add_talker_socket(self, request):
+    def _mock_add_listener_socket(self, request):
         # FIXME: modify once manager implements setup socket
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_PRIORITY, 6)
