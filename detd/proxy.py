@@ -96,6 +96,7 @@ class ServiceProxy:
         request.txmin = configuration.stream.txoffset
         request.txmax = configuration.stream.txoffset
         request.setup_socket = setup_socket
+        request.talker = True
 
         message = request.SerializeToString()
         self.send(message)
@@ -129,6 +130,7 @@ class ServiceProxy:
         request.vid = configuration.stream.vid
         request.pcp = configuration.stream.pcp
         request.setup_socket = setup_socket
+        request.talker = False
 
         message = request.SerializeToString()
         self.send(message)

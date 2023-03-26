@@ -231,6 +231,14 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         self.send_fd(message, fd)
 
 
+    def receive_listener_qos_request(self):
+
+        data = self.packet
+        request = StreamListenerQosRequest()
+        request.ParseFromString(data)
+
+        return request
+
 
     def build_listener_qos_response(self, ok, vlan_interface=None, soprio=None, fd=None):
         response = StreamListenerQosResponse()
@@ -258,7 +266,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         message = self.build_Listener_qos_response(ok, fd=fd)
         self.send_fd(message, fd)
 
-    def receive_listener_qos_request(self):
+    def receive_qos_request(self):
 
         data = self.packet
         request = StreamListenerQosRequest()
@@ -397,7 +405,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
         #if talker/listener possible? through request?
         
-        if request.talker == True:
+        if request.listener == False:
             if request.setup_socket == True:
             # FIXME: perform actual configuration
             # Currently manager only supports non-socket config
@@ -436,7 +444,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
                 except Exception as ex:
                     logger.exception("Exception raised while sending the QoS response after setting up a talker")
 
-        elif request.talker == False:
+        elif request.listener == True:
             if request.setup_socket == True:
             # FIXME: perform actual configuration
             # Currently manager only supports non-socket config
