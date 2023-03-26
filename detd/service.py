@@ -442,7 +442,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
             # Currently manager only supports non-socket config
                 try:
                     ok = False
-                    sock = self.add_listener_socket(request)
+                    sock = self.add_listener_socket(listenerrequest)
                     ok = True
                 except Exception as ex:
                     logger.exception("Exception raised while setting up a listener socket")
@@ -461,7 +461,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
             elif request.setup_socket == False:
                 try:
                     ok = False
-                    vlan_interface, soprio = self.add_listener(request)
+                    vlan_interface, soprio = self.add_listener(listenerrequest)
                     ok = True
                 except Exception as ex:
                     logger.exception("Exception raised while setting up a listener")
