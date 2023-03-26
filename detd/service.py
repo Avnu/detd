@@ -249,7 +249,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
     def send_listener_qos_response(self, ok, vlan_interface, soprio):
 
-        message = self.build_Listener_qos_response(ok, vlan_interface, soprio)
+        message = self.build_listener_qos_response(ok, vlan_interface, soprio)
         self.send(message)
 
 
@@ -335,7 +335,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         interface_name = request.interface
 
         interface = Interface(interface_name)
-        stream = StreamConfiguration(addr, vid, pcp, txoffset)
+        stream = StreamConfiguration(addr, vid, pcp, 0)
         traffic = TrafficSpecification(interval, size)
 
         config = Configuration(interface, stream, traffic)
