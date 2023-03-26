@@ -11,6 +11,7 @@ message StreamQosRequest {
 	uint32 txmin = 7;
 	uint32 txmax = 8;
 	bool   setup_socket = 9;
+	bool talker = 0;
 	uint32 basetime = 10;
 }
 
@@ -28,6 +29,7 @@ message StreamListenerQosRequest {
 	uint32 vid = 3;
 	uint32 pcp = 4;
 	bool   setup_socket = 9;
+	bool talker = 1;
 }
 
 message StreamListenerQosResponse {

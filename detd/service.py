@@ -163,7 +163,7 @@ class Service(socketserver.UnixDatagramServer):
 class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
 
-    def setup(self): #this does not run, causing a problem in handle()
+    def setup(self):
 
         logger.info("============================== REQUEST DISPATCHED ==================================")
         logger.info("Setting up ServiceRequestHandler")
@@ -393,41 +393,84 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         logger.info("Handling request")
 
         request = self.receive_qos_request()
+        listenerrequest = self.receive_listener_qos_request()
 
-        if request.setup_socket == True:
+        #if talker/listener possible? through request?
+        
+        if request.listener == False:
+            if request.setup_socket == True:
             # FIXME: perform actual configuration
             # Currently manager only supports non-socket config
-            try:
-                ok = False
-                sock = self.add_talker_socket(request)
-                ok = True
-            except Exception as ex:
-                logger.exception("Exception raised while setting up a talker socket")
+                try:
+                    ok = False
+                    sock = self.add_talker_socket(request)
+                    ok = True
+                except Exception as ex:
+                    logger.exception("Exception raised while setting up a talker socket")
 
-            if not ok:
-                sock = None
+                if not ok:
+                    sock = None
 
-            try:
-                self.send_qos_socket_response(ok, sock)
-            except Exception as ex:
-                logger.exception("Exception raised while sending the QoS response after setting up a talker socket")
+                try:
+                    self.send_qos_socket_response(ok, sock)
+                except Exception as ex:
+                    logger.exception("Exception raised while sending the QoS response after setting up a talker socket")
 
-            self.mock_socket_cleanup(sock)
+                self.mock_socket_cleanup(sock)
 
 
-        elif request.setup_socket == False:
-            try:
-                ok = False
-                vlan_interface, soprio = self.add_talker(request)
-                ok = True
-            except Exception as ex:
-                logger.exception("Exception raised while setting up a talker")
+            elif request.setup_socket == False:
+                try:
+                    ok = False
+                    vlan_interface, soprio = self.add_talker(request)
+                    ok = True
+                except Exception as ex:
+                    logger.exception("Exception raised while setting up a talker")
 
-            if not ok:
-                vlan_interface = None
-                soprio = None
+                if not ok:
+                    vlan_interface = None
+                    soprio = None
 
-            try:
-                self.send_qos_response(ok, vlan_interface, soprio)
-            except Exception as ex:
-                logger.exception("Exception raised while sending the QoS response after setting up a talker")
+                try:
+                    self.send_qos_response(ok, vlan_interface, soprio)
+                except Exception as ex:
+                    logger.exception("Exception raised while sending the QoS response after setting up a talker")
+
+        elif request.listener == True:
+            if request.setup_socket == True:
+            # FIXME: perform actual configuration
+            # Currently manager only supports non-socket config
+                try:
+                    ok = False
+                    sock = self.add_listener_socket(request)
+                    ok = True
+                except Exception as ex:
+                    logger.exception("Exception raised while setting up a listener socket")
+
+                if not ok:
+                    sock = None
+
+                try:
+                    self.send_listener_qos_socket_response(ok, sock)
+                except Exception as ex:
+                    logger.exception("Exception raised while sending the QoS response after setting up a  socket")
+
+                self.mock_socket_cleanup(sock)
+
+
+            elif request.setup_socket == False:
+                try:
+                    ok = False
+                    vlan_interface, soprio = self.add_listener(request)
+                    ok = True
+                except Exception as ex:
+                    logger.exception("Exception raised while setting up a listener")
+
+                if not ok:
+                    vlan_interface = None
+                    soprio = None
+
+                try:
+                    self.send_listener_qos_response(ok, vlan_interface, soprio)
+                except Exception as ex:
+                    logger.exception("Exception raised while sending the QoS response after setting up a listener")
