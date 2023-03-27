@@ -85,11 +85,11 @@ class Device:
         self.features = {}
 
 
-    def setup(self, interface, mapping, scheduler, stream, options):
+    def setup(self, interface, mapping, scheduler, stream):
         '''Performs the configuration of the talker stream provided.
         '''
 
-        self.systemconf.setup(interface, mapping, scheduler, stream, options)
+        self.systemconf.setup(interface, mapping, scheduler, stream)
 
 
     def get_rate(self, interface):
@@ -129,7 +129,3 @@ class Device:
 
     def supports_qbv(self):
         return Capability.Qbv in self.capabilities
-
-    
-    def supports_ltc(self):
-        return Capability.LTC in self.capabilities
