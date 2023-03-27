@@ -79,6 +79,7 @@ class Manager():
         logger.info(f"Initializing {__class__.__name__}")
 
         self.talker_manager = {}
+        self.listener_manager = {}
         self.lock = threading.Lock()
 
 
@@ -98,11 +99,11 @@ class Manager():
 
         logger.info("Adding listener to Manager")
 
-       #with self.lock:
+       with self.lock:
 
-         #   if not config.interface.name in self.talker_manager:
-          #      interface_manager = InterfaceManager(config.interface)
-           #     self.talker_manager[config.interface.name] = interface_manager
+            if not config.interface.name in self.listener_manager:
+                interface_manager = InterfaceManager(config.interface)
+                self.listener_manager[config.interface.name] = interface_manager
 
         return self.talker_manager[config.interface.name].add_listener(config)
 

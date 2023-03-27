@@ -336,7 +336,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
         interface = Interface(interface_name)
         stream = StreamConfiguration(addr, vid, pcp, 0)
-        traffic = TrafficSpecification(interval, size)
+        traffic = TrafficSpecification(0, 0)
 
         config = Configuration(interface, stream, traffic)
 
