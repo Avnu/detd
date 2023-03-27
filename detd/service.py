@@ -237,13 +237,12 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         interface_name = request.interface
 
         options = Options()
-        options.flag = request.flag
         options.qdiscmap = request.qdiscmap
         interface = Interface(interface_name)
         stream = StreamConfiguration(addr, vid, pcp, txoffset)
         traffic = TrafficSpecification(interval, size)
 
-        config = Configuration(interface, stream, traffic)
+        config = Configuration(interface, stream, traffic, options)
 
         vlan_interface, soprio = self.server.manager.add_talker(config)
 

@@ -131,7 +131,7 @@ class SystemConfigurator:
         return True
 
 
-    def setup(self, interface, mapping, scheduler, stream, options):
+    def setup(self, interface, mapping, scheduler, stream):
 
         logger.info("Setting up platform and devices")
 
@@ -147,7 +147,7 @@ class SystemConfigurator:
         # FIXME: consider other exceptions, e.g. TypeError
         try:
             # FIXME add qdisc reset
-            self.qdisc.setup(interface, mapping, scheduler, stream.base_time, options)
+            self.qdisc.setup(interface, mapping, scheduler, stream.base_time)
         except subprocess.CalledProcessError:
             raise
 
@@ -218,24 +218,14 @@ class QdiscConfigurator:
         pass
 
 
-    def setup(self, interface, mapping, scheduler, base_time, options):
+    def setup(self, interface, mapping, scheduler, base_time):
         tc = CommandTc()
 
-        if options is None or options.flag is None:
-            if interface.device.supports_qbv():
-                tc.set_taprio_offload(interface, mapping, scheduler, base_time)
-            elif interface.device.supports_ltc():
-                tc.set_taprio_txassist(interface, mapping, scheduler, base_time)
-            else:
-                tc.set_taprio_software(interface, mapping, scheduler, base_time)
+        if interface.device.supports_qbv():
+            tc.set_taprio_offload(interface, mapping, scheduler, base_time)
         else:
-            if interface.device.supports_qbv() and options.flag == "0x2":
-                tc.set_taprio_offload(interface, mapping, scheduler, base_time)
-            elif interface.device.supports_ltc() and options.flag == "0x1":
-                tc.set_taprio_txassist(interface, mapping, scheduler, base_time)
-            else:
-                tc.set_taprio_software(interface, mapping, scheduler, base_time)
-            #TODO: pass parameters from options in some way so taprio gets set up with the custom input
+            tc.set_taprio_software(interface, mapping, scheduler, base_time)
+
 
     def unset(self, interface):
         tc = CommandTc()

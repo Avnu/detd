@@ -44,7 +44,7 @@ class Interface:
         if not Check.is_interface(name):
             logger.error(f"{name} is not a valid network interface name")
             raise TypeError(f"{name} is not a valid network interface name")
-            
+
         self.name = name
 
         sysinfo = SystemInformation()
@@ -62,8 +62,8 @@ class Interface:
         return self.device.get_rate(self)
 
 
-    def setup(self, mapping, scheduler, stream, options):
-        self.device.setup(self, mapping, scheduler, stream, options)
+    def setup(self, mapping, scheduler, stream):
+        self.device.setup(self, mapping, scheduler, stream)
 
 
 
@@ -174,7 +174,7 @@ class InterfaceManager():
 
         # Configure the system
         try:
-            self.interface.setup(self.mapping, self.scheduler, config.stream, config.options)
+            self.interface.setup(self.mapping, self.scheduler, config.stream)
         except:
             # Leave the internal structures in a consistent state
             logger.error("Error applying the configuration on the system")
