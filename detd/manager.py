@@ -182,15 +182,11 @@ class InterfaceManager():
             self.mapping.unmap_and_free(soprio, traffic.tc, queue)
             raise RuntimeError("Error applying the configuration on the system")
 
-        #Calculate MAC offset
-        txoffsetmin = config.stream.txoffset - self.interface.device.hardware_delay_max
-        txoffsetmax = config.stream.txoffset - self.interface.device.hardware_delay_min
-        
         # FIXME: generate the name to use for the VLAN interface in the manager
         # instead of in the command string class.
 
         vlan_interface = "{}.{}".format(self.interface.name, config.stream.vid)
-        return vlan_interface, soprio, txoffsetmin, txoffsetmax
+        return vlan_interface, soprio
 
 
     # Unfortunately, not all devices accept base_time in the future, or base_time
