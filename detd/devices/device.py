@@ -62,12 +62,10 @@ class Device:
 
     """
 
-    def __init__(self, num_tx_queues, num_rx_queues, hardware_delay_min, hardware_delay_max):
+    def __init__(self, num_tx_queues, num_rx_queues):
         """
         num_tx_queues: number of Tx queues
         num_rx_queues: number of Rx queues
-        hardware_delay_min: minimum delay caused by hardware 
-        hardware_delay_max: maximum delay caused by hardware
         """
 
         self.systeminfo = SystemInformation()
@@ -79,9 +77,6 @@ class Device:
         self.num_rx_queues = num_rx_queues
         self.best_effort_tx_queues = list(range(0, num_tx_queues))
 
-
-        self.hardware_delay_min = hardware_delay_min
-        self.hardware_delay_max = hardware_delay_max
         # self.features
         # Taking the name from ethtool's "features" option.
         # Currently, the code just passes the key and value to ethtool.
