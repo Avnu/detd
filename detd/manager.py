@@ -99,7 +99,7 @@ class Manager():
 
         logger.info("Adding listener to Manager")
 
-       with self.lock:
+        with self.lock:
 
             if not config.interface.name in self.listener_manager:
                 interface_manager = InterfaceManager(config.interface)
