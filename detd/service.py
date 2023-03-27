@@ -243,7 +243,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         stream = StreamConfiguration(addr, vid, pcp, txoffset)
         traffic = TrafficSpecification(interval, size)
 
-        config = Configuration(interface, stream, traffic, options)
+        config = Configuration(interface, stream, traffic)
 
         vlan_interface, soprio = self.server.manager.add_talker(config)
 

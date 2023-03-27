@@ -22,7 +22,6 @@ import enum
 import math
 
 from .common import Check
-from .common import Options
 
 from .logger import get_logger
 
@@ -37,7 +36,7 @@ logger = get_logger(__name__)
 
 class Configuration:
 
-    def __init__(self, interface, stream, traffic, options = None):
+    def __init__(self, interface, stream, traffic, options = none):
 
         if stream.txoffset > traffic.interval:
             raise TypeError("Invalid TxOffset, it exceeds Interval")
