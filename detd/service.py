@@ -255,7 +255,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
     def send_listener_qos_socket_response(self, ok, fd):
 
-        message = self.build_Listener_qos_response(ok, fd=fd)
+        message = self.build_listener_qos_response(ok, fd=fd)
         self.send_fd(message, fd)
 
     def receive_listener_qos_request(self):
@@ -331,7 +331,10 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         addr = request.dmac
         vid = request.vid
         pcp = request.pcp
-
+        txoffset = 0
+        interval = 0
+        size = 0
+        
         interface_name = request.interface
 
         interface = Interface(interface_name)

@@ -105,7 +105,7 @@ class Manager():
                 interface_manager = InterfaceManager(config.interface)
                 self.listener_manager[config.interface.name] = interface_manager
 
-        return self.talker_manager[config.interface.name].add_listener(config)
+        return self.listener_manager[config.interface.name].add_listener(config)
 
 
 
