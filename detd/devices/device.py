@@ -91,7 +91,7 @@ class Device:
 
         self.systemconf.setup_talker(interface, mapping, scheduler, stream)
 
-    def setup_listener(self, interface, mapping, scheduler, stream):
+    def setup_listener(self, interface, stream):
         #maybe not needed
         self.systemconf.setup_listener(interface, stream)
 
