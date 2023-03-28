@@ -166,8 +166,8 @@ class SystemConfigurator:
 
         logger.info("Setting up platform and devices")
 
-        if not self.args_valid(interface, stream):
-            raise TypeError
+        #if not self.args_valid(interface, stream):
+        #    raise TypeError
 
         try:
             self.device.setup_listener(interface, eee="off")
