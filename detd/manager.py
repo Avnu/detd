@@ -199,6 +199,7 @@ class InterfaceManager():
         vlan_interface = "{}.{}".format(self.interface.name, config.stream.vid)
         return vlan_interface, soprio
 
+
     def add_listener(self, config):
         '''
         Performs the local configuration for the configuration provided
@@ -219,15 +220,11 @@ class InterfaceManager():
         logger.info("Adding listener to InterfaceManager")
 
 
-        # Retrieve device rate
-        try:
-           rate = self.interface.rate
-        except RuntimeError:
-            logger.exception("Error while retrieving device rate")
-            raise
+        #soprio, tc, queue = self.mapping.assign_and_map(config.stream.pcp, self.scheduler.traffics)
+        soprio = self.mapping.assign_soprio_and_map(config.stream.pcp)
 
         # Configure the system
-            self.interface.setup_listener(config.stream)
+        self.interface.setup_listener(config.stream)
         except RuntimeError:
             logger.error("Error applying the configuration on the system")
             raise
