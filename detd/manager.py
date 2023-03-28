@@ -224,7 +224,8 @@ class InterfaceManager():
         soprio = self.mapping.assign_soprio_and_map(config.stream.pcp)
 
         # Configure the system
-        self.interface.setup_listener(config.stream)
+        try:
+            self.interface.setup_listener(config.stream)
         except RuntimeError:
             logger.error("Error applying the configuration on the system")
             raise
