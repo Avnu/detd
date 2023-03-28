@@ -60,7 +60,8 @@ class CommandIp:
     def subscribe_multicast(self):
         dmac = "00:c0:08:a2:d5:73"
         
-        cmd = "ip maddr add $dmac eth0"
+        #cmd = "ip maddr add $dmac eth0"
+        cmd = "ip maddr add 00:c0:08:a2:d5:73 enp173s0"
 
         self.run(str(cmd))
 
