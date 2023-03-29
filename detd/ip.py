@@ -46,8 +46,8 @@ class CommandIp:
 
     def set_vlan_ingress(self, interface, stream, mapping):
 
-        soprio_to_pcp = transform_soprio_to_pcp(mapping.soprio_to_pcp)
-        cmd = CommandStringIpLinkSetVlanIngress(interface.name, stream.vid, soprio_to_pcp)
+        #soprio_to_pcp = transform_soprio_to_pcp(mapping.soprio_to_pcp)
+        cmd = CommandStringIpLinkSetVlanIngress(interface.name, stream.vid)
 
         self.run(str(cmd))
         
@@ -117,8 +117,7 @@ class CommandStringIpLinkSetVlanIngress (CommandString):
 
         params = {
             'device'        : device,
-            'id'            : vid,
-            'soprio_to_pcp' : soprio_to_pcp
+            'id'            : vid
         }
 
         super().__init__(template, params)

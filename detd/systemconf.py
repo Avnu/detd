@@ -171,6 +171,7 @@ class SystemConfigurator:
 
         try:
             self.device.setup_listener(interface, eee="off")
+            
         except subprocess.CalledProcessError:
             # FIXME add device restore
             raise
@@ -187,7 +188,7 @@ class SystemConfigurator:
             return
 
         try:
-            #self.vlan.setup_talker(interface, stream, mapping)
+            self.vlan.setup_listener(interface, stream)
             self.already_configured_vids.append(stream.vid)
         except subprocess.CalledProcessError:
             self.qdisc.unset(interface)
@@ -253,7 +254,7 @@ class VlanConfigurator:
 
         ip.set_vlan(interface, stream, mapping)
 
-    def setup_talker(self, interface, stream, mapping):
+    def setup_listener(self, interface, stream, mapping):
         ip = CommandIp()
 
         ip.set_vlan_ingress(interface, stream, mapping)
