@@ -104,7 +104,7 @@ class CommandStringIpLinkSetVlan (CommandString):
 
 class CommandStringIpLinkSetVlanIngress (CommandString):
 
-    def __init__(self, device, vid, soprio_to_pcp):
+    def __init__(self, device, vid):
 
         template = '''
             ip link add
