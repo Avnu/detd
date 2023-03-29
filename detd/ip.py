@@ -61,7 +61,7 @@ class CommandIp:
         dmac = "00:c0:08:a2:d5:73"
         
         #cmd = "ip maddr add $dmac eth0"
-        cmd = "ip maddr add 01-1B-19-00-00-00 enp173s0"
+        cmd = "ip maddr add 226.255.0.1 enp173s0"
 
         self.run(str(cmd))
 
