@@ -63,7 +63,7 @@ class CommandIp:
         #cmd = "ip maddr add $dmac eth0"
         cmd = "ip maddr add 226.255.0.1 enp173s0"
 
-        self.run(str(cmd))
+        #self.run(str(cmd))
 
 
 def transform_soprio_to_pcp(soprio_to_pcp):
