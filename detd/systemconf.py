@@ -254,10 +254,10 @@ class VlanConfigurator:
 
         ip.set_vlan(interface, stream, mapping)
 
-    def setup_listener(self, interface, stream, mapping):
+    def setup_listener(self, interface, stream):
         ip = CommandIp()
 
-        ip.set_vlan_ingress(interface, stream, mapping)
+        ip.set_vlan_ingress(interface, stream)
 
 
     def unset(self, interface, stream):
