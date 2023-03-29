@@ -177,17 +177,17 @@ class SystemConfigurator:
 
         #this is the important difference
         # FIXME: consider other exceptions, e.g. TypeError
-        try:
+        #try:
             # FIXME add qdisc reset
-            self.qdisc.setup(interface, mapping, scheduler, stream.base_time)
-        except subprocess.CalledProcessError:
-            raise
+        #    self.qdisc.setup(interface, mapping, scheduler, stream.base_time)
+        #except subprocess.CalledProcessError:
+        #    raise
 
         if stream.vid in self.already_configured_vids:
             return
 
         try:
-            self.vlan.setup_talker(interface, stream, mapping)
+            #self.vlan.setup_talker(interface, stream, mapping)
             self.already_configured_vids.append(stream.vid)
         except subprocess.CalledProcessError:
             self.qdisc.unset(interface)
