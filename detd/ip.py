@@ -58,7 +58,7 @@ class CommandIp:
         self.run(str(cmd))
 
     def subscribe_multicast(self):
-        cmd = "ip maddr add 239.1.1.1 enp173s0"
+        cmd = "ip maddr add 33:33:EF:01:01:01 dev enp173s0"
 
         self.run(str(cmd))
 
