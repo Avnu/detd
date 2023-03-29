@@ -113,7 +113,6 @@ class CommandStringIpLinkSetVlanIngress (CommandString):
                     type     vlan
                     protocol 802.1Q
                     id       $id
-                    egress   $soprio_to_pcp
                     ingress  0:0 1:1 2:2 3:3 4:4 5:5 6:7 7:7'''
 
         params = {
