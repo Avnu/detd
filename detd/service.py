@@ -39,6 +39,7 @@ from .manager import Interface
 from .manager import Manager
 
 from .scheduler import Configuration
+from .scheduler import ListenerConfiguration
 from .scheduler import StreamConfiguration
 from .scheduler import TrafficSpecification
 
