@@ -131,7 +131,7 @@ class ServiceProxy:
         request.pcp = configuration.stream.pcp
         request.setup_socket = setup_socket
         request.talker = False
-        request.maddress = cunfiguration.stream.maddress
+        request.maddress = configuration.maddress
 
         message = request.SerializeToString()
         self.send(message)
