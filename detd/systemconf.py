@@ -228,7 +228,7 @@ class DeviceConfigurator:
         ethtool.set_eee(interface, eee)
         ethtool.set_features_ingress(interface)
 
-        ip.subscribe_multicast(maddress)
+        ip.subscribe_multicast(interface.name, maddress)
         
         if sysinfo.interface_supports_split_channels(interface):
             ethtool.set_split_channels(interface)
