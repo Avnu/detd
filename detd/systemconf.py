@@ -162,7 +162,7 @@ class SystemConfigurator:
             raise
 
 
-    def setup_listener(self, interface, stream):
+    def setup_listener(self, interface, stream, maddress):
 
         logger.info("Setting up platform and devices")
 
@@ -170,7 +170,7 @@ class SystemConfigurator:
         #    raise TypeError
 
         try:
-            self.device.setup_listener(interface, eee="off")
+            self.device.setup_listener(interface, maddress, eee="off")
             
         except subprocess.CalledProcessError:
             # FIXME add device restore
@@ -219,7 +219,7 @@ class DeviceConfigurator:
 
         ethtool.set_rings(interface)
 
-    def setup_listener(self, interface, eee="off"):
+    def setup_listener(self, interface, maddress, eee="off"):
 
         sysinfo = SystemInformation()
         ip = CommandIp()
@@ -228,7 +228,7 @@ class DeviceConfigurator:
         ethtool.set_eee(interface, eee)
         ethtool.set_features_ingress(interface)
 
-        ip.subscribe_multicast()
+        ip.subscribe_multicast(maddress)
         
         if sysinfo.interface_supports_split_channels(interface):
             ethtool.set_split_channels(interface)

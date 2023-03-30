@@ -65,8 +65,8 @@ class Interface:
     def setup_talker(self, mapping, scheduler, stream):
         self.device.setup_talker(self, mapping, scheduler, stream)
 
-    def setup_listener(self, stream):
-        self.device.setup_listener(self, stream)
+    def setup_listener(self, stream, maddress):
+        self.device.setup_listener(self, stream, maddress)
 
 
 
@@ -225,7 +225,7 @@ class InterfaceManager():
 
         # Configure the system
         try:
-            self.interface.setup_listener(config.stream)
+            self.interface.setup_listener(config.stream, config.maddr)
         except RuntimeError:
             logger.error("Error applying the configuration on the system")
             raise
