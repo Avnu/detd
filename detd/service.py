@@ -342,7 +342,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         stream = StreamConfiguration(addr, vid, pcp, 0)
         traffic = TrafficSpecification(0, 0)
 
-        config = Configuration(interface, stream, traffic, maddress)
+        config = ListenerConfiguration(interface, stream, traffic, maddress)
 
         #add maddr
         vlan_interface, soprio = self.server.manager.add_listener(config)
