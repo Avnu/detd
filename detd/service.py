@@ -334,6 +334,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         txoffset = 0
         interval = 0
         size = 0
+        maddress = request.maddress
         
         interface_name = request.interface
 
@@ -341,8 +342,9 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         stream = StreamConfiguration(addr, vid, pcp, 0)
         traffic = TrafficSpecification(0, 0)
 
-        config = Configuration(interface, stream, traffic)
+        config = Configuration(interface, stream, traffic, maddress)
 
+        #add maddr
         vlan_interface, soprio = self.server.manager.add_listener(config)
 
         return vlan_interface, soprio
