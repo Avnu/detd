@@ -225,7 +225,7 @@ class InterfaceManager():
 
         # Configure the system
         try:
-            self.interface.setup_listener(config.stream, config.maddr)
+            self.interface.setup_listener(config.stream, config.maddress)
         except RuntimeError:
             logger.error("Error applying the configuration on the system")
             raise
