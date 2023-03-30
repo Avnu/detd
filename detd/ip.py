@@ -58,7 +58,8 @@ class CommandIp:
         self.run(str(cmd))
 
     def subscribe_multicast(self):
-        cmd = "ip maddr add 33:33:EF:01:01:01 dev enp173s0"
+#        cmd = "ip maddr add 33:33:EF:01:01:01 dev enp173s0"
+        cmd = CommandStringSubscribeMulticast(interface.name, "33:33:EF:01:01:01")
 
         self.run(str(cmd))
 
@@ -129,6 +130,19 @@ class CommandStringIpLinkUnsetVlan (CommandString):
         params = {
             'device' : device,
             'id'     : vid
+        }
+
+        super().__init__(template, params)
+
+class CommandStringSubscribeMulticast (CommandString):
+
+    def __init__(self, device, maddress):
+
+        template = '''ip maddr add $maddress dev $device'''
+
+        params = {
+            'device'        : device,
+            'maddress'      : maddress
         }
 
         super().__init__(template, params)
