@@ -1,0 +1,71 @@
+' SPDX-License-Identifier: BSD-3-Clause
+' Copyright(C) 2022-2023 Intel Corporation
+' Authors:
+'   Hector Blanco Alcaine
+
+
+
+
+@startuml
+
+
+actor Developer as developer
+
+box "Workstation"
+  boundary "Engineering Application" as engapp
+end box
+
+
+box "Talker End Station (non-bridged)"
+  control "Engineering Application Runtime" as runtime
+  entity "Talker" as talker
+  control "Local Configuration" as localconf
+  control "Remote Configuration" as remoteconf
+end box
+
+
+box "CNC"
+  control "CNC" as cnc
+end box
+
+
+box "Infrastructure"
+  collections "Bridges" as bridges
+end box
+
+
+== Initialization ==
+
+developer -> engapp : blueprint schedule, mapping, etc
+engapp -> cnc : blueprint schedule, mapping, etc
+cnc -> bridges :  blueprint schedule, mapping, etc
+
+engapp -> runtime : blueprint schedule, mapping, etc
+runtime -> localconf : blueprint schedule, mapping, etc
+
+
+== Talker request ==
+
+developer -> engapp : workloads \n stream qos requirements for workloads
+
+engapp -> runtime : workload \n stream qos requirements for workload
+
+runtime -> talker : spawn
+activate talker #DarkSalmon
+runtime -> talker : stream qos requirements
+
+talker -> remoteconf : stream qos requirements
+
+remoteconf -> cnc: stream qos requirements for workload
+cnc -> cnc : calculate new network configuration
+cnc -> bridges : configuration (e.g. GCLs)
+bridges -> bridges :  apply(configuration)
+cnc -> remoteconf : configuration (e.g. streamId, txOffset)
+
+remoteconf -> talker : configuration
+
+talker -> localconf : apply(configuration)
+localconf -> talker : handler
+
+
+@enduml
