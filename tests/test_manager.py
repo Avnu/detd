@@ -232,7 +232,7 @@ class TestManager(unittest.TestCase):
 
         config = setup_config(self.mode)
 
-        with RunContext(self.mode, vlan_exc=subprocess.CalledProcessError(1, "ip")):
+        with RunContext(self.mode, vlan_exc=ValueError("Interface could not be found")):
             manager = Manager()
 
             self.assertRaises(RuntimeError, manager.add_talker, config)

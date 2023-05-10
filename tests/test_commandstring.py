@@ -8,8 +8,6 @@ import inspect
 import re
 import unittest
 
-from detd import CommandStringIpLinkSetVlan
-from detd import CommandStringIpLinkUnsetVlan
 from detd import CommandStringEthtoolFeatures
 from detd import CommandStringEthtoolGetChannelsInformation
 from detd import CommandStringEthtoolSetCombinedChannels
@@ -30,42 +28,6 @@ class TestCommandString(unittest.TestCase):
         harmonized_another = re.sub('\s+', ' ', str(another).strip())
 
         self.assertEqual(harmonized_one, harmonized_another)
-
-
-
-
-    def test_iplinksetvlan(self):
-
-        interface_name = "eth0"
-        stream_vid = 3
-        soprio_to_pcp = "0:7 1:6 2:5 3:4 4:3 5:2 6:1 7:0"
-
-        cmd = CommandStringIpLinkSetVlan(interface_name, stream_vid, soprio_to_pcp)
-        expected = """
-            ip link add
-                    link     eth0
-                    name     eth0.3
-                    type     vlan
-                    protocol 802.1Q
-                    id       3
-                    egress   0:7 1:6 2:5 3:4 4:3 5:2 6:1 7:0"""
-
-        self.assert_commandstring_equal(cmd, expected)
-
-
-
-
-    def test_iplinkunsetvlan(self):
-
-        interface_name = "eth0"
-        stream_vid = 3
-
-        cmd = CommandStringIpLinkUnsetVlan(interface_name, stream_vid)
-        expected = "ip link delete eth0.3"
-
-        self.assert_commandstring_equal(cmd, expected)
-
-
 
 
     def test_ethtoolfeatures(self):
