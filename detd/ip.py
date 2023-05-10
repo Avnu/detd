@@ -39,8 +39,22 @@ class CommandIp:
         if parent_interface_index is None:
             raise ValueError("Interface {} could not be found".format(interface.name))
 
+        link_info = get_link_info(name)
+        if link_info:
+            # VLAN interface already exists, check for incompatible configuration
+            if get_ip_attr(link_info, 'IFLA_INFO_KIND') != 'vlan':
+                raise Exception("Existing interface {} has no VLAN link info".format(name))
+
+            info_data = get_ip_attr(link_info, 'IFLA_INFO_DATA')
+
+            if get_ip_attr(info_data, 'IFLA_VLAN_PROTOCOL') != ETH_P_8021Q:
+                raise Exception("Existing interface {} is not a 802.1Q VLAN interface".format(name))
+
+            if get_ip_attr(info_data, 'IFLA_VLAN_ID') != stream.vid:
+                raise Exception("Existing interface {} does not have VLAN ID {}".format(name, stream.vid))
+
         ip = IPRoute()
-        ip.link('add',
+        ip.link('set' if link_info else 'add',
                 ifname = name,
                 kind = "vlan",
                 link = parent_interface_index,
@@ -72,4 +86,23 @@ def get_interface_index(name):
         return None
 
     return interface_index[0]
+
+
+def get_link_info(interface):
+    index = get_interface_index(interface)
+
+    if index is None:
+        return None
+
+    ip = IPRoute()
+    for link in ip.get_links(index):
+        return get_ip_attr(link, 'IFLA_LINKINFO')
+
+
+def get_ip_attr(data, key):
+    if any((subdata := attr)[0] == key for attr in data['attrs']):
+        return subdata[1]
+    else:
+        raise KeyError("Key {} not found".format(key))
+
 
