@@ -75,6 +75,13 @@ class Service(socketserver.UnixDatagramServer):
         try:
             self.setup_unix_domain_socket()
 
+            # Create directory for the socket file
+            try:
+               os.makedirs(os.path.dirname(_SERVICE_UNIX_DOMAIN_SOCKET))
+            except FileExistsError:
+               # directory already exists
+               pass
+
             super().__init__(_SERVICE_UNIX_DOMAIN_SOCKET, ServiceRequestHandler)
 
             self.test_mode = test_mode
