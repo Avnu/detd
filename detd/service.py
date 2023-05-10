@@ -72,16 +72,21 @@ class Service(socketserver.UnixDatagramServer):
         # We create the lock file even before calling parent's constructor
         self.setup_lock_file()
 
-        self.setup_unix_domain_socket()
+        try:
+            self.setup_unix_domain_socket()
 
-        super().__init__(_SERVICE_UNIX_DOMAIN_SOCKET, ServiceRequestHandler)
+            super().__init__(_SERVICE_UNIX_DOMAIN_SOCKET, ServiceRequestHandler)
 
-        self.test_mode = test_mode
+            self.test_mode = test_mode
 
-        self.manager = Manager()
+            self.manager = Manager()
 
-        signal.signal(signal.SIGINT, self.terminate)
-        signal.signal(signal.SIGTERM, self.terminate)
+            signal.signal(signal.SIGINT, self.terminate)
+            signal.signal(signal.SIGTERM, self.terminate)
+        except Exception as ex:
+            self.cleanup_lock_file()
+            logger.exception("Exception while initializing service")
+            raise
 
 
     def setup_lock_file(self):
@@ -142,7 +147,9 @@ class Service(socketserver.UnixDatagramServer):
             if os.path.exists(self.server_address):
                 raise
 
+        self.cleanup_lock_file()
 
+    def cleanup_lock_file(self):
         # Clean-up lock file
         if not Check.is_valid_file(Service._SERVICE_LOCK_FILE):
             logger.error(f"{Service.SERVICE_LOCK_FILE} is not a valid file")
