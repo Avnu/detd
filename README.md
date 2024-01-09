@@ -346,6 +346,16 @@ tail /var/log/detd.log
 At this point the service is ready to receive requests.
 
 
+#### Docker
+
+To avoid installing all build dependencies locally, you can also use Docker for building the Debian package:
+
+```
+docker build -f tools/Dockerfile . -t detd_builder
+docker run --name detd_build_container detd_builder
+docker cp detd_build_container:/tmp/detd_0.1.dev0-1_all.deb ./
+docker rm detd_build_container
+```
 
 #### pip
 
