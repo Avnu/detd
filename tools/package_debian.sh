@@ -9,8 +9,7 @@
 # Generates a rudimentary deb package to facilitate installations on Debian
 # based distributions. The package is then copied to /tmp
 
-
-
+set -e # exit early on errors
 
 function usage () {
    echo "Usage:"
