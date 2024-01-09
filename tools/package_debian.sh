@@ -49,6 +49,7 @@ function create_deb () {
 	# E.g. detd-0.1.dev0 (PKG: detd, VERSION: 0.1.dev0)
 	PKG=$(awk '/^name/{print $3}' ./setup.cfg)
 	VERSION=$(awk '/^version/{print $3}' ./setup.cfg)
+	REVISION=1
 	ID="${PKG}-${VERSION}"
 
 
@@ -61,7 +62,9 @@ function create_deb () {
 
 	# Generate and customize the debian directory
 	cd ${TMPDIR}/${ID}
-	debmake --binaryspec ':py3' --email ${EMAIL} --fullname ${FULLNAME} --spec
+	debmake --binaryspec ':py3' --email ${EMAIL} --fullname ${FULLNAME} --spec --revision ${REVISION}
+
+	ARCHITECTURE=`grep -Po 'Architecture: \K\S+' debian/control`
 
 	cp ${TMPDIR}/detd.service debian/
 
@@ -82,10 +85,11 @@ function create_deb () {
 
 	# Generate the deb, make it available and perform clean-up
 	fakeroot debian/rules binary
-	dpkg --contents ../*deb
-	dpkg -I ../*deb
-	cp ../*deb /tmp
-	echo "The deb package is now available in /tmp"
+	FILENAME=${PKG}_${VERSION}-${REVISION}_${ARCHITECTURE}.deb
+	dpkg --contents ../${FILENAME}
+	dpkg -I ../${FILENAME}
+	cp ../${FILENAME} /tmp
+	echo "The deb package is now available at /tmp/${FILENAME}"
 
 	rm -rf ${TMPDIR}
 
