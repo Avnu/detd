@@ -9,8 +9,7 @@
 # Generates a rudimentary deb package to facilitate installations on Debian
 # based distributions. The package is then copied to /tmp
 
-
-
+set -e # exit early on errors
 
 function usage () {
    echo "Usage:"
@@ -50,6 +49,7 @@ function create_deb () {
 	# E.g. detd-0.1.dev0 (PKG: detd, VERSION: 0.1.dev0)
 	PKG=$(awk '/^name/{print $3}' ./setup.cfg)
 	VERSION=$(awk '/^version/{print $3}' ./setup.cfg)
+	REVISION=1
 	ID="${PKG}-${VERSION}"
 
 
@@ -62,7 +62,9 @@ function create_deb () {
 
 	# Generate and customize the debian directory
 	cd ${TMPDIR}/${ID}
-	debmake --binaryspec ':py3' --email ${EMAIL} --fullname ${FULLNAME} --spec
+	debmake --binaryspec ':py3' --email ${EMAIL} --fullname ${FULLNAME} --spec --revision ${REVISION}
+
+	ARCHITECTURE=`grep -Po 'Architecture: \K\S+' debian/control`
 
 	cp ${TMPDIR}/detd.service debian/
 
@@ -77,16 +79,17 @@ function create_deb () {
 
 	echo -e "\tdh_installsystemd" >> debian/rules
 	# Restart detd when the application is upgraded
-	echo -e "\noverride_dh_systemd_start:\n\tdh_systemd_start --restart-after-upgrade" >> debian/rules
+	echo -e "\noverride_dh_installsystemd:\n\tdh_installsystemd --restart-after-upgrade" >> debian/rules
 	# Force xz for compression, to prevent installation issues with Zstandard
 	echo -e "\noverride_dh_builddeb:\n\tdh_builddeb -- -Zxz" >> debian/rules
 
 	# Generate the deb, make it available and perform clean-up
 	fakeroot debian/rules binary
-	dpkg --contents ../*deb
-	dpkg -I ../*deb
-	cp ../*deb /tmp
-	echo "The deb package is now available in /tmp"
+	FILENAME=${PKG}_${VERSION}-${REVISION}_${ARCHITECTURE}.deb
+	dpkg --contents ../${FILENAME}
+	dpkg -I ../${FILENAME}
+	cp ../${FILENAME} /tmp
+	echo "The deb package is now available at /tmp/${FILENAME}"
 
 	rm -rf ${TMPDIR}
 
