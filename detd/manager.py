@@ -86,7 +86,7 @@ class Manager():
         with self.lock:
 
             if not config.interface.name in self.talker_manager:
-                interface_manager = InterfaceManager(config.interface)
+                interface_manager = InterfaceManager(config.interface, config.options)
                 self.talker_manager[config.interface.name] = interface_manager
 
             return self.talker_manager[config.interface.name].add_talker(config)
@@ -96,12 +96,17 @@ class Manager():
 
 class InterfaceManager():
 
-    def __init__(self, interface):
+    def __init__(self, interface, options):
 
         logger.info(f"Initializing {__class__.__name__}")
 
         self.interface = interface
-        self.mapping = Mapping(self.interface)
+        self.options = options
+        
+        if self.options.qdiscmap == "nomap":
+            self.mapping = Mapping(self.interface)
+        else:
+            self.mapping = Mapping(self.interface, self.options)
         self.scheduler = Scheduler(self.mapping)
 
 

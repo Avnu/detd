@@ -224,7 +224,7 @@ class QdiscConfigurator:
         if interface.device.supports_qbv():
             tc.set_taprio_offload(interface, mapping, scheduler, base_time)
         else:
-            raise NotImplementedError("tc.set_taprio_software() not implemented")
+            tc.set_taprio_software(interface, mapping, scheduler, base_time)
 
 
     def unset(self, interface):
