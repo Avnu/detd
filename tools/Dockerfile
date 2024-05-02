@@ -10,11 +10,12 @@ RUN apt-get update --fix-missing && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-ADD . /usr/local/src/detd/
+# Copy the detd to the container.
+ADD tmp_detd /usr/local/src/detd/
 
 WORKDIR /usr/local/src/detd/tools
 
-# Work around bug in debmake
+# Work around bug in debmake.
 RUN ln -s /usr/lib/debmake/python3.short /usr/lib/debmakepython3.short
 RUN ln -s /usr/lib/debmake/python3.long /usr/lib/debmakepython3.long
 
