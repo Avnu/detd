@@ -28,9 +28,7 @@ logger = get_logger(__name__)
 
 
 
-
-
-class MappingNaive():
+class MappingFlexible():
 
     """
     A class mapping the hardware and system resources (socket priorities,
@@ -209,7 +207,7 @@ class MappingNaive():
 
 
 
-class Mapping():
+class MappingFixed():
 
     """
     A class mapping the hardware and system resources (socket priorities,
@@ -245,15 +243,13 @@ class Mapping():
     """
 
 
-    def __init__(self, interface, options = None):
+    def __init__(self, interface):
 
         logger.info(f"Initializing {__class__.__name__}")
 
         # FIXME: make the number of Tx queues a parameter, so things are not hardcoded
 
         self.interface = interface
-        self.options = options
-
 
         # Socket priorities
 
@@ -357,10 +353,8 @@ class Mapping():
         for tc, soprio in enumerate(self.tc_to_soprio):
             mapping[soprio] = tc
         
-        if self.options is None:
-            return mapping
-        else:
-            return [int(x) for x in self.options.qdiscmap.split()]
+
+        return mapping
 
 
     def assign_and_map(self, pcp, traffics):

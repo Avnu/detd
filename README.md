@@ -213,14 +213,18 @@ def setup_stream_config():
     vid = 3
     pcp = 6
 
-    options = Options()
-    options.qdiscmap = "0 1 0 0 0 0 0 0 2 3 0 0 0 0 0 0"
+    preemption = False
+    launch_time_control = False
+    tx_selection_offload = False
+    datapath = DataPath.AF_PACKET
+    tx_selection = TxSelection.EST
 
     interface = Interface(interface_name)
     stream = StreamConfiguration(addr, vid, pcp, txoffset)
     traffic = TrafficSpecification(interval, size)
+    hints = Hints(tx_selection, tx_selection_offload, datapath, preemption, launch_time_control)
 
-    config = Configuration(interface, stream, traffic, options)
+    config = Configuration(interface, stream, traffic, hints)
 
     return config
 

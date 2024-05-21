@@ -39,14 +39,13 @@ from .manager import Manager
 from .scheduler import Configuration
 from .scheduler import StreamConfiguration
 from .scheduler import TrafficSpecification
+from .scheduler import Hints
 
 from .systemconf import Check
 from .systemconf import QdiscConfigurator
 from .systemconf import DeviceConfigurator
 from .systemconf import SystemInformation
 from .systemconf import CommandIp
-
-from .common import Options
 
 from .logger import setup_root_logger
 from .logger import get_logger
@@ -249,14 +248,19 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         interval = request.period
         size = request.size
         interface_name = request.interface
+        tx_selection = request.tx_selection
+        tx_selection_offload = request.tx_selection_offload
+        data_path = request.data_path
+        preemption = request.preemption
+        launch_time_control = request.launch_time_control
 
-        options = Options()
-        options.qdiscmap = request.qdiscmap
+
         interface = Interface(interface_name)
         stream = StreamConfiguration(addr, vid, pcp, txoffset)
         traffic = TrafficSpecification(interval, size)
+        hints = Hints(tx_selection, tx_selection_offload, data_path, preemption, launch_time_control)
 
-        config = Configuration(interface, stream, traffic, options)
+        config = Configuration(interface, stream, traffic, hints)
 
         vlan_interface, soprio = self.server.manager.add_talker(config)
 

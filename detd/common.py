@@ -181,12 +181,3 @@ class CommandString(collections.UserString):
         data = template.substitute(params).replace('\n', '')
 
         super().__init__(data)
-
-        
-class Options:
-    """Methods to assign parameters to passs into one convenient Object.
-       Used for: Passing parameters in Python script for manual customization of the qdisc. """
-    def __init__(self):
-        
-        self.qdiscmap = "nomap"
-        

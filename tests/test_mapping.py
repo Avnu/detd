@@ -7,8 +7,7 @@
 import unittest
 
 from detd import Interface
-from detd import Mapping
-from detd import MappingNaive
+from detd import MappingFlexible
 
 import os
 
@@ -39,7 +38,7 @@ class TestManager(unittest.TestCase):
             interface = Interface(interface_name)
             tc = None
 
-            mapping = MappingNaive(interface)
+            mapping = MappingFlexible(interface)
             expected_tc_to_hwq_mapping = [ {"offset":0, "num_queues":8} ]
             self.assertEqual(mapping.tc_to_hwq, expected_tc_to_hwq_mapping)
 
@@ -118,7 +117,7 @@ class TestManager(unittest.TestCase):
             interface = Interface(interface_name)
             tc = None
 
-            mapping = MappingNaive(interface)
+            mapping = MappingFlexible(interface)
             mapping.assign_queue_and_map(tc)
             mapping.assign_queue_and_map(tc)
             mapping.assign_queue_and_map(tc)

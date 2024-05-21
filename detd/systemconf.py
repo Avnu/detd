@@ -61,6 +61,7 @@ from .common import Mbps_to_bps
 
 from .logger import get_logger
 
+from .scheduler import TxSelection
 
 logger = get_logger(__name__)
 
@@ -87,7 +88,7 @@ class SystemConfigurator:
         self.already_configured_vids = []
 
 
-    def args_valid(self, interface, mapping, scheduler, stream):
+    def args_valid(self, interface, mapping, scheduler, stream, hints):
 
         if not Check.is_interface(interface.name):
             return False
@@ -131,11 +132,11 @@ class SystemConfigurator:
         return True
 
 
-    def setup(self, interface, mapping, scheduler, stream):
+    def setup(self, interface, mapping, scheduler, stream, hints):
 
         logger.info("Setting up platform and devices")
 
-        if not self.args_valid(interface, mapping, scheduler, stream):
+        if not self.args_valid(interface, mapping, scheduler, stream, hints):
             raise TypeError
 
         try:
@@ -147,7 +148,7 @@ class SystemConfigurator:
         # FIXME: consider other exceptions, e.g. TypeError
         try:
             # FIXME add qdisc reset
-            self.qdisc.setup(interface, mapping, scheduler, stream.base_time)
+            self.qdisc.setup(interface, mapping, scheduler, stream.base_time, hints)
         except subprocess.CalledProcessError:
             raise
 
@@ -218,14 +219,21 @@ class QdiscConfigurator:
         pass
 
 
-    def setup(self, interface, mapping, scheduler, base_time):
+    def setup(self, interface, mapping, scheduler, base_time, hints):
         tc = CommandTc()
 
-        if interface.device.supports_qbv():
-            tc.set_taprio_offload(interface, mapping, scheduler, base_time)
+        if hints.tx_selection == TxSelection.EST:
+            if hints.tx_selection_offload == True:
+                tc.set_taprio_offload(interface, mapping, scheduler, base_time)
+            elif hints.launch_time_control == True:
+                raise NotImplementedError("The handler class for the device must implement this function")
+            else:
+                tc.set_taprio_software(interface, mapping, scheduler, base_time)
+        
+        elif hints.tx_selection == TxSelection.STRICT_PRIO:
+            raise NotImplementedError("The handler class for the device must implement this function")
         else:
-            tc.set_taprio_software(interface, mapping, scheduler, base_time)
-
+            raise RuntimeError("Incorrect Hints provided")
 
     def unset(self, interface):
         tc = CommandTc()

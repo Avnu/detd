@@ -12,7 +12,11 @@ message StreamQosRequest {
 	uint32 txmax = 8;
 	bool   setup_socket = 9;
 	uint32 basetime = 10;
-	string qdiscmap = 11;
+	uint32 tx_selection = 11;
+	bool tx_selection_offload = 12;
+	uint32 data_path = 13;
+	bool preemption = 14;
+	bool launch_time_control = 15;
 }
 
 
