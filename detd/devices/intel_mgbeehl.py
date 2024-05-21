@@ -16,6 +16,9 @@ from ..logger import get_logger
 from .device import Capability
 from .device import Device
 
+from ..scheduler import DataPath
+from ..scheduler import TxSelection
+from ..scheduler import Hints
 
 logger = get_logger(__name__)
 
@@ -44,6 +47,7 @@ class IntelMgbeEhl(Device):
     # Make sure to expose this in your device class.
     PCI_IDS = PCI_IDS_HOST + PCI_IDS_PSE
 
+    CAPABILITIES = [Capability.Qbv, Capability.LTC, Capability.Qbu]
 
     # FIXME support for listener stream
     # If the stream is time aware, flows should be configured for PTP traffic
@@ -65,6 +69,8 @@ class IntelMgbeEhl(Device):
         self.num_tx_ring_entries = 1024
         self.num_rx_ring_entries = 1024
 
+        self.capabilities = [Capability.Qbv, Capability.LTC, Capability.Qbu]
+
         # Please note other features are currently set for all devices in the
         # systemconf module.
         # For example, Energy Efficient Ethernet is disabled for all devices.
@@ -79,3 +85,14 @@ class IntelMgbeEhl(Device):
         # FIXME: check additional constraints, like maximum cycle time
 
         return True
+    
+    def default_hints(self):
+        '''Returns device supported default Hints.
+        '''
+        preemption = False
+        launch_time_control = False
+        tx_selection_offload = True
+        datapath = DataPath.AF_PACKET
+        tx_selection = TxSelection.EST
+        
+        return Hints(tx_selection, tx_selection_offload ,datapath, preemption, launch_time_control)

@@ -23,8 +23,12 @@ import time
 from .scheduler import Scheduler
 from .scheduler import Traffic
 from .scheduler import TrafficType
+
+from .scheduler import TxSelection
+
 from .systemconf import SystemInformation
-from .mapping import Mapping
+from .mapping import MappingFixed
+from .mapping import MappingFlexible
 from .common import Check
 
 from .devices import device
@@ -62,8 +66,8 @@ class Interface:
         return self.device.get_rate(self)
 
 
-    def setup(self, mapping, scheduler, stream):
-        self.device.setup(self, mapping, scheduler, stream)
+    def setup(self, mapping, scheduler, stream, hints):
+        self.device.setup(self, mapping, scheduler, stream, hints)
 
 
 
@@ -86,7 +90,7 @@ class Manager():
         with self.lock:
 
             if not config.interface.name in self.talker_manager:
-                interface_manager = InterfaceManager(config.interface, config.options)
+                interface_manager = InterfaceManager(config)
                 self.talker_manager[config.interface.name] = interface_manager
 
             return self.talker_manager[config.interface.name].add_talker(config)
@@ -96,19 +100,23 @@ class Manager():
 
 class InterfaceManager():
 
-    def __init__(self, interface, options):
+    def __init__(self, config):
 
         logger.info(f"Initializing {__class__.__name__}")
 
-        self.interface = interface
-        self.options = options
-        
-        if self.options.qdiscmap == "nomap":
-            self.mapping = Mapping(self.interface)
-        else:
-            self.mapping = Mapping(self.interface, self.options)
-        self.scheduler = Scheduler(self.mapping)
+        self.interface = config.interface
+        self.hints = self._get_device_hints(config)
 
+        if self.hints.tx_selection == TxSelection.EST:
+            
+            if self.hints.tx_selection_offload == True:
+                self.mapping = MappingFixed(self.interface)
+            else:
+                self.mapping = MappingFlexible(self.interface)
+        else:
+            raise RuntimeError(f"Mapping not defined for{self.hints.tx_selection}")
+        
+        self.scheduler = Scheduler(self.mapping)
 
     def add_talker(self, config):
         '''
@@ -174,7 +182,7 @@ class InterfaceManager():
 
         # Configure the system
         try:
-            self.interface.setup(self.mapping, self.scheduler, config.stream)
+            self.interface.setup(self.mapping, self.scheduler, config.stream, self.hints)
         except:
             # Leave the internal structures in a consistent state
             logger.error("Error applying the configuration on the system")
@@ -213,3 +221,14 @@ class InterfaceManager():
         safety_margin = multiple * period
 
         config.stream.base_time = (now + ns_until_next_cycle) + safety_margin
+
+    def _get_device_hints(self, config):
+
+        if config.hints is None or config.hints.hints_available == False:
+            # Get the device suggested default hints
+            hints = self.interface.device.default_hints()
+        else:
+            hints = self.interface.device.check_hints(config)
+
+        return hints
+

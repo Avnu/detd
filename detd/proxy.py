@@ -94,7 +94,16 @@ class ServiceProxy:
         request.txmin = configuration.stream.txoffset
         request.txmax = configuration.stream.txoffset
         request.setup_socket = setup_socket
-        request.qdiscmap = configuration.options.qdiscmap
+
+        if configuration.hints is not None:
+            request.hints_available = True
+            request.hints_tx_selection = configuration.hints.tx_selection.value
+            request.hints_tx_selection_offload = configuration.hints.tx_selection_offload
+            request.hints_data_path = configuration.hints.data_path.value
+            request.hints_preemption = configuration.hints.preemption
+            request.hints_launch_time_control = configuration.hints.launch_time_control
+        else:
+            request.hints_available = False
 
         message = request.SerializeToString()
         self.send(message)
