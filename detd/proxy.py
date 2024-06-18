@@ -95,6 +95,13 @@ class ServiceProxy:
         request.txmax = configuration.stream.txoffset
         request.setup_socket = setup_socket
 
+        if configuration.hints is not None:
+            request.tx_selection = configuration.hints.tx_selection.value
+            request.tx_selection_offload = configuration.hints.tx_selection_offload
+            request.data_path = configuration.hints.data_path.value
+            request.preemption = configuration.hints.preemption
+            request.launch_time_control = configuration.hints.launch_time_control
+
         message = request.SerializeToString()
         self.send(message)
 

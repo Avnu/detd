@@ -15,6 +15,9 @@ from ..logger import get_logger
 from .device import Capability
 from .device import Device
 
+from ..scheduler import DataPath
+from ..scheduler import TxSelection
+from ..scheduler import Hints
 
 logger = get_logger(__name__)
 
@@ -26,7 +29,7 @@ class IntelI225(Device):
     NUM_TX_QUEUES = 4
     NUM_RX_QUEUES = 4
 
-    CAPABILITIES = [Capability.Qbv]
+    CAPABILITIES = [Capability.Qbv, Capability.LTC, Capability.Qbu]
 
     # Devices supporting TSN: i225-LM, i225-IT
     PCI_IDS_VALID = ['8086:0D9F', '8086:15F2']
@@ -52,10 +55,10 @@ class IntelI225(Device):
         if pci_id in IntelI225.PCI_IDS_UNPROGRAMMED:
             raise "The flash image in this i225 device is empty, or the NVM configuration loading failed."
 
-        self.capabilities = [Capability.Qbv]
-
         self.features['rxvlan'] = 'off'
         #self.features['hw-tc-offload'] = 'on'
+
+        self.capabilities = [Capability.Qbv, Capability.LTC, Capability.Qbu]
 
         # self.num_tx_ring_entries and self.num_rx_ring_entries
         # Provides the number of ring entries for Tx and Rx rings.
@@ -85,3 +88,14 @@ class IntelI225(Device):
         # FIXME: check additional constraints, like maximum cycle time
 
         return True
+    
+    def default_hints(self):
+        '''Returns device supported default Hints.
+        '''
+        preemption = False
+        launch_time_control = False
+        tx_selection_offload = True
+        datapath = DataPath.AF_PACKET
+        tx_selection = TxSelection.EST
+
+        return Hints(tx_selection, tx_selection_offload ,datapath, preemption, launch_time_control)
