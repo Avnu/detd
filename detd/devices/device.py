@@ -20,13 +20,14 @@ import enum
 from ..systemconf import SystemConfigurator
 from ..systemconf import SystemInformation
 
+from ..scheduler import DataPath
+from ..scheduler import TxSelection
+from ..scheduler import Hints
+
 from ..logger import get_logger
 
 
 logger = get_logger(__name__)
-
-
-
 
 def from_pci_id(pci_id):
 
@@ -42,15 +43,10 @@ def from_pci_id(pci_id):
 
     raise NameError("Unrecognized PCI ID: {}".format(pci_id))
 
-
-
-
 class Capability(enum.Enum):
     Qbv = 0
     Qbu = 1
     LTC = 2
-
-
 
 class Device:
 
@@ -85,11 +81,11 @@ class Device:
         self.features = {}
 
 
-    def setup(self, interface, mapping, scheduler, stream):
+    def setup(self, interface, mapping, scheduler, stream, hints):
         '''Performs the configuration of the talker stream provided.
         '''
 
-        self.systemconf.setup(interface, mapping, scheduler, stream)
+        self.systemconf.setup(interface, mapping, scheduler, stream, hints)
 
 
     def get_rate(self, interface):
@@ -125,7 +121,44 @@ class Device:
         '''
 
         raise NotImplementedError("The handler class for the device must implement this function")
+    
+    def default_hints(self):
+        '''Returns device supported default Hints.
+        '''
+        preemption = False
+        launch_time_control = False
+        tx_selection_offload = False
+        datapath = DataPath.AF_PACKET
+        tx_selection = TxSelection.Qbv
+        
+        return Hints(tx_selection, tx_selection_offload ,datapath, preemption, launch_time_control)
+    
+    def check_hints(self, config):
 
+        preemption = config.hints.preemption
+        launch_time_control = config.hints.launch_time_control
+        tx_selection_offload = config.hints.tx_selection_offload
+        datapath = DataPath(config.hints.data_path)
+        tx_selection = TxSelection(config.hints.tx_selection)
 
-    def supports_qbv(self):
-        return Capability.Qbv in self.capabilities
+        # Add feature later
+        if datapath != DataPath.AF_PACKET:
+            raise ValueError(f"Device does not support the requested DataPath feature."
+                             f"Requested: {datapath}")
+
+        if  tx_selection == TxSelection.EST and tx_selection_offload == True:
+            if Capability.Qbv not in self.capabilities:
+                raise ValueError(f"Device does not support the requested Tx selection feature."
+                                 f"Requested Tx_selection: {tx_selection}, Requested tx_selection_offload: {tx_selection_offload}")
+    
+        if preemption == True:
+            if Capability.Qbu not in self.capabilities:
+                raise ValueError(f"Device does not support the requested Tx selection feature."
+                                 f"Requested Tx_selection: {tx_selection}, Requested preemption: {preemption}")
+
+        if  launch_time_control == True:
+            if Capability.LTC not in self.capabilities:
+                raise ValueError(f"Device does not support the requested launch_time_control feature."
+                                 f"Requested: {launch_time_control}")
+        
+        return Hints(tx_selection, tx_selection_offload ,datapath, preemption, launch_time_control)     

@@ -39,6 +39,7 @@ from .manager import Manager
 from .scheduler import Configuration
 from .scheduler import StreamConfiguration
 from .scheduler import TrafficSpecification
+from .scheduler import Hints
 
 from .systemconf import Check
 from .systemconf import QdiscConfigurator
@@ -247,12 +248,22 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         interval = request.period
         size = request.size
         interface_name = request.interface
+        if request.hints_available == True:
+            tx_selection = request.hints_tx_selection
+            tx_selection_offload = request.hints_tx_selection_offload
+            data_path = request.hints_data_path
+            preemption = request.hints_preemption
+            launch_time_control = request.hints_launch_time_control
+            hints = Hints(tx_selection, tx_selection_offload, data_path, preemption, launch_time_control)
+        else:
+            hints = None
+
 
         interface = Interface(interface_name)
         stream = StreamConfiguration(addr, vid, pcp, txoffset)
         traffic = TrafficSpecification(interval, size)
 
-        config = Configuration(interface, stream, traffic)
+        config = Configuration(interface, stream, traffic, hints)
 
         vlan_interface, soprio = self.server.manager.add_talker(config)
 

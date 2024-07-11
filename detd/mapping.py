@@ -28,9 +28,7 @@ logger = get_logger(__name__)
 
 
 
-
-
-class MappingNaive():
+class MappingFlexible():
 
     """
     A class mapping the hardware and system resources (socket priorities,
@@ -209,7 +207,7 @@ class MappingNaive():
 
 
 
-class Mapping():
+class MappingFixed():
 
     """
     A class mapping the hardware and system resources (socket priorities,
@@ -252,7 +250,6 @@ class Mapping():
         # FIXME: make the number of Tx queues a parameter, so things are not hardcoded
 
         self.interface = interface
-
 
         # Socket priorities
 
@@ -355,6 +352,7 @@ class Mapping():
         # Then we assign those socket prios used by other traffic classes
         for tc, soprio in enumerate(self.tc_to_soprio):
             mapping[soprio] = tc
+        
 
         return mapping
 

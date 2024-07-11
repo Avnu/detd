@@ -1,5 +1,14 @@
 syntax = "proto3";
 
+enum DataPath {
+    AF_PACKET = 0;
+    AF_XDP_ZC = 1;
+}
+
+enum TxSelection{
+    EST = 0;
+    STRICT_PRIO = 1;
+}
 
 message StreamQosRequest {
 	string interface = 1;
@@ -12,6 +21,12 @@ message StreamQosRequest {
 	uint32 txmax = 8;
 	bool   setup_socket = 9;
 	uint32 basetime = 10;
+	bool hints_available = 11;
+	TxSelection hints_tx_selection = 12;
+	bool hints_tx_selection_offload = 13;
+	DataPath hints_data_path = 14;
+	bool hints_preemption = 15;
+	bool hints_launch_time_control = 16;
 }
 
 
