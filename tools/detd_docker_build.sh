@@ -26,7 +26,7 @@ function build_detd_deb {
     rm -rf $TMP_DIRECTORY
     # Copy detd to local folder
     echo "Copying detd to $TMP_DIRECTORY"
-    cp -r ../ $TMP_DIRECTORY
+    rsync -av --exclude 'tmp_detd' ../ $TMP_DIRECTORY
 
     # Build Docker image.
     echo "Building Docker"
