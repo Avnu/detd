@@ -33,11 +33,13 @@ from unittest import mock
 from .ipc_pb2 import StreamQosRequest
 from .ipc_pb2 import StreamQosResponse
 
+
 from .manager import Interface
 from .manager import Manager
 
 from .scheduler import Configuration
 from .scheduler import StreamConfiguration
+from .scheduler import ListenerConfiguration
 from .scheduler import TrafficSpecification
 from .scheduler import Hints
 
@@ -186,9 +188,13 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         if self.server.test_mode:
             self.add_talker = self._mock_add_talker
             self.add_talker_socket = self._mock_add_talker_socket
+            self.add_listener = self._mock_add_listener
+            self.add_listener_socket = self._mock_add_listener_socket
         else:
             self.add_talker = self._add_talker
             self.add_talker_socket = self._add_talker_socket
+            self.add_listener = self._add_listener
+            self.add_listener_socket = self._add_listener_socket
 
 
     def send(self, msg):
@@ -204,6 +210,16 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         return self.socket.sendmsg([msg], ancdata, 0, addr)
 
 
+    def build_qos_response(self, vlan_interface=None, soprio=None, fd=None):
+        response = StreamQosResponse()
+
+        if fd is None:
+            response.vlan_interface = vlan_interface
+            response.socket_priority = soprio
+
+        message = response.SerializePartialToString()
+        return message
+
     def receive_qos_request(self):
 
         data = self.packet
@@ -213,30 +229,38 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         return request
 
 
-    def build_qos_response(self, ok, vlan_interface=None, soprio=None, fd=None):
+    def send_qos_response(self, vlan_interface, soprio):
+
+        message = self.build_qos_response(vlan_interface, soprio)
+        self.send(message)
+
+
+    def send_qos_socket_response(self, fd):
+
+        message = self.build_qos_response(fd=fd)
+        self.send_fd(message, fd)
+
+    def build_listener_qos_response(self, vlan_interface=None, soprio=None, fd=None):
         response = StreamQosResponse()
 
-        response.ok = ok
-
-        if response.ok:
-            if fd is None:
-                response.vlan_interface = vlan_interface
-                response.socket_priority = soprio
+        if fd is None:
+            response.vlan_interface = vlan_interface
+            response.socket_priority = soprio
 
         message = response.SerializePartialToString()
         return message
 
 
 
-    def send_qos_response(self, ok, vlan_interface, soprio):
+    def send_listener_qos_response(self, vlan_interface, soprio):
 
-        message = self.build_qos_response(ok, vlan_interface, soprio)
+        message = self.build_listener_qos_response(vlan_interface, soprio)
         self.send(message)
 
 
-    def send_qos_socket_response(self, ok, fd):
+    def send_listener_qos_socket_response(self, fd):
 
-        message = self.build_qos_response(ok, fd=fd)
+        message = self.build_listener_qos_response(fd=fd)
         self.send_fd(message, fd)
 
 
@@ -274,7 +298,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
         with mock.patch.object(QdiscConfigurator,  'setup', return_value=None), \
              mock.patch.object(CommandIp,   'run', return_value=None), \
-             mock.patch.object(DeviceConfigurator, 'setup', return_value=None), \
+             mock.patch.object(DeviceConfigurator, 'setup_talker', return_value=None), \
              mock.patch.object(SystemInformation,  'get_pci_id', return_value=('8086:4B30')), \
              mock.patch.object(SystemInformation,  'get_rate', return_value=1000 * 1000 * 1000), \
              mock.patch.object(Check,  'is_interface', return_value=True):
@@ -310,51 +334,140 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         s.bind(("127.0.0.1", 20001))
         return s
 
+    def _add_listener(self, request):
+        addr = request.dmac
+        vid = request.vid
+        pcp = request.pcp
+        txoffset = request.txmin
+        interval = request.period
+        size = request.size
+        maddress = request.maddress
+        interface_name = request.interface
+        hints = None
+
+        interface = Interface(interface_name)
+        stream = StreamConfiguration(addr, vid, pcp, txoffset)
+        traffic = TrafficSpecification(interval, size)
+
+        config = ListenerConfiguration(interface, stream, traffic, maddress, hints)
+
+        vlan_interface, soprio = self.server.manager.add_listener(config)
+
+        return vlan_interface, soprio
+
+    def _add_listener_socket(self, request):
+        # FIXME: complete once manager implements setup socket
+        raise
+
+
+    def _mock_add_listener(self, request):
+
+        with mock.patch.object(QdiscConfigurator,  'setup', return_value=None), \
+             mock.patch.object(CommandIp,   'run', return_value=None), \
+             mock.patch.object(DeviceConfigurator, 'setup_listener', return_value=None), \
+             mock.patch.object(SystemInformation,  'get_pci_id', return_value=('8086:4B30')), \
+             mock.patch.object(SystemInformation,  'get_rate', return_value=1000 * 1000 * 1000), \
+             mock.patch.object(Check,  'is_interface', return_value=True):
+
+            addr = request.dmac
+            vid = request.vid
+            pcp = request.pcp
+            txoffset = request.txmin
+            interval = request.period
+            size = request.size
+            interface_name = request.interface
+
+            stream = StreamConfiguration(addr, vid, pcp, txoffset)
+            traffic = TrafficSpecification(interval, size)
+            interface = Interface(interface_name)
+
+            config = Configuration(interface, stream, traffic)
+
+            vlan_interface, soprio = self.server.manager.add_listener(config)
+
+        return vlan_interface, soprio
+
+    def _mock_add_listener_socket(self, request):
+        # FIXME: modify once manager implements setup socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_PRIORITY, 6)
+        s.bind(("127.0.0.1", 20001))
+        return s
 
     def mock_socket_cleanup(self, socket):
         socket.close()
 
-
     def handle(self):
-
         logger.info("Handling request")
 
         request = self.receive_qos_request()
 
-        if request.setup_socket == True:
+        if request.talker == True:
+            if request.setup_socket == True:
             # FIXME: perform actual configuration
             # Currently manager only supports non-socket config
-            try:
-                ok = False
-                sock = self.add_talker_socket(request)
-                ok = True
-            except Exception as ex:
-                logger.exception("Exception raised while setting up a talker socket")
+                try:
+                    sock = None
+                    sock = self.add_talker_socket(request)
+                    if sock is None:
+                        raise ValueError("Failed to create a talker, socket is None.")
+                except Exception as ex:
+                    logger.exception("Exception raised while setting up a talker socket")
 
-            if not ok:
-                sock = None
+                try:
+                    self.send_qos_socket_response(sock)
+                except Exception as ex:
+                    logger.exception("Exception raised while sending the QoS response after setting up a talker socket")
 
-            try:
-                self.send_qos_socket_response(ok, sock)
-            except Exception as ex:
-                logger.exception("Exception raised while sending the QoS response after setting up a talker socket")
-
-            self.mock_socket_cleanup(sock)
+                self.mock_socket_cleanup(sock)
 
 
-        elif request.setup_socket == False:
-            try:
-                ok = False
-                vlan_interface, soprio = self.add_talker(request)
-                ok = True
-            except Exception as ex:
-                logger.exception("Exception raised while setting up a talker")
+            elif request.setup_socket == False:
+                try:
+                    vlan_interface = None
+                    soprio = None
+                    vlan_interface, soprio = self.add_talker(request)
+                    if vlan_interface is None or soprio is None:
+                         raise ValueError("Failed to create a talker, vlan_interface or soprio is None.")
+                except Exception as ex:
+                    logger.exception("Exception raised while setting up a talker")
 
-            if not ok:
-                vlan_interface = None
-                soprio = None
+                try:
+                    self.send_qos_response(vlan_interface, soprio)
+                except Exception as ex:
+                    logger.exception("Exception raised while sending the QoS response after setting up a talker")
 
-            try:
-                self.send_qos_response(ok, vlan_interface, soprio)
-            except Exception as ex:
-                logger.exception("Exception raised while sending the QoS response after setting up a talker")
+        elif request.talker == False:
+            if request.setup_socket == True:
+            # FIXME: perform actual configuration
+            # Currently manager only supports non-socket config
+                try:
+                    sock = None
+                    sock = self.add_listener_socket(request)
+                    if sock is None:
+                        raise ValueError("Failed to create a listener, socket is None.")
+                except Exception as ex:
+                    logger.exception("Exception raised while setting up a listener socket")
+
+                try:
+                    self.send_listener_qos_socket_response(sock)
+                except Exception as ex:
+                    logger.exception("Exception raised while sending the QoS response after setting up a  socket")
+
+                self.mock_socket_cleanup(sock)
+
+
+            elif request.setup_socket == False:
+                try:
+                    vlan_interface = None
+                    soprio = None
+                    vlan_interface, soprio = self.add_listener(request)
+                    if vlan_interface is None or soprio is None:
+                        raise ValueError("Failed to create a listener, vlan_interface or soprio is None.")
+                except Exception as ex:
+                    logger.exception("Exception raised while setting up a listener")
+                
+                try:
+                    self.send_listener_qos_response(vlan_interface, soprio)
+                except Exception as ex:
+                    logger.exception("Exception raised while sending the QoS response after setting up a listener")

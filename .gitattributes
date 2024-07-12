@@ -1,2 +1,6 @@
-* text=auto
+# Ensure these files use LF
 *.sh text eol=lf
+*.yml text eol=lf
+*.cfg text eol=lf
+*.py text eol=lf
+
