@@ -25,6 +25,8 @@ from .common import Check
 
 from .ipc_pb2 import StreamQosRequest
 from .ipc_pb2 import StreamQosResponse
+from .ipc_pb2 import StreamListenerQosRequest
+from .ipc_pb2 import StreamListenerQosResponse
 
 
 _SERVICE_UNIX_DOMAIN_SOCKET='/var/run/detd/detd_service.sock'
@@ -128,6 +130,39 @@ class ServiceProxy:
         s = socket.socket(fileno=fds[0])
 
         return response, s
+    
+    def send_listener_qos_request(self, configuration, setup_socket):
+        request = StreamListenerQosRequest()
+        request.interface = configuration.interface.name
+        request.dmac = configuration.stream.addr
+        request.vid = configuration.stream.vid
+        request.pcp = configuration.stream.pcp
+        request.setup_socket = setup_socket
+        request.maddress = configuration.maddress
+
+        message = request.SerializeToString()
+        self.send(message)
+
+
+    def receive_listener_qos_response(self):
+        message = self.recv()
+
+        response = StreamListenerQosResponse()
+        response.ParseFromString(message)
+
+        return response
+
+
+    def receive_listener_qos_socket_response(self):
+        sock = self.sock
+
+        message, fds = self.recv_fd(1024)
+        response = StreamQosListenerResponse()
+        response.ParseFromString(message)
+
+        s = socket.socket(fileno=fds[0])
+
+        return response, s
 
 
     def add_talker_socket(self, configuration):
@@ -136,9 +171,6 @@ class ServiceProxy:
         self.send_qos_request(configuration, setup_socket=True)
         status, sock = self.receive_qos_socket_response()
         self.sock.close()
-
-        if not status.ok:
-            raise RuntimeError("The configuration could not be applied")
 
         return sock
 
@@ -150,8 +182,27 @@ class ServiceProxy:
         response = self.receive_qos_response()
         self.sock.close()
 
-        if not response.ok:
-            raise RuntimeError("The configuration could not be applied")
+        vlan_interface = response.vlan_interface
+        soprio = response.socket_priority
+
+        return vlan_interface, soprio
+
+    def add_listener_socket(self, configuration):
+
+        self.setup_socket()
+        self.send_qos_listener_request(configuration, setup_socket=True)
+        status, sock = self.receive_listener_qos_socket_response()
+        self.sock.close()
+
+        return sock
+
+
+    def add_listener(self, configuration):
+
+        self.setup_socket()
+        self.send_listener_qos_request(configuration, setup_socket=False)
+        response = self.receive_listener_qos_response()
+        self.sock.close()
 
         vlan_interface = response.vlan_interface
         soprio = response.socket_priority
