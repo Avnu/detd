@@ -49,7 +49,7 @@ class RunContext(AbstractContextManager):
 
         if mode == TestMode.HOST:
             self.qdisc_conf_mock  = mock.patch.object(CommandTc,  'run', side_effect=qdisc_exc)
-            self.vlan_conf_mock   = mock.patch.object(CommandIp,   'run', side_effect=vlan_exc)
+            self.vlan_conf_mock   = mock.patch.object(CommandIp,   'set_vlan', side_effect=vlan_exc)
             self.device_conf_mock = mock.patch.object(CommandEthtool, 'run', side_effect=device_exc)
             self.device_pci_id_mock = mock.patch.object(SystemInformation, 'get_pci_id', return_value=('8086:4B30'))
             self.device_channels_mock = mock.patch.object(SystemInformation, 'get_channels_information', return_value=(8,8))
