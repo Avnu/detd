@@ -27,6 +27,8 @@ message StreamQosRequest {
 	DataPath hints_data_path = 14;
 	bool hints_preemption = 15;
 	bool hints_launch_time_control = 16;
+	bool talker = 17;
+	string maddress = 18;
 }
 
 
@@ -35,3 +37,4 @@ message StreamQosResponse {
 	string  vlan_interface = 2;
 	uint32  socket_priority = 3;
 }
+

@@ -46,6 +46,15 @@ class Configuration:
         self.traffic = traffic
         self.hints = hints
 
+class ListenerConfiguration:
+
+    def __init__(self, interface, stream, traffic, maddress, hints = None):
+
+        self.interface = interface
+        self.stream = stream
+        self.traffic = traffic
+        self.hints = hints
+        self.maddress = maddress
 
 class StreamConfiguration:
 
