@@ -68,8 +68,8 @@ class Interface:
     def setup_talker(self, mapping, scheduler, stream, hints):
         self.device.setup_talker(self, mapping, scheduler, stream, hints)
 
-    def setup_listener(self, stream, maddress):
-        self.device.setup_listener(self, stream, maddress)
+    def setup_listener(self, mapping, scheduler, stream, hints, maddress):
+        self.device.setup_listener(self, mapping, scheduler, stream, hints, maddress)
 
 
 
@@ -249,12 +249,51 @@ class InterfaceManager():
             logger.info("Adding listener to InterfaceManager")
 
 
-            #soprio, tc, queue = self.mapping.assign_and_map(config.stream.pcp, self.scheduler.traffics)
-            soprio = self.mapping.assign_soprio_and_map(config.stream.pcp)
+            # Retrieve device rate
+            try:
+                rate = self.interface.rate
+            except RuntimeError:
+                logger.exception("Error while retrieving device rate")
+                raise
+
+
+            # Assign resources
+            soprio, tc, queue = self.mapping.assign_and_map(config.stream.pcp, self.scheduler.traffics)
+
+            traffic = Traffic(rate, TrafficType.SCHEDULED, config)
+            traffic.tc = tc
+
+
+            # Add stream to schedule
+            try:
+                self.scheduler.add(traffic)
+            except Exception as ex:
+                logger.exception(f"Error while adding traffic to schedule:\n{self.scheduler.schedule}")
+                self.mapping.unmap_and_free(soprio, traffic.tc, queue)
+                raise
+
+
+            # Make sure that the target device is able to implement the resulting schedule
+            if not self.interface.device.supports_schedule(self.scheduler.schedule):
+                # FIXME: add the limitations in the devices.py class handling the device
+                # and then print the docstrings when this error happens
+                logger.error(f"The device associated to the network interface does not support the schedule:\n{self.scheduler.schedule}")
+                self.scheduler.remove(traffic)
+                self.mapping.unmap_and_free(soprio, traffic.tc, queue)
+                raise TypeError("The device associated to the network interface does not support the resulting schedule")
+
+
+            # Normally, the base_time will be determined by the network planning process
+            # However, for quick tests, we may just want to give a value that allows us
+            # to send frames according to a given schedule. That is what a value of
+            # None in the base_time will trigger.
+            if config.stream.base_time is None:
+                self.update_base_time(config)
+
 
             # Configure the system
             try:
-                self.interface.setup_listener(config.stream, config.maddress)
+                self.interface.setup_listener(self.mapping, self.scheduler, config.stream, config.hints, config.maddress)
             except RuntimeError:
                 logger.error("Error applying the configuration on the system")
                 raise

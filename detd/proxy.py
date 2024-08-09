@@ -25,8 +25,6 @@ from .common import Check
 
 from .ipc_pb2 import StreamQosRequest
 from .ipc_pb2 import StreamQosResponse
-from .ipc_pb2 import StreamListenerQosRequest
-from .ipc_pb2 import StreamListenerQosResponse
 
 
 _SERVICE_UNIX_DOMAIN_SOCKET='/var/run/detd/detd_service.sock'
@@ -96,6 +94,7 @@ class ServiceProxy:
         request.txmin = configuration.stream.txoffset
         request.txmax = configuration.stream.txoffset
         request.setup_socket = setup_socket
+        request.talker = True
 
         if configuration.hints is not None:
             request.hints_available = True
@@ -131,14 +130,21 @@ class ServiceProxy:
 
         return response, s
     
-    def send_listener_qos_request(self, configuration, setup_socket):
-        request = StreamListenerQosRequest()
+    def send_qos_listener_request(self, configuration, setup_socket):
+
+        request = StreamQosRequest()
         request.interface = configuration.interface.name
+        request.period = configuration.traffic.interval
+        request.size = configuration.traffic.size
         request.dmac = configuration.stream.addr
         request.vid = configuration.stream.vid
         request.pcp = configuration.stream.pcp
+        request.txmin = configuration.stream.txoffset
+        request.txmax = configuration.stream.txoffset
         request.setup_socket = setup_socket
         request.maddress = configuration.maddress
+        request.talker = False
+        request.hints_available = False
 
         message = request.SerializeToString()
         self.send(message)
@@ -147,7 +153,7 @@ class ServiceProxy:
     def receive_listener_qos_response(self):
         message = self.recv()
 
-        response = StreamListenerQosResponse()
+        response = StreamQosResponse()
         response.ParseFromString(message)
 
         return response
@@ -157,7 +163,7 @@ class ServiceProxy:
         sock = self.sock
 
         message, fds = self.recv_fd(1024)
-        response = StreamQosListenerResponse()
+        response = StreamQosResponse()
         response.ParseFromString(message)
 
         s = socket.socket(fileno=fds[0])
@@ -200,7 +206,7 @@ class ServiceProxy:
     def add_listener(self, configuration):
 
         self.setup_socket()
-        self.send_listener_qos_request(configuration, setup_socket=False)
+        self.send_qos_listener_request(configuration, setup_socket=False)
         response = self.receive_listener_qos_response()
         self.sock.close()
 

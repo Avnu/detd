@@ -53,8 +53,8 @@ class ListenerConfiguration:
         self.interface = interface
         self.stream = stream
         self.traffic = traffic
-        self.maddress = maddress
         self.hints = hints
+        self.maddress = maddress
 
 class StreamConfiguration:
 

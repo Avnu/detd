@@ -32,8 +32,7 @@ from unittest import mock
 
 from .ipc_pb2 import StreamQosRequest
 from .ipc_pb2 import StreamQosResponse
-from .ipc_pb2 import StreamListenerQosRequest
-from .ipc_pb2 import StreamListenerQosResponse
+
 
 from .manager import Interface
 from .manager import Manager
@@ -235,7 +234,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         self.send_fd(message, fd)
 
     def build_listener_qos_response(self, vlan_interface=None, soprio=None, fd=None):
-        response = StreamListenerQosResponse()
+        response = StreamQosResponse()
 
         if fd is None:
             response.vlan_interface = vlan_interface
@@ -256,31 +255,6 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
         message = self.build_listener_qos_response(fd=fd)
         self.send_fd(message, fd)
-
-    def receive_qos_request(self):
-        data = self.packet
-        is_talker = False
-        
-        # Try parsing as StreamListenerQosRequest first
-        listener_request = StreamListenerQosRequest()
-        listener_request.ParseFromString(data)
-        if listener_request.IsInitialized():
-            # Check for fields unique to StreamListenerQosRequest
-            if listener_request.maddress != "":
-                print("The message is of type StreamListenerQosRequest")
-                return listener_request, is_talker
-        
-        # Default to parsing as StreamQosRequest
-        request = StreamQosRequest()
-        request.ParseFromString(data)
-        if request.IsInitialized():
-            print("The message is of type StreamQosRequest")
-            is_talker = True
-            return request, is_talker
-
-        print("Unknown message type")
-        return None
-
 
 
     def _add_talker(self, request):
@@ -357,18 +331,18 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         addr = request.dmac
         vid = request.vid
         pcp = request.pcp
-        txoffset = 0
-        interval = 0
-        size = 0
+        txoffset = request.txmin
+        interval = request.period
+        size = request.size
         maddress = request.maddress
-
+        hints = None
         interface_name = request.interface
 
         interface = Interface(interface_name)
         stream = StreamConfiguration(addr, vid, pcp, txoffset)
         traffic = TrafficSpecification(interval, size)
 
-        config = ListenerConfiguration(interface, stream, traffic, maddress)
+        config = ListenerConfiguration(interface, stream, traffic, hints, maddress)
 
         vlan_interface, soprio = self.server.manager.add_listener(config)
 
@@ -420,9 +394,9 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
     def handle(self):
         logger.info("Handling request")
 
-        request, is_talker = self.receive_qos_request()
+        request = StreamQosRequest()
 
-        if is_talker == True:
+        if request.talker == True:
             if request.setup_socket == True:
             # FIXME: perform actual configuration
             # Currently manager only supports non-socket config
@@ -457,7 +431,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
                 except Exception as ex:
                     logger.exception("Exception raised while sending the QoS response after setting up a talker")
 
-        elif is_talker == False:
+        elif request.talker == False:
             if request.setup_socket == True:
             # FIXME: perform actual configuration
             # Currently manager only supports non-socket config

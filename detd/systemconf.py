@@ -162,12 +162,10 @@ class SystemConfigurator:
             self.qdisc.unset(interface)
             raise
 
-    def setup_listener(self, interface, stream, maddress):
+    def setup_listener(self, interface, stream, mapping, scheduler, hints, maddress):
 
         logger.info("Setting up platform and devices")
 
-        #if not self.args_valid(interface, stream):
-        #    raise TypeError
 
         try:
             self.device.setup_listener(interface, maddress, eee="off")
@@ -178,17 +176,17 @@ class SystemConfigurator:
 
         #this is the important difference
         # FIXME: consider other exceptions, e.g. TypeError
-        #try:
+        try:
             # FIXME add qdisc reset
-        #    self.qdisc.setup(interface, mapping, scheduler, stream.base_time)
-        #except subprocess.CalledProcessError:
-        #    raise
+            self.qdisc.setup(interface, mapping, scheduler, stream.base_time, hints)
+        except subprocess.CalledProcessError:
+            raise
 
         if stream.vid in self.already_configured_vids:
             return
 
         try:
-            self.vlan.setup_listener(interface, stream)
+            self.vlan.setup_listener(interface, stream, mapping)
             self.already_configured_vids.append(stream.vid)
         except subprocess.CalledProcessError:
             self.qdisc.unset(interface)
@@ -246,10 +244,10 @@ class VlanConfigurator:
 
         ip.set_vlan(interface, stream, mapping)
 
-    def setup_listener(self, interface, stream):
+    def setup_listener(self, interface, stream, mapping):
         ip = CommandIp()
 
-        ip.set_vlan_ingress(interface, stream)
+        ip.set_vlan_ingress(interface, stream, mapping)
 
 
     def unset(self, interface, stream):

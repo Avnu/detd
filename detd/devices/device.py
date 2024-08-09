@@ -87,9 +87,9 @@ class Device:
 
         self.systemconf.setup_talker(interface, mapping, scheduler, stream, hints)
 
-    def setup_listener(self, interface, stream, maddress):
-        #maybe not needed
-        self.systemconf.setup_listener(interface, stream, maddress)
+    def setup_listener(self, interface, stream, mapping, scheduler, hints, maddress):
+
+        self.systemconf.setup_listener(interface, stream, mapping, scheduler, hints, maddress)
 
 
     def get_rate(self, interface):
