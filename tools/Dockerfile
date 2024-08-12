@@ -1,4 +1,5 @@
-FROM debian:bookworm
+ARG VARIANT=debian:bookworm
+FROM ${VARIANT}
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update --fix-missing && \

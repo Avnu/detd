@@ -13,6 +13,8 @@ IMAGE_NAME="detd_builder"
 CONTAINER_NAME="detd_build_container"
 DEB_DIRECTORY="/tmp/detd"
 
+VARIANT="debian:bookworm"
+
 # Temporary folder to copy data to container
 # Due to security access reasons, the ADD command is not able to access any other folder.
 # Please make sure to use the same folder in the ADD command in the Dockerfile.
@@ -30,7 +32,7 @@ function build_detd_deb {
 
     # Build Docker image.
     echo "Building Docker"
-    docker build -f Dockerfile . -t $IMAGE_NAME
+    docker build -f Dockerfile . -t $IMAGE_NAME --build-arg VARIANT=${VARIANT}
 
     # Run the container.
     echo "Container run"
