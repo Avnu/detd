@@ -83,7 +83,7 @@ function create_deb () {
 	echo -e "\noverride_dh_builddeb:\n\tdh_builddeb -- -Zxz" >> debian/rules
 
 	# Generate the deb, make it available and perform clean-up
-	fakeroot debian/rules binary
+	debuild
 	FILENAME=${PKG}_${VERSION}-${REVISION}_${ARCHITECTURE}.deb
 	dpkg --contents ../${FILENAME}
 	dpkg -I ../${FILENAME}
