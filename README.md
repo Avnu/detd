@@ -406,15 +406,9 @@ cd tools
 ./detd_docker_build.sh
 ```
 
-Different variants are supported, like Debian Bookworm or Ubuntu 22.04. In order to build for a specific target, modify the VARIANT variable inside detd_docker_build.sh The value should match that used by the FROM clause inside a Dockerfile. For example:
+Different variants are supported, like Debian Bookworm or Ubuntu 22.04. In order to build for a specific target, provide the name as argument. The value should match that used by the FROM clause inside a Dockerfile. For example:
 ```bash
-VARIANT="debian:bookworm"
-```
-
-or
-
-```bash
-VARIANT="ubuntu:22.04"
+./detd_docker_build.sh ubuntu:24.04
 ```
 
 If you are behind a proxy and experience connectivity issues, e.g. to update and install the dependencies, you may want to include the following in the Dockerfile:

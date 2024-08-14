@@ -21,8 +21,16 @@ VARIANT="debian:bookworm"
 
 TMP_DIRECTORY="tmp_detd"
 
+
+function usage () {
+   echo "Usage:"
+   echo "$0 [VARIANT] (e.g. $0 ubuntu:noble)"
+}
+
+
 function build_detd_deb {
 
+    echo "Building deb on ${VARIANT}..."
 
     # Clean up old directory
     rm -rf $TMP_DIRECTORY
@@ -53,5 +61,18 @@ function build_detd_deb {
     echo "Debian package located in $DEB_DIRECTORY"
     rm -rf $TMP_DIRECTORY
 }
+
+
+# Check the number of arguments supplied
+if [ $# -gt 1 ]; then
+    echo "Wrong number of arguments"
+    usage
+    exit 1
+fi
+
+if [ $# -eq 1 ]; then
+    VARIANT="$1"
+fi
+
 
 build_detd_deb
