@@ -132,7 +132,7 @@ class SystemConfigurator:
         return True
 
 
-    def setup(self, interface, mapping, scheduler, stream, hints):
+    def setup_talker(self, interface, mapping, scheduler, stream, hints):
 
         logger.info("Setting up platform and devices")
 
@@ -140,7 +140,7 @@ class SystemConfigurator:
             raise TypeError
 
         try:
-            self.device.setup(interface, eee="off")
+            self.device.setup_talker(interface, eee="off")
         except subprocess.CalledProcessError:
             # FIXME add device restore
             raise
@@ -156,13 +156,33 @@ class SystemConfigurator:
             return
 
         try:
-            self.vlan.setup(interface, stream, mapping)
+            self.vlan.setup_talker(interface, stream, mapping)
             self.already_configured_vids.append(stream.vid)
         except subprocess.CalledProcessError:
             self.qdisc.unset(interface)
             raise
 
+    def setup_listener(self, interface, mapping, scheduler, stream, maddress, hints):
 
+        logger.info("Setting up platform and devices")
+
+
+        try:
+            self.device.setup_listener(interface, maddress, eee="off")
+
+        except subprocess.CalledProcessError:
+            # FIXME add device restore
+            raise
+
+        if stream.vid in self.already_configured_vids:
+            return
+
+        try:
+            self.vlan.setup_listener(interface, stream, mapping)
+            self.already_configured_vids.append(stream.vid)
+        except subprocess.CalledProcessError:
+            self.qdisc.unset(interface)
+            raise
 
 
 class DeviceConfigurator:
@@ -171,7 +191,7 @@ class DeviceConfigurator:
         pass
 
 
-    def setup(self, interface, eee="off"):
+    def setup_talker(self, interface, eee="off"):
 
         sysinfo = SystemInformation()
 
@@ -187,11 +207,23 @@ class DeviceConfigurator:
 
         ethtool.set_rings(interface)
 
+    def setup_listener(self, interface, maddress, eee="off"):
 
+        sysinfo = SystemInformation()
+        ip = CommandIp()
+        ethtool = CommandEthtool()
 
+        ethtool.set_eee(interface, eee)
+        ethtool.set_features_ingress(interface)
 
+        ip.subscribe_multicast(interface.name, maddress)
 
+        if sysinfo.interface_supports_split_channels(interface):
+            ethtool.set_split_channels(interface)
+        else:
+            ethtool.set_combined_channels(interface)
 
+        ethtool.set_rings(interface)
 
 class VlanConfigurator:
 
@@ -199,10 +231,15 @@ class VlanConfigurator:
         pass
 
 
-    def setup(self, interface, stream, mapping):
+    def setup_talker(self, interface, stream, mapping):
         ip = CommandIp()
 
-        ip.set_vlan(interface, stream, mapping)
+        ip.set_vlan_egress(interface, stream, mapping)
+
+    def setup_listener(self, interface, stream, mapping):
+        ip = CommandIp()
+
+        ip.set_vlan_ingress(interface, stream, mapping)
 
 
     def unset(self, interface, stream):

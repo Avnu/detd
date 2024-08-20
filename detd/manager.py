@@ -64,10 +64,12 @@ class Interface:
     @property
     def rate(self):
         return self.device.get_rate(self)
+    
+    def setup_talker(self, mapping, scheduler, stream, hints):
+        self.device.setup_talker(self, mapping, scheduler, stream, hints)
 
-
-    def setup(self, mapping, scheduler, stream, hints):
-        self.device.setup(self, mapping, scheduler, stream, hints)
+    def setup_listener(self, mapping, scheduler, stream, maddress, hints):
+        self.device.setup_listener(self, mapping, scheduler, stream, maddress, hints)
 
 
 
@@ -80,6 +82,8 @@ class Manager():
         logger.info(f"Initializing {__class__.__name__}")
 
         self.talker_manager = {}
+        self.listener_manager = {}
+
         self.lock = threading.Lock()
 
 
@@ -94,9 +98,18 @@ class Manager():
                 self.talker_manager[config.interface.name] = interface_manager
 
             return self.talker_manager[config.interface.name].add_talker(config)
+    
+    def add_listener(self, config):
 
+        logger.info("Adding listener to Manager")
 
+        with self.lock:
 
+            if not config.interface.name in self.listener_manager:
+                interface_manager = InterfaceManager(config)
+                self.listener_manager[config.interface.name] = interface_manager
+
+        return self.listener_manager[config.interface.name].add_listener(config)
 
 class InterfaceManager():
 
@@ -182,7 +195,7 @@ class InterfaceManager():
 
         # Configure the system
         try:
-            self.interface.setup(self.mapping, self.scheduler, config.stream, self.hints)
+            self.interface.setup_talker(self.mapping, self.scheduler, config.stream, self.hints)
         except:
             # Leave the internal structures in a consistent state
             logger.error("Error applying the configuration on the system")
@@ -221,6 +234,52 @@ class InterfaceManager():
         safety_margin = multiple * period
 
         config.stream.base_time = (now + ns_until_next_cycle) + safety_margin
+    
+    def add_listener(self, config):
+            '''
+            Performs the local configuration for the configuration provided
+            and returns the associated VLAN interface and socket priority
+            Parameters:
+                config: configuration
+            Returns:
+                VLAN interface
+                socket priority
+            '''
+
+            logger.info("Adding listener to InterfaceManager")
+
+
+            # Retrieve device rate
+            try:
+                rate = self.interface.rate
+            except RuntimeError:
+                logger.exception("Error while retrieving device rate")
+                raise
+
+
+            # Assign resources
+            soprio, tc, queue = self.mapping.assign_and_map(config.stream.pcp, self.scheduler.traffics)
+
+            traffic = Traffic(rate, TrafficType.SCHEDULED, config)
+            traffic.tc = tc
+
+            # Normally, the base_time will be determined by the network planning process
+            # However, for quick tests, we may just want to give a value that allows us
+            # to send frames according to a given schedule. That is what a value of
+            # None in the base_time will trigger.
+            if config.stream.base_time is None:
+                self.update_base_time(config)
+
+
+            # Configure the system
+            try:
+                self.interface.setup_listener(self.mapping, self.scheduler, config.stream, config.maddress, self.hints)
+            except RuntimeError:
+                logger.error("Error applying the configuration on the system")
+                raise
+
+            vlan_interface = "{}.{}".format(self.interface.name, config.stream.vid)
+            return vlan_interface, soprio    
 
     def _get_device_hints(self, config):
 
