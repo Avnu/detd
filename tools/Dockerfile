@@ -1,10 +1,11 @@
-FROM debian:bookworm
+ARG VARIANT=debian:bookworm
+FROM ${VARIANT}
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update --fix-missing && \
     apt-get upgrade --assume-yes --no-install-recommends && \
     apt-get install --assume-yes --no-install-recommends \
-    debmake debhelper-compat dh-python \
+    build-essential debmake debhelper-compat dh-python \
     python3 python3-all python3-setuptools \
     protobuf-compiler python3-protobuf && \
     apt-get clean && \

@@ -399,14 +399,25 @@ At this point the service is ready to receive requests.
 
 #### Docker
 
-To avoid installing all build dependencies locally, you can also use Docker for building the Debian package:
+The script detd_docker_build.sh allows to build the deb packages inside a docker container in a convenient way. E.g. just run:
 
+```bash
+cd tools
+./detd_docker_build.sh
 ```
-docker build -f tools/Dockerfile . -t detd_builder
-docker run --name detd_build_container detd_builder
-docker cp detd_build_container:/tmp/detd_0.1.dev0-1_all.deb ./
-docker rm detd_build_container
+
+Different variants are supported, like Debian Bookworm or Ubuntu 22.04. In order to build for a specific target, provide the name as argument. The value should match that used by the FROM clause inside a Dockerfile. For example:
+```bash
+./detd_docker_build.sh ubuntu:24.04
 ```
+
+If you are behind a proxy and experience connectivity issues, e.g. to update and install the dependencies, you may want to include the following in the Dockerfile:
+
+```bash
+ENV http_proxy=http://your.http.proxy:port
+ENV https_proxy=http://your.https.proxy:port
+```
+
 
 #### pip
 

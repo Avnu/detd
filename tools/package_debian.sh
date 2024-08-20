@@ -72,7 +72,6 @@ function create_deb () {
 	sed -i 's/^Homepage:[^$]*$/Homepage\: https\:\/\/github.com\/Avnu\/detd/' debian/control
 	sed -i 's/^X-Python3-Version:[^$]*$/X-Python3-Version: >= 3.8/' debian/control
 	sed -i 's/^Build-Depends:\([^,]*\),$/Build-Depends: protobuf-compiler,\n              \1,/' debian/control
-	sed -i 's/^Build-Depends:\([^,]*\),$/Build-Depends: dh-systemd,\n              \1,/' debian/control
 	sed -i 's/^Depends:\(.*\)/Depends: iproute2,\n        \1/' debian/control
 	sed -i 's/^Depends:\(.*\)/Depends: ethtool,\n        \1/' debian/control
 	sed -i '/^Description:.*/i Recommends: cgroup-tools' debian/control
@@ -84,7 +83,7 @@ function create_deb () {
 	echo -e "\noverride_dh_builddeb:\n\tdh_builddeb -- -Zxz" >> debian/rules
 
 	# Generate the deb, make it available and perform clean-up
-	fakeroot debian/rules binary
+	debuild
 	FILENAME=${PKG}_${VERSION}-${REVISION}_${ARCHITECTURE}.deb
 	dpkg --contents ../${FILENAME}
 	dpkg -I ../${FILENAME}
