@@ -22,6 +22,7 @@ Internally, SystemConfigurator relies on concern-specific classes, like:
     * VlanConfigurator
     * DeviceConfigurator
     * QdiscConfigurator
+    * KernelConfigurator
 
 Currently, only the Linux operating system is supported. However, this
 architecture is intended to make it easier to support further operating systems
@@ -54,6 +55,7 @@ import subprocess
 
 from .ip import CommandIp
 from .ethtool import CommandEthtool
+from .sysctl import CommandSysctl
 from .tc import CommandTc
 
 from .common import Check
@@ -82,6 +84,7 @@ class SystemConfigurator:
         self.qdisc = QdiscConfigurator()
         self.vlan = VlanConfigurator()
         self.device = DeviceConfigurator()
+        self.kernel = KernelConfigurator()
 
         # We track the VLAN ids configured. So when streams share the same VID,
         # we do not configure it again.
@@ -162,6 +165,14 @@ class SystemConfigurator:
             self.qdisc.unset(interface)
             raise
 
+        # Disable IPv6 support to prevent interference
+        try:
+            # FIXME disable when the InterfaceManager initializes the interface
+            self.kernel.disable_ipv6(interface)
+            self.kernel.disable_ipv6(interface, stream.vid)
+        except subprocess.CalledProcessError:
+            raise
+
     def setup_listener(self, interface, mapping, scheduler, stream, maddress, hints):
 
         logger.info("Setting up platform and devices")
@@ -184,6 +195,13 @@ class SystemConfigurator:
             self.qdisc.unset(interface)
             raise
 
+        # Disable IPv6 support to prevent interference
+        try:
+            # FIXME disable when the InterfaceManager initializes the interface
+            self.kernel.disable_ipv6(interface)
+            self.kernel.disable_ipv6(interface, stream.vid)
+        except subprocess.CalledProcessError:
+            raise
 
 class DeviceConfigurator:
 
@@ -248,6 +266,15 @@ class VlanConfigurator:
         ip.unset_vlan(interface, stream)
 
 
+class KernelConfigurator:
+
+    def __init__(self):
+        pass
+
+    def disable_ipv6(self, interface, vid=None):
+        sysctl = CommandSysctl()
+
+        sysctl.disable_ipv6(interface, vid)
 
 
 class QdiscConfigurator:
