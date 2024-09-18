@@ -60,6 +60,17 @@ class CommandIp:
 
         self.run(str(cmd))
 
+    def set_interface_up(self, interface, vid=None):
+
+        if vid == None:
+            interface_name = interface.name
+        else:
+            interface_name = f"{interface.name}/{vid}"
+
+        cmd = CommandStringIpLinkSetInterfaceUp(interface_name)
+
+        self.run(cmd)
+
 
 def transform_soprio_to_pcp(soprio_to_pcp):
     mapping = []
@@ -138,6 +149,18 @@ class CommandStringSubscribeMulticast (CommandString):
         params = {
             'device'        : device,
             'maddress'      : maddress
+        }
+
+        super().__init__(template, params)
+
+class CommandStringIpLinkSetInterfaceUp (CommandString):
+
+    def __init__(self, interface):
+
+        template = 'ip link set $interface up'
+
+        params = {
+            "interface" : interface,
         }
 
         super().__init__(template, params)

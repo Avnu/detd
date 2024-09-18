@@ -253,11 +253,13 @@ class VlanConfigurator:
         ip = CommandIp()
 
         ip.set_vlan_egress(interface, stream, mapping)
+        ip.set_interface_up(interface, stream.vid)
 
     def setup_listener(self, interface, stream, mapping):
         ip = CommandIp()
 
         ip.set_vlan_ingress(interface, stream, mapping)
+        ip.set_interface_up(interface, stream.vid)
 
 
     def unset(self, interface, stream):
