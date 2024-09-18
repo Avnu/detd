@@ -65,7 +65,7 @@ class CommandIp:
         if vid == None:
             interface_name = interface.name
         else:
-            interface_name = f"{interface.name}/{vid}"
+            interface_name = f"{interface.name}.{vid}"
 
         cmd = CommandStringIpLinkSetInterfaceUp(interface_name)
 

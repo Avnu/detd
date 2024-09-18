@@ -203,6 +203,21 @@ class SystemConfigurator:
         except subprocess.CalledProcessError:
             raise
 
+    def set_interface_up(self, interface, retries=5):
+        sysinfo = SystemInformation()
+        ip = CommandIp()
+
+        for attempt in range(1, retries + 1):
+            if not sysinfo.has_link(interface):
+                ip.set_interface_up(interface)
+            else:
+                return
+
+        # After retries, if the link is still not detected, raise an error
+        if not sysinfo.has_link(interface):
+            raise ValueError(f"Interface {interface.name} cannot be powered up after {retries} attempts.")
+
+
 class DeviceConfigurator:
 
     def __init__(self):
@@ -335,7 +350,14 @@ class SystemInformation:
 
         raise RuntimeError("ethtool output does not include correct bus-info information for {}".format(interface.name))
 
+    def has_link(self, interface):
 
+        ethtool = CommandEthtool()
+        output = ethtool.get_information(interface)
+        for line in output:
+            if "Link detected" in line:
+                return "no" not in line
+        return False
 
     def get_hex(self, filename):
 
