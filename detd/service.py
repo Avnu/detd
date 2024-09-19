@@ -39,7 +39,6 @@ from .manager import Manager
 
 from .scheduler import Configuration
 from .scheduler import StreamConfiguration
-from .scheduler import ListenerConfiguration
 from .scheduler import TrafficSpecification
 from .scheduler import Hints
 
@@ -343,7 +342,6 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         txoffset = request.txmin
         interval = request.period
         size = request.size
-        maddress = request.maddress
         interface_name = request.interface
         hints = None
 
@@ -351,7 +349,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         stream = StreamConfiguration(addr, vid, pcp, txoffset)
         traffic = TrafficSpecification(interval, size)
 
-        config = ListenerConfiguration(interface, stream, traffic, maddress, hints)
+        config = Configuration(interface, stream, traffic, hints)
 
         vlan_interface, soprio = self.server.manager.add_listener(config)
 

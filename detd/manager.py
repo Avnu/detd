@@ -273,7 +273,7 @@ class InterfaceManager():
 
             # Configure the system
             try:
-                self.interface.setup_listener(self.mapping, self.scheduler, config.stream, config.maddress, self.hints)
+                self.interface.setup_listener(self.mapping, self.scheduler, config.stream, config.stream.addr, self.hints)
             except RuntimeError:
                 logger.error("Error applying the configuration on the system")
                 raise
