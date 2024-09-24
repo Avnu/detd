@@ -27,6 +27,9 @@ function usage () {
    echo "$0 [VARIANT] (e.g. $0 ubuntu:noble)"
 }
 
+function cleanup () {
+    rm -rf $TMP_DIRECTORY
+}
 
 function build_detd_deb {
 
@@ -34,6 +37,7 @@ function build_detd_deb {
 
     # Clean up old directory
     rm -rf $TMP_DIRECTORY
+
     # Copy detd to local folder
     echo "Copying detd to $TMP_DIRECTORY"
     rsync -av --exclude 'tmp_detd' ../ $TMP_DIRECTORY
@@ -41,11 +45,17 @@ function build_detd_deb {
     # Build Docker image.
     echo "Building Docker"
     docker build -f Dockerfile . -t $IMAGE_NAME --build-arg VARIANT=${VARIANT}
+    if [ "$?" -ne "0" ]; then
+
+	echo "docker build failed! Exiting..."
+	cleanup
+	exit 1
+
+    fi
 
     # Run the container.
     echo "Container run"
     docker run --name $CONTAINER_NAME $IMAGE_NAME
-
 
     # Clean-up files from previous runs.
     echo "Cleaning up previous outputs"
@@ -55,11 +65,15 @@ function build_detd_deb {
     echo "Copying Debian package from container to host"
     docker cp $CONTAINER_NAME:/tmp/ $DEB_DIRECTORY
 
+    echo "Debian package located in $DEB_DIRECTORY:"
+    find $DEB_DIRECTORY -name *.deb
+
     # Clean up container and temporary detd folder.
     echo "Removing Docker container"
     docker rm $CONTAINER_NAME
-    echo "Debian package located in $DEB_DIRECTORY"
-    rm -rf $TMP_DIRECTORY
+
+    cleanup
+
 }
 
 
@@ -76,3 +90,5 @@ fi
 
 
 build_detd_deb
+
+exit 0

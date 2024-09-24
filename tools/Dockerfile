@@ -16,9 +16,7 @@ ADD tmp_detd /usr/local/src/detd/
 
 WORKDIR /usr/local/src/detd/tools
 
-# Work around bug in debmake.
-RUN ln -s /usr/lib/debmake/python3.short /usr/lib/debmakepython3.short
-RUN ln -s /usr/lib/debmake/python3.long /usr/lib/debmakepython3.long
-
-CMD ./package_debian.sh
-
+# Work around bug in debmake and run the packaging script.
+RUN ln -s /usr/lib/debmake/python3.short /usr/lib/debmakepython3.short && \
+    ln -s /usr/lib/debmake/python3.long /usr/lib/debmakepython3.long && \
+    ./package_debian.sh
