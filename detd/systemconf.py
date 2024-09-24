@@ -253,13 +253,21 @@ class VlanConfigurator:
         ip = CommandIp()
 
         ip.set_vlan_egress(interface, stream, mapping)
-        ip.set_interface_up(interface, stream.vid)
+        try:
+            ip.set_interface_up(interface, stream.vid)
+        except RuntimeError:
+            logger.exception("Error while setting interface up")
+            raise
 
     def setup_listener(self, interface, stream, mapping):
         ip = CommandIp()
 
         ip.set_vlan_ingress(interface, stream, mapping)
-        ip.set_interface_up(interface, stream.vid)
+        try:
+            ip.set_interface_up(interface, stream.vid)
+        except RuntimeError:
+            logger.exception("Error while setting interface up")
+            raise
 
 
     def unset(self, interface, stream):
