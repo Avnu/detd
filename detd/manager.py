@@ -27,9 +27,11 @@ from .scheduler import TrafficType
 from .scheduler import TxSelection
 
 from .systemconf import SystemInformation
+from .systemconf import SystemConfigurator
 from .mapping import MappingFixed
 from .mapping import MappingFlexible
 from .common import Check
+
 
 from .devices import device
 
@@ -118,6 +120,17 @@ class InterfaceManager():
         logger.info(f"Initializing {__class__.__name__}")
 
         self.interface = config.interface
+
+        sysinfo = SystemInformation()
+        sysconf = SystemConfigurator()
+
+        try:
+            if not sysinfo.has_link(config.interface):
+                sysconf.set_interface_up(config.interface)
+        except:
+            logger.error(f"Failed to Power up Interface {config.interface}")
+            raise RuntimeError(f"Interface {config.interface} is not up")
+
         self.hints = self._get_device_hints(config)
 
         if self.hints.tx_selection == TxSelection.EST:

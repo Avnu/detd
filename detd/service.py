@@ -303,6 +303,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
              mock.patch.object(CommandSysctl, 'run', return_value=None), \
              mock.patch.object(SystemInformation,  'get_pci_id', return_value=('8086:4B30')), \
              mock.patch.object(SystemInformation,  'get_rate', return_value=1000 * 1000 * 1000), \
+             mock.patch.object(SystemInformation,  'has_link', return_value=True), \
              mock.patch.object(Check,  'is_interface', return_value=True):
 
             addr = request.dmac
@@ -370,6 +371,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
              mock.patch.object(DeviceConfigurator, 'setup_listener', return_value=None), \
              mock.patch.object(SystemInformation,  'get_pci_id', return_value=('8086:4B30')), \
              mock.patch.object(SystemInformation,  'get_rate', return_value=1000 * 1000 * 1000), \
+             mock.patch.object(SystemInformation,  'has_link', return_value=True), \
              mock.patch.object(Check,  'is_interface', return_value=True):
 
             addr = request.dmac
