@@ -73,6 +73,8 @@ In a little bit more detail:
 
 ### Currently supported devices
 
+* Intel® Ethernet Controller I226-LM
+* Intel® Ethernet Controller I226-IT
 * Intel® Ethernet Controller I225-LM
 * Intel® Ethernet Controller I225-IT
 * Intel Atom® x6000E Series (Elkhart Lake) integrated TSN controller
@@ -86,9 +88,6 @@ See [Contributing](README.md#contributing) :)
 * Only some Intel Ethernet controllers supported
   * Code ready to support additional devices
 * Only Linux support
-* Only talker streams
-* taprio support restricted to offload mode
-  * Code ready to support additional qdiscs
 * Launch-Time Control not supported
   * E.g. etf qdisc
 * Current support for AF_PACKET only
@@ -374,6 +373,10 @@ cd detd
   * debhelper-compat
   * dh-python
 
+The sections below describe how to generate the deb package, directly on the host machine or by using a Docker build container. It can then be installed by the regular means.
+
+Make sure to check the Configuration section as well.
+
 
 #### deb package
 
@@ -447,6 +450,47 @@ Ran 39 tests in 1.458s
 OK (skipped=2)
 ```
 
+### Configuration
+
+#### Standard network management services
+
+If another service is trying to manage the same interfaces that detd, issues will arise.
+
+To prevent that, make sure that the other services are not managing them.
+
+For example, if NetworkManager is installed, and you want to exclude enp1s0 and enp2s0:
+
+Create /etc/NetworkManager/conf.d/99-detd-managed-devices.conf and add:
+
+```bash
+[keyfile]
+unmanaged-devices=interface-name:enp1s0;interface-name:enp2s0
+```
+
+Then restart NetworkManager.
+
+#### Linux Real Time Tuning
+
+detd only performs the networking configuration. In order to test it together with a real-time application, the application and operating system may need to be tuned.
+
+A Linux kernel using the PREEMPT_RT preemption model should be used, isolating cores for the execution and performing other tuning tasks. For example, the following kernel command line would isolate cores 2 and 3 for a real-time application, applying hardware tuning for Intel platforms:
+
+```bash
+noht processor.max_cstate=0 intel.max_cstate=0 processor_idle.max_cstate=0 intel_idle.max_cstate=0 intel_pstate=disable idle=poll
+clocksource=tsc tsc=reliable hpet=disable
+mem_sleep_default=deep hugepages=1024
+i915.enable_rc6=0 i915.enable_dc=0 i915.disable_power_well=0 i915.enable_guc=7
+iommu=pt igb.blacklist=no pcie_aspm=off pcie_port_pm=off
+isolcpus=domain,managed_irq,2-3 nohz_full=2,3 irqaffinity=0 numa_balancing=disable
+rcu_nocbs=all rcupdate.rcu_cpu_stall_suppress=1 rcu_nocb_poll
+nowatchdog mce=off efi=runtime audit=0 skew_tick=1
+```
+
+Please consult your Linux distribution real-time tuning guidelines for further guidance.
+
+For real-time tuning on Intel platforms, please refer to:
+[Public Intel® Time Coordinated Compute (TCC) User Guide](https://cdrdv2.intel.com/v1/dl/getContent/831067?explicitVersion=true)
+
 
 ### Contributing
 
@@ -469,7 +513,6 @@ OK (skipped=2)
 * System integration
   * Rename QdiscConfigurator as NetworkQosConfigurator
   * Add Linux class providing Linux-specific operations that do not rely on a specialized system command. E.g. get_pci_id that currently relies on /sys.
-  * Add support for taprio "pure software mode" in CommandTc, plus unit tests
   * Add support for taprio "txtime-assist" mode (aka txtime offload mode) in CommandTc, plus unit tests
 
 * Device support
@@ -481,8 +524,6 @@ OK (skipped=2)
     * So we can remove that from the device support class
   * Split device features into rx_features and tx_features
     * So e.g. only tx_features are applied when setting up the talker
-  * Add i226 support
-    * For guidance and examples, please refer to [detd.devices](detd/devices/__init__.py) package documentation
   * Add support for more devices
   * Generic device support
     * E.g. just fall-back to software taprio and etf. Depends on launch-time support
@@ -509,9 +550,6 @@ OK (skipped=2)
   * Add profiles
     * A layer on top of the basic interface that further elevates the level of abstraction
     * E.g. IEC/IEEE 60802, 61850... that provide the right mappings abstracting the developers from that
-  * Make the implementation strategies configurable
-    * An implementation strategy maps traffic types to backends like mapping a time-aware stream to launch-time + Qbv, launch-time + Qbu, etc
-    * detd would offer the most sane default, but still allow to override it
   * Cover basic interaction with TSN network configuration mechanisms
     * E.g. start enabling to load the configuration from a text file
   * Add diagnostics mode
@@ -528,10 +566,6 @@ OK (skipped=2)
 * Device support
   * Add support for more devices
     * For guidance and examples, please refer to [detd.devices](detd/devices/__init__.py) package documentation
-  * Add listener stream setup
-    * VLAN tag configuration
-    * DMAC subscription
-    * tc and ethtool configuration
 
 * Port PoCs
   * E.g. to VxWorks, or via MicroPython to FreeRTOS, Zephyr...
