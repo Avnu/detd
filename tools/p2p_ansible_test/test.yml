@@ -1,0 +1,110 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright(C) 2024 Intel Corporation
+# Authors:
+#   Kumar Amber
+#   Hector Blanco Alcaine
+
+
+---
+- name: Run experiment
+  gather_facts: false
+  hosts: talker_nodes listener_nodes
+
+  tasks:
+
+    - name: Run listener asynchronously
+      command: "{{ dest }}/execute_detd.sh listener {{ interface }}"
+      args:
+        chdir: "{{ dest }}"
+      become: yes
+      async: 600
+      poll: 0
+      register: listener
+      when: inventory_hostname in groups['listener_nodes']
+
+    # As we may be running testing back-to-back, we give some time for the
+    # link to settle. Otherwise, the initialization sequence or the experiment
+    # may be disrupted.
+    - pause:
+        seconds: 5
+        prompt: "Let the link settle if we are back-to-back..."
+
+    - name: Run talker
+      command: "{{ dest }}/execute_detd.sh talker {{ interface }}"
+      args:
+        chdir: "{{ dest }}"
+      become: yes
+      register: talker
+      when: inventory_hostname in groups['talker_nodes']
+
+    - name: Wait for listener to end
+      async_status:
+        jid: '{{ listener.ansible_job_id }}'
+      become: yes
+      register: listener_result
+      until: listener_result.finished
+      retries: 3
+      delay: 100
+      when: inventory_hostname in groups['listener_nodes']
+
+
+# We retrieve for further analysis is needed:
+# - detd logs on both ends
+# - listener.txt from the listener
+- name: Fetch logs
+  gather_facts: false
+  hosts: listener_nodes talker_nodes
+
+  tasks:
+
+    - name: Fetch detd log from listener and talker
+      fetch:
+        src: /var/log/detd.log
+        dest: "{{ fetch_dest }}"
+
+    - name: Fetch listener log
+      fetch:
+        src: "{{ dest }}/listener.txt"
+        dest: "{{ fetch_dest }}"
+      when: inventory_hostname in groups['listener_nodes']
+
+
+# We display the standard output and error on both ends, in order to support
+# debugging issues.
+- name: Report outputs
+  gather_facts: false
+  hosts: listener_nodes talker_nodes
+
+  tasks:
+
+    - debug:
+        var: listener_result.stdout_lines
+      when: inventory_hostname in groups['listener_nodes']
+
+    - debug:
+        var: listener_result.stderr_lines
+      when: inventory_hostname in groups['listener_nodes']
+
+    - debug:
+        var: talker.stdout_lines
+      when: inventory_hostname in groups['talker_nodes']
+
+    - debug:
+        var: talker.stderr_lines
+      when: inventory_hostname in groups['talker_nodes']
+
+    - pause:
+        seconds: 1
+        prompt: |
+
+          --------------------------------------------------------------------------
+           
+           * * * * * * * * * Experiment execution finished * * * * * * * * *
+          
+           The following files should be available in {{ fetch_dest }}:           
+           * detd logs for talker and listener (detd.log)
+           * Listener side Rx timestamps from the NIC (listener.txt)
+
+           Standard output and error for listener and talker are displayed above.
+          
+          --------------------------------------------------------------------------
