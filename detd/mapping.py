@@ -61,9 +61,9 @@ class MappingFlexible():
     """
 
 
-    def __init__(self, interface):
+    def __init__(self, device):
 
-        self.interface = interface
+        self.device = device
 
         # Initialize socket priority mappings
         # Socket prio 0 is configured as the default
@@ -98,7 +98,7 @@ class MappingFlexible():
         # Initially, all queues are used for best effort traffic
         # Everytime that a new traffic class is added, a best effort queue
         # will be removed and assigned to it
-        num_tx_queues = self.interface.device.num_tx_queues
+        num_tx_queues = self.device.num_tx_queues
         self.tc_to_hwq = [ {"offset":0, "num_queues":num_tx_queues} ]
 
         # Tx queues available to be assigned to streams
@@ -131,7 +131,7 @@ class MappingFlexible():
         return soprio, tc, queue
 
 
-    def unmap_and_free(self, soprio, queue):
+    def unmap_and_free(self, soprio, tc, queue):
         self.unmap_and_free_queue(queue)
         self.unmap_and_free_tc(soprio)
         self.unmap_and_free_soprio(soprio)
@@ -243,13 +243,13 @@ class MappingFixed():
     """
 
 
-    def __init__(self, interface):
+    def __init__(self, device):
 
         logger.info(f"Initializing {__class__.__name__}")
 
         # FIXME: make the number of Tx queues a parameter, so things are not hardcoded
 
-        self.interface = interface
+        self.device = device
 
         # Socket priorities
 
@@ -265,7 +265,7 @@ class MappingFixed():
         # Even though the socket prio assignments are static, we still need to
         # return the specific socket prio when adding a talker
         #self.available_socket_prios = [7, 8, 9, 10, 11, 12, 13]
-        self.available_socket_prios = list(range(7, 7 + self.interface.device.num_tx_queues - 1))
+        self.available_socket_prios = list(range(7, 7 + self.device.num_tx_queues - 1))
 
 
         # Traffic classes
@@ -277,7 +277,7 @@ class MappingFixed():
         # Although the traffic classes are static, we still need to return the
         # specific tc when adding a talker
         #self.available_tcs = [1, 2, 3, 4, 5, 6, 7]
-        self.available_tcs = list(range(1, 1 + self.interface.device.num_tx_queues - 1))
+        self.available_tcs = list(range(1, 1 + self.device.num_tx_queues - 1))
 
         # Assumes the BE mappings to socket prio 0 and TC 0
         # See also the property soprio_to_tc
@@ -286,7 +286,7 @@ class MappingFixed():
         # self.tc_to_soprio = [0, 7, 8, 9, 10, 11, 12, 13]
         self.tc_to_soprio = [0]
 
-        num_tx_queues = self.interface.device.num_tx_queues
+        num_tx_queues = self.device.num_tx_queues
         for i in range(num_tx_queues - 1):
             self.tc_to_soprio.append(7 + i)
 
@@ -334,7 +334,7 @@ class MappingFixed():
 
         # We pre-assign all the queues for the expected traffic classes
         # New traffic classes won't be assigned during runtime
-        num_tx_queues = self.interface.device.num_tx_queues
+        num_tx_queues = self.device.num_tx_queues
 
         self.tc_to_hwq = []
         for i in range(num_tx_queues):
@@ -342,7 +342,7 @@ class MappingFixed():
 
         # Tx queues available to be assigned to streams
         #self.available_tx_queues = [1, 2, 3, 4, 5, 6, 7]
-        self.available_tx_queues = list(range(1, 1 + self.interface.device.num_tx_queues - 1))
+        self.available_tx_queues = list(range(1, 1 + self.device.num_tx_queues - 1))
 
 
     @property

@@ -28,7 +28,7 @@ from .scheduler import TxSelection
 
 from .systemconf import SystemInformation
 from .systemconf import SystemConfigurator
-from .mapping import MappingFixed
+#from .mapping import MappingFixed
 from .mapping import MappingFlexible
 from .common import Check
 
@@ -136,9 +136,10 @@ class InterfaceManager():
         if self.hints.tx_selection == TxSelection.EST:
             
             if self.hints.tx_selection_offload == True:
-                self.mapping = MappingFixed(self.interface)
+                #self.mapping = MappingFixed(self.interface)
+                self.mapping = self.interface.device.mapping
             else:
-                self.mapping = MappingFlexible(self.interface)
+                self.mapping = MappingFlexible(self.interface.device)
         else:
             raise RuntimeError(f"Mapping not defined for{self.hints.tx_selection}")
         

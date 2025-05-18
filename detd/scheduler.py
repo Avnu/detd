@@ -347,7 +347,7 @@ class Scheduler:
 
         best_effort_traffic = Traffic(TrafficType.BEST_EFFORT)
         best_effort_traffic.socket_prio = mapping.best_effort_socket_prio
-        best_effort_traffic.queue = mapping.interface.device.best_effort_tx_queues[0]
+        best_effort_traffic.queue = mapping.device.best_effort_tx_queues[0]
         best_effort_traffic.tc = mapping.best_effort_tc
 
         self.traffics.append(best_effort_traffic)

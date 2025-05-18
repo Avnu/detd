@@ -55,7 +55,7 @@ class TestSchedulerMethods(unittest.TestCase):
 
         with RunContext(TestMode.HOST):
             interface = Interface("eth0")
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 0 * us_to_ns
@@ -73,7 +73,7 @@ class TestSchedulerMethods(unittest.TestCase):
 
         with RunContext(TestMode.HOST):
             interface = Interface("eth0")
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 0 * us_to_ns
@@ -95,7 +95,7 @@ class TestSchedulerMethods(unittest.TestCase):
 
         with RunContext(TestMode.HOST):
             interface = Interface("eth0")
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 250 * us_to_ns
@@ -112,7 +112,7 @@ class TestSchedulerMethods(unittest.TestCase):
 
         with RunContext(TestMode.HOST):
             interface = Interface("eth0")
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 250 * us_to_ns
@@ -133,7 +133,7 @@ class TestSchedulerMethods(unittest.TestCase):
 
         with RunContext(TestMode.HOST):
             interface = Interface("eth0")
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 250 * us_to_ns
@@ -162,7 +162,7 @@ class TestSchedulerMethods(unittest.TestCase):
 
         with RunContext(TestMode.HOST):
             interface = Interface("eth0")
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 250 * us_to_ns
@@ -200,7 +200,7 @@ class TestSchedulerMethods(unittest.TestCase):
 
         with RunContext(TestMode.HOST):
             interface = Interface("eth0")
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 250 * us_to_ns
@@ -252,7 +252,7 @@ class TestSchedulerMethods(unittest.TestCase):
 
         with RunContext(TestMode.HOST):
             interface = Interface("eth0")
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 250 * us_to_ns
@@ -308,7 +308,7 @@ class TestSchedulerMethods(unittest.TestCase):
         with RunContext(self.mode):
             interface_name = "eth0"
             interface = Interface(interface_name)
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 100 * us_to_ns
@@ -330,7 +330,7 @@ class TestSchedulerMethods(unittest.TestCase):
         with RunContext(self.mode):
             interface_name = "eth0"
             interface = Interface(interface_name)
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 100 * us_to_ns
@@ -351,7 +351,7 @@ class TestSchedulerMethods(unittest.TestCase):
         with RunContext(self.mode):
             interface_name = "eth0"
             interface = Interface(interface_name)
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 100 * us_to_ns
@@ -372,7 +372,7 @@ class TestSchedulerMethods(unittest.TestCase):
         with RunContext(self.mode):
             interface_name = "eth0"
             interface = Interface(interface_name)
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 100 * us_to_ns

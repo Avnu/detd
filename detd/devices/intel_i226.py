@@ -15,6 +15,8 @@ from ..logger import get_logger
 from .device import Capability
 from .device import Device
 
+from ..mapping import MappingFixed
+
 from ..scheduler import DataPath
 from ..scheduler import TxSelection
 from ..scheduler import Hints
@@ -54,6 +56,8 @@ class IntelI226(Device):
 
         if pci_id in IntelI226.PCI_IDS_UNPROGRAMMED:
             raise "The flash image in this i226 device is empty, or the NVM configuration loading failed."
+
+        self.mapping = MappingFixed(self)
 
         self.features['rxvlan'] = 'off'
         #self.features['hw-tc-offload'] = 'on'

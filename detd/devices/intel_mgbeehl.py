@@ -16,6 +16,8 @@ from ..logger import get_logger
 from .device import Capability
 from .device import Device
 
+from ..mapping import MappingFlexible
+
 from ..scheduler import DataPath
 from ..scheduler import TxSelection
 from ..scheduler import Hints
@@ -62,6 +64,8 @@ class IntelMgbeEhl(Device):
         super().__init__(IntelMgbeEhl.NUM_TX_QUEUES, IntelMgbeEhl.NUM_RX_QUEUES)
 
         self.capabilities = [Capability.Qbv]
+
+        self.mapping = MappingFlexible(self)
 
         self.features['rxvlan'] = 'off'
         self.features['hw-tc-offload'] = 'on'

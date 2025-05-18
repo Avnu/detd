@@ -38,7 +38,7 @@ class TestManager(unittest.TestCase):
             interface = Interface(interface_name)
             tc = None
 
-            mapping = MappingFlexible(interface)
+            mapping = interface.device.mapping
             expected_tc_to_hwq_mapping = [ {"offset":0, "num_queues":8} ]
             self.assertEqual(mapping.tc_to_hwq, expected_tc_to_hwq_mapping)
 
@@ -117,7 +117,7 @@ class TestManager(unittest.TestCase):
             interface = Interface(interface_name)
             tc = None
 
-            mapping = MappingFlexible(interface)
+            mapping = interface.device.mapping
             mapping.assign_queue_and_map(tc)
             mapping.assign_queue_and_map(tc)
             mapping.assign_queue_and_map(tc)
