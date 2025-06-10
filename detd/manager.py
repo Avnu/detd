@@ -190,7 +190,7 @@ class InterfaceManager():
 
 
         # Make sure that the target device is able to implement the resulting schedule
-        if not self.interface.device.supports_schedule(self.scheduler.schedule):
+        if not self.interface.device.supports_schedule(self.scheduler):
             # FIXME: add the limitations in the devices.py class handling the device
             # and then print the docstrings when this error happens
             logger.error(f"The device associated to the network interface does not support the schedule:\n{self.scheduler.schedule}")

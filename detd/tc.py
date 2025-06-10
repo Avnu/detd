@@ -43,7 +43,7 @@ class CommandTc:
         num_tc = len(set(mapping.soprio_to_tc))
         soprio_to_tc = transform_soprio_to_tc(mapping.soprio_to_tc)
         tc_to_hwq = transform_tc_to_hwq(mapping.tc_to_hwq)
-        schedule = extract_schedule(scheduler)
+        schedule = extract_schedule(scheduler, mapping)
         sched_entries = transform_sched_entries(schedule)
         cmd = CommandStringTcTaprioOffloadSet(interface.name, num_tc, soprio_to_tc, tc_to_hwq, base_time, sched_entries)
 
@@ -63,7 +63,7 @@ class CommandTc:
         num_tc = len(set(mapping.soprio_to_tc))
         soprio_to_tc = transform_soprio_to_tc(mapping.soprio_to_tc)
         tc_to_hwq = transform_tc_to_hwq(mapping.tc_to_hwq)
-        schedule = extract_schedule(scheduler)
+        schedule = extract_schedule(scheduler, mapping)
         sched_entries = transform_sched_entries(schedule)
         cmd = CommandStringTcTaprioSoftwareSet(interface.name, num_tc, soprio_to_tc, tc_to_hwq, base_time, sched_entries)
 
@@ -94,21 +94,56 @@ def transform_tc_to_hwq(tc_to_hwq):
     return ' '.join(mapping)
 
 
-def extract_schedule(scheduler):
+def extract_schedule(scheduler, mapping):
+
+    tc_to_hwq = mapping.tc_to_hwq
+    queues_for_be = mapping.queues_for_be
+
     schedule = []
     for slot in scheduler.schedule:
         entry = {}
         entry["command"] = "SetGateStates"
         tc = slot.traffic.tc
-        gatemask = ""
-        for i in reversed(range(0,8)):
-            if i == tc:
-                gatemask += "1"
+        # If the traffic class has a 1:1 mapping to a single queue, just create
+        # an exclusive gating schedule
+        if tc_to_hwq[tc]['num_queues'] == 1:
+            gatemask = ""
+            for i in reversed(range(0,8)):
+                if i == tc:
+                    gatemask += "1"
+                else:
+                    gatemask += "0"
+            entry["gatemask"] = gatemask
+            entry["interval"] = slot.length
+            schedule.append(entry)
+        # If the traffic class corresponds to more than one queue, the way the
+        # schedule has to be implemented is specified by the mapping class
+        elif tc_to_hwq[tc]['num_queues'] > 1:
+
+            # FIXME add assert to check that schedule and mapping are
+            # FIXME consistent. E.g. that we will not run out of queues in
+            # FIXME runtime.
+
+            # This is similar to the case above, but we use the queue index
+            # instead of the traffic class index to determine the bitmask
+            # entry to open
+            if mapping.is_traffic_class_to_multiqueue_exclusive():
+
+                queue = queues_for_be.pop()
+                gatemask = ""
+                for i in reversed(range(0,8)):
+                    if i == queue:
+                        gatemask += "1"
+                    else:
+                        gatemask += "0"
+                entry["gatemask"] = gatemask
+                entry["interval"] = slot.length
+                schedule.append(entry)
             else:
-                gatemask += "0"
-        entry["gatemask"] = gatemask
-        entry["interval"] = slot.length
-        schedule.append(entry)
+                raise NotImplementedError("Non-exclusive traffic class to multiqueue not implemented")
+        # Each traffic class should always be assigned at least to one queue
+        else:
+            raise ValueError
     return schedule
 
 

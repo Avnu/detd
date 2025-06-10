@@ -15,7 +15,7 @@ from ..logger import get_logger
 from .device import Capability
 from .device import Device
 
-from ..mapping import MappingFixed
+from ..mapping import MappingMultiqueueTrafficClassExclusive
 
 from ..scheduler import DataPath
 from ..scheduler import TxSelection
@@ -57,7 +57,7 @@ class IntelI226(Device):
         if pci_id in IntelI226.PCI_IDS_UNPROGRAMMED:
             raise "The flash image in this i226 device is empty, or the NVM configuration loading failed."
 
-        self.mapping = MappingFixed(self)
+        self.mapping = MappingMultiqueueTrafficClassExclusive(self)
 
         self.features['rxvlan'] = 'off'
         #self.features['hw-tc-offload'] = 'on'
@@ -84,14 +84,36 @@ class IntelI226(Device):
         return -1
 
 
-    def supports_schedule(self, schedule):
+    def supports_schedule(self, scheduler):
 
-        if schedule.opens_gate_multiple_times_per_cycle():
-            return False
+        if not scheduler.schedule.opens_gate_multiple_times_per_cycle():
+            return True
 
         # FIXME: check additional constraints, like maximum cycle time
 
-        return True
+        if isinstance(self.mapping, MappingMultiqueueTrafficClassExclusive):
+
+            # If there is only one stream (plus best effort), it is supported
+            # as long as the MappingMultiqueueTrafficClassExclusive is used
+            # RT | BE
+            # BE | RT
+
+            # If there are two streams (plus best effort), it is supported as
+            # well with the MappingMultiqueueTrafficClassExclusive
+            # BE  | RT  | BE
+            # RT1 | RT2 | BE
+            # RT1 | BE  | RT2
+            # BE  | RT1 | RT2
+
+            # num_tcs includes scheduled traffics plus one entry for best effort
+            num_tcs = len(scheduler.traffics)
+            num_slots = len(scheduler.schedule)
+
+            if num_tcs <= 3 and num_slots <= 4:
+                return True
+
+        return False
+
 
     def default_hints(self):
         '''Returns device supported default Hints.
