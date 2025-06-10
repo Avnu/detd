@@ -10,5 +10,15 @@
 # tests and deletes the generated code.
 
 protoc ipc.proto --python_out=.
-python3 -m unittest discover .. --verbose
+if [ "$#" -eq 0 ]; then
+   python3 -m unittest discover .. --verbose
+elif [ "$#" -eq 1 ]; then
+   cd ..
+   python3 -m unittest "$1" --verbose
+   cd -
+else
+   echo "Usage: $0 [unit test to execute]"
+fi
 rm ipc_pb2.py
+
+echo -e "\nUnit testing logs available in detd-server-unittest.log"
