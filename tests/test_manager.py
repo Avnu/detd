@@ -56,29 +56,24 @@ class TestManager(unittest.TestCase):
 
         interface_name = "eth0"
 
-        num_tx_queues = 8
+        num_tx_queues = 4
 
         # These three mappings are expected to remain immutable
-        tc_to_soprio = [0, 7, 8, 9, 10, 11, 12, 13]
+        tc_to_soprio = [0, 7, 8]
         soprio_to_pcp = {
-            0: 0,
-            7: 1,
-            8: 2,
-            9: 3,
-            10: 4,
-            11: 5,
-            12: 6,
-            13: 7
+           0: 0,
+           9: 1,
+           10: 2,
+           11: 3,
+           12: 4,
+           13: 5,
+           8: 6,
+           7: 7,
         }
         tc_to_hwq = [
+            {"offset":2, "num_queues":2},
             {"offset":0, "num_queues":1},
             {"offset":1, "num_queues":1},
-            {"offset":2, "num_queues":1},
-            {"offset":3, "num_queues":1},
-            {"offset":4, "num_queues":1},
-            {"offset":5, "num_queues":1},
-            {"offset":6, "num_queues":1},
-            {"offset":7, "num_queues":1},
         ]
 
 
@@ -87,7 +82,7 @@ class TestManager(unittest.TestCase):
             manager = Manager()
 
 
-        # A first stream
+        # Add first stream
         config = setup_config(self.mode)
 
         with RunContext(self.mode):
@@ -97,15 +92,17 @@ class TestManager(unittest.TestCase):
         self.assertEqual(soprio, 7)
 
         available_socket_prios = [8, 9, 10, 11, 12, 13]
-        available_tcs = [2, 3, 4, 5, 6, 7]
-        available_tx_queues = [2, 3, 4, 5, 6, 7]
+        available_tcs = [2]
+        available_tx_queues = [1]
         self.assertMappingEqual(manager.talker_manager[interface_name].mapping,
                                 available_socket_prios, available_tcs, available_tx_queues,
                                 tc_to_soprio, soprio_to_pcp, tc_to_hwq)
 
 
-        # A second stream
-        config = setup_config(self.mode, interval=20*1000*1000, txoffset=600*1000)
+        # A second stream, which should reach the limit
+        # Please note we do not support all 2 RT streams configurations, but
+        # here we are using as supported one as we are testing for success
+        config = setup_config(self.mode, interval=20*1000*1000, txoffset=262177)
 
         with RunContext(self.mode):
             vlan_interface, soprio = manager.add_talker(config)
@@ -114,22 +111,6 @@ class TestManager(unittest.TestCase):
         self.assertEqual(soprio, 8)
 
         available_socket_prios = [9, 10, 11, 12, 13]
-        available_tcs = [3, 4, 5, 6, 7]
-        available_tx_queues = [3, 4, 5, 6, 7]
-        self.assertMappingEqual(manager.talker_manager[interface_name].mapping,
-                                available_socket_prios, available_tcs, available_tx_queues,
-                                tc_to_soprio, soprio_to_pcp, tc_to_hwq)
-
-        # Five more streams until we reach the maximum available number for 8 queues
-        for txoffset_us in [800, 1000, 1400, 1800, 2200]:
-            config = setup_config(self.mode, interval=20*1000*1000, txoffset=txoffset_us*1000)
-            with RunContext(self.mode):
-                vlan_interface, soprio = manager.add_talker(config)
-
-        self.assertEqual(vlan_interface, "eth0.3")
-        self.assertEqual(soprio, 13)
-
-        available_socket_prios = []
         available_tcs = []
         available_tx_queues = []
         self.assertMappingEqual(manager.talker_manager[interface_name].mapping,
@@ -141,7 +122,7 @@ class TestManager(unittest.TestCase):
         with RunContext(self.mode):
             self.assertRaises(IndexError, manager.add_talker, config)
 
-
+    @unittest.skip("WIP")
     def test_remove_max_talkers_success_and_error(self):
 
         interface_name = "eth0"

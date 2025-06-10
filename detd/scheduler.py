@@ -205,7 +205,7 @@ class Slot:
         self.traffic = traffic
 
     def __eq__(self, other):
-        return self.start == other.start
+        return (self.start == other.start) and (self.end == other.end)
 
     def __lt__(self, other):
         return self.start < other.start
@@ -231,26 +231,74 @@ class Schedule(list):
         self.sort()
 
 
-    def add_best_effort_padding(self, traffic):
+    def add_best_effort_padding(self, best_effort_traffic):
+        '''Takes the slots for all the scheduled traffic and adds best effort
+        slots to cover for the gaps over the given period.
+
+        The traffic slots to be incorporated to the current schedule must be
+        sorted before the function is called.
+
+        The initial schedule only contains the slots with scheduled traffic.
+
+        The function moves from the start of the cycle (0) to the end of it
+        (period). When there is a gap not covered by the existing slots, it
+        will append a new best effort slot to the schedule to cover it.
+
+        When all the best effort slots have been appended, the slots in the
+        schedule will be sorted.
+        '''
+
+        # The list of slots that composes the schedule must be sorted over time
+        assert all(self[i].start <= self[i+1].start for i in range(len(self) - 1))
 
         end = 0
+        # We are iterating on all the scheduled traffics
         i = 0
         n = len(self)
         while i < n:
             assert end <= self[i].start, "i={0}: {1} > {2}".format(i, end, self[i].start)
             if end < self[i].start:
-                # We add all the padding slots at the end and will sort later
-                # This way we do not need to deal with re-indexing
-                self.append(Slot(end, self[i].start, traffic))
-                end = self[i].end
+                # If end = 0, it means there is no preceding traffic because we
+                # are starting the gating cycle, so we need to insert padding
+                # between the start of the cycle and the beginning of the
+                # traffic
+                if end == 0:
+                    start = 0
+                    end = self[i].start - 1
+                    # We add all the padding slots at the end of the schedule,
+                    # and will sort them when we are done.
+                    self.append(Slot(start, end, best_effort_traffic))
+                    end = self[i].end
+
+                # If end > 0, it means that there is a preceding scheduled
+                # traffic.
+                # If the current traffic starts immediately after the other, we
+                # do not need to insert best effort. Just move to the end of
+                # the current traffic and re-evaluate.
+                elif end + 1 == self[i].start:
+                    end = self[i].end
+                # Otherwise, we need to insert best effort starting in the next
+                # nanosecond, and covering until the current traffic starts.
+                else:
+                    start = end + 1
+                    end = self[i].start - 1
+                    self.append(Slot(start, end, best_effort_traffic))
+                    # Now end will be the end of the current scheduled traffic
+                    end = self[i].end
             elif end == self[i].start:
-                end = self[i].end
+                if i == 0:
+                    end = self[i].end
+                else:
+                    raise ValueError("Slots overlap when padding with best effort")
+            # If this is the last scheduled traffic, cover with best effort
+            # until the end of the period
+            if i == (n - 1):
+                if end < self.period:
+                    self.append(Slot(end + 1, self.period, best_effort_traffic))
+
             i += 1
         # We sort the list of slots that now contains scheduled and best effort
         self.sort()
-        # The last best effort padding element may cover the remaining until period
-        if self[-1].end < self.period:
-            self.append(Slot(self[-1].end, self.period, traffic))
 
 
     def conflicts_with_traffic(self, traffic):
@@ -347,7 +395,7 @@ class Scheduler:
 
         best_effort_traffic = Traffic(TrafficType.BEST_EFFORT)
         best_effort_traffic.socket_prio = mapping.best_effort_socket_prio
-        best_effort_traffic.queue = mapping.interface.device.best_effort_tx_queues[0]
+        best_effort_traffic.queue = mapping.device.best_effort_tx_queues[0]
         best_effort_traffic.tc = mapping.best_effort_tc
 
         self.traffics.append(best_effort_traffic)
@@ -438,5 +486,3 @@ class Hints:
                 f"data_path={self.data_path.name}, "
                 f"preemption={self.preemption}, "
                 f"launch_time_control={self.launch_time_control})")
-
-

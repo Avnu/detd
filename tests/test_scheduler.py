@@ -55,7 +55,7 @@ class TestSchedulerMethods(unittest.TestCase):
 
         with RunContext(TestMode.HOST):
             interface = Interface("eth0")
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 0 * us_to_ns
@@ -66,14 +66,14 @@ class TestSchedulerMethods(unittest.TestCase):
             self.assertEqual(scheduler.schedule.period, 20000000)
 
             self.assert_slot(scheduler, 0,     0,    12176)
-            self.assert_slot(scheduler, 1, 12176, 20000000)
+            self.assert_slot(scheduler, 1, 12177, 20000000)
 
 
     def test_add_remove_single_scheduled_traffic_start_0(self):
 
         with RunContext(TestMode.HOST):
             interface = Interface("eth0")
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 0 * us_to_ns
@@ -84,7 +84,7 @@ class TestSchedulerMethods(unittest.TestCase):
             self.assertEqual(scheduler.schedule.period, 20000000)
 
             self.assert_slot(scheduler, 0,     0,    12176)
-            self.assert_slot(scheduler, 1, 12176, 20000000)
+            self.assert_slot(scheduler, 1, 12177, 20000000)
 
             scheduler.remove(traffic)
 
@@ -95,7 +95,7 @@ class TestSchedulerMethods(unittest.TestCase):
 
         with RunContext(TestMode.HOST):
             interface = Interface("eth0")
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 250 * us_to_ns
@@ -103,16 +103,16 @@ class TestSchedulerMethods(unittest.TestCase):
             traffic = traffic_helper(txoffset, interval)
             scheduler.add(traffic)
 
-            self.assert_slot(scheduler, 0,      0,   250000)
+            self.assert_slot(scheduler, 0,      0,   249999)
             self.assert_slot(scheduler, 1, 250000,   262176)
-            self.assert_slot(scheduler, 2, 262176, 20000000)
+            self.assert_slot(scheduler, 2, 262177, 20000000)
 
 
     def test_add_remove_single_scheduled_traffic_start_non_0(self):
 
         with RunContext(TestMode.HOST):
             interface = Interface("eth0")
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 250 * us_to_ns
@@ -120,9 +120,45 @@ class TestSchedulerMethods(unittest.TestCase):
             traffic = traffic_helper(txoffset, interval)
             scheduler.add(traffic)
 
-            self.assert_slot(scheduler, 0,      0,   250000)
+            self.assert_slot(scheduler, 0,      0,   249999)
             self.assert_slot(scheduler, 1, 250000,   262176)
-            self.assert_slot(scheduler, 2, 262176, 20000000)
+            self.assert_slot(scheduler, 2, 262177, 20000000)
+
+            scheduler.remove(traffic)
+
+            self.assert_schedule_empty(scheduler.schedule)
+
+
+    def test_add_single_scheduled_traffic_end_on_period_end(self):
+
+        with RunContext(TestMode.HOST):
+            interface = Interface("eth0")
+            mapping = interface.device.mapping
+            scheduler = Scheduler(mapping)
+
+            txoffset = 19987824
+            interval = 20 * ms_to_ns
+            traffic = traffic_helper(txoffset, interval)
+            scheduler.add(traffic)
+
+            self.assert_slot(scheduler, 0,        0,   19987823)
+            self.assert_slot(scheduler, 1, 19987824,   20000000)
+
+
+    def test_add_remove_single_scheduled_traffic_end_on_period_end(self):
+
+        with RunContext(TestMode.HOST):
+            interface = Interface("eth0")
+            mapping = interface.device.mapping
+            scheduler = Scheduler(mapping)
+
+            txoffset = 19987824
+            interval = 20 * ms_to_ns
+            traffic = traffic_helper(txoffset, interval)
+            scheduler.add(traffic)
+
+            self.assert_slot(scheduler, 0,        0,   19987823)
+            self.assert_slot(scheduler, 1, 19987824,   20000000)
 
             scheduler.remove(traffic)
 
@@ -133,7 +169,7 @@ class TestSchedulerMethods(unittest.TestCase):
 
         with RunContext(TestMode.HOST):
             interface = Interface("eth0")
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 250 * us_to_ns
@@ -150,11 +186,11 @@ class TestSchedulerMethods(unittest.TestCase):
             self.assert_traffic(scheduler.traffics[1], 250000, 1000000)
             self.assert_traffic(scheduler.traffics[2], 550000, 1000000)
 
-            self.assert_slot(scheduler, 0,      0,  250000)
+            self.assert_slot(scheduler, 0,      0,  249999)
             self.assert_slot(scheduler, 1, 250000,  262176)
-            self.assert_slot(scheduler, 2, 262176,  550000)
+            self.assert_slot(scheduler, 2, 262177,  549999)
             self.assert_slot(scheduler, 3, 550000,  562176)
-            self.assert_slot(scheduler, 4, 562176, 1000000)
+            self.assert_slot(scheduler, 4, 562177, 1000000)
 
 
 
@@ -162,7 +198,7 @@ class TestSchedulerMethods(unittest.TestCase):
 
         with RunContext(TestMode.HOST):
             interface = Interface("eth0")
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 250 * us_to_ns
@@ -177,30 +213,30 @@ class TestSchedulerMethods(unittest.TestCase):
 
             self.assertEqual(scheduler.schedule.period, 6000000)
 
-            self.assert_slot(scheduler, 0,      0, 250000)
+            self.assert_slot(scheduler, 0,      0, 249999)
             self.assert_slot(scheduler, 1, 250000, 262176)
 
-            self.assert_slot(scheduler, 2, 262176, 750000)
+            self.assert_slot(scheduler, 2, 262177, 749999)
             self.assert_slot(scheduler, 3, 750000, 762176)
 
-            self.assert_slot(scheduler, 4,  762176, 2250000)
+            self.assert_slot(scheduler, 4,  762177, 2249999)
             self.assert_slot(scheduler, 5, 2250000, 2262176)
 
-            self.assert_slot(scheduler, 6, 2262176, 3750000)
+            self.assert_slot(scheduler, 6, 2262177, 3749999)
             self.assert_slot(scheduler, 7, 3750000, 3762176)
 
-            self.assert_slot(scheduler, 8, 3762176, 4250000)
+            self.assert_slot(scheduler, 8, 3762177, 4249999)
             self.assert_slot(scheduler, 9, 4250000, 4262176)
 
 
-            self.assert_slot(scheduler, 10, 4262176, 6000000)
+            self.assert_slot(scheduler, 10, 4262177, 6000000)
 
 
     def test_add_remove_last_to_first_two_scheduled_traffics_different_interval(self):
 
         with RunContext(TestMode.HOST):
             interface = Interface("eth0")
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 250 * us_to_ns
@@ -215,32 +251,32 @@ class TestSchedulerMethods(unittest.TestCase):
 
             self.assertEqual(scheduler.schedule.period, 6000000)
 
-            self.assert_slot(scheduler, 0,      0, 250000)
+            self.assert_slot(scheduler, 0,      0, 249999)
             self.assert_slot(scheduler, 1, 250000, 262176)
 
-            self.assert_slot(scheduler, 2, 262176, 750000)
+            self.assert_slot(scheduler, 2, 262177, 749999)
             self.assert_slot(scheduler, 3, 750000, 762176)
 
-            self.assert_slot(scheduler, 4,  762176, 2250000)
+            self.assert_slot(scheduler, 4,  762177, 2249999)
             self.assert_slot(scheduler, 5, 2250000, 2262176)
 
-            self.assert_slot(scheduler, 6, 2262176, 3750000)
+            self.assert_slot(scheduler, 6, 2262177, 3749999)
             self.assert_slot(scheduler, 7, 3750000, 3762176)
 
-            self.assert_slot(scheduler, 8, 3762176, 4250000)
+            self.assert_slot(scheduler, 8, 3762177, 4249999)
             self.assert_slot(scheduler, 9, 4250000, 4262176)
 
-            self.assert_slot(scheduler, 10, 4262176, 6000000)
+            self.assert_slot(scheduler, 10, 4262177, 6000000)
 
             # Remove traffic2
             scheduler.remove(traffic2)
 
             self.assertEqual(scheduler.schedule.period, 2000000)
 
-            self.assert_slot(scheduler, 0,      0, 250000)
+            self.assert_slot(scheduler, 0,      0, 249999)
             self.assert_slot(scheduler, 1, 250000, 262176)
 
-            self.assert_slot(scheduler, 2, 262176, 2000000)
+            self.assert_slot(scheduler, 2, 262177, 2000000)
 
             # Remove traffic1
             scheduler.remove(traffic1)
@@ -252,7 +288,7 @@ class TestSchedulerMethods(unittest.TestCase):
 
         with RunContext(TestMode.HOST):
             interface = Interface("eth0")
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 250 * us_to_ns
@@ -267,32 +303,32 @@ class TestSchedulerMethods(unittest.TestCase):
 
             self.assertEqual(scheduler.schedule.period, 6000000)
 
-            self.assert_slot(scheduler, 0,      0, 250000)
+            self.assert_slot(scheduler, 0,      0, 249999)
             self.assert_slot(scheduler, 1, 250000, 262176)
 
-            self.assert_slot(scheduler, 2, 262176, 750000)
+            self.assert_slot(scheduler, 2, 262177, 749999)
             self.assert_slot(scheduler, 3, 750000, 762176)
 
-            self.assert_slot(scheduler, 4,  762176, 2250000)
+            self.assert_slot(scheduler, 4,  762177, 2249999)
             self.assert_slot(scheduler, 5, 2250000, 2262176)
 
-            self.assert_slot(scheduler, 6, 2262176, 3750000)
+            self.assert_slot(scheduler, 6, 2262177, 3749999)
             self.assert_slot(scheduler, 7, 3750000, 3762176)
 
-            self.assert_slot(scheduler, 8, 3762176, 4250000)
+            self.assert_slot(scheduler, 8, 3762177, 4249999)
             self.assert_slot(scheduler, 9, 4250000, 4262176)
 
-            self.assert_slot(scheduler, 10, 4262176, 6000000)
+            self.assert_slot(scheduler, 10, 4262177, 6000000)
 
             # Remove traffic2
             scheduler.remove(traffic1)
 
             self.assertEqual(scheduler.schedule.period, 3000000)
 
-            self.assert_slot(scheduler, 0,      0, 750000)
+            self.assert_slot(scheduler, 0,      0, 749999)
             self.assert_slot(scheduler, 1, 750000, 762176)
 
-            self.assert_slot(scheduler, 2, 762176, 3000000)
+            self.assert_slot(scheduler, 2, 762177, 3000000)
 
             # Remove traffic1
             scheduler.remove(traffic2)
@@ -308,7 +344,7 @@ class TestSchedulerMethods(unittest.TestCase):
         with RunContext(self.mode):
             interface_name = "eth0"
             interface = Interface(interface_name)
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 100 * us_to_ns
@@ -330,7 +366,7 @@ class TestSchedulerMethods(unittest.TestCase):
         with RunContext(self.mode):
             interface_name = "eth0"
             interface = Interface(interface_name)
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 100 * us_to_ns
@@ -351,7 +387,7 @@ class TestSchedulerMethods(unittest.TestCase):
         with RunContext(self.mode):
             interface_name = "eth0"
             interface = Interface(interface_name)
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 100 * us_to_ns
@@ -372,7 +408,7 @@ class TestSchedulerMethods(unittest.TestCase):
         with RunContext(self.mode):
             interface_name = "eth0"
             interface = Interface(interface_name)
-            mapping = MappingFixed(interface)
+            mapping = interface.device.mapping
             scheduler = Scheduler(mapping)
 
             txoffset = 100 * us_to_ns

@@ -28,7 +28,7 @@ from .scheduler import TxSelection
 
 from .systemconf import SystemInformation
 from .systemconf import SystemConfigurator
-from .mapping import MappingFixed
+#from .mapping import MappingFixed
 from .mapping import MappingFlexible
 from .common import Check
 
@@ -136,9 +136,10 @@ class InterfaceManager():
         if self.hints.tx_selection == TxSelection.EST:
             
             if self.hints.tx_selection_offload == True:
-                self.mapping = MappingFixed(self.interface)
+                #self.mapping = MappingFixed(self.interface)
+                self.mapping = self.interface.device.mapping
             else:
-                self.mapping = MappingFlexible(self.interface)
+                self.mapping = MappingFlexible(self.interface.device)
         else:
             raise RuntimeError(f"Mapping not defined for{self.hints.tx_selection}")
         
@@ -189,7 +190,7 @@ class InterfaceManager():
 
 
         # Make sure that the target device is able to implement the resulting schedule
-        if not self.interface.device.supports_schedule(self.scheduler.schedule):
+        if not self.interface.device.supports_schedule(self.scheduler):
             # FIXME: add the limitations in the devices.py class handling the device
             # and then print the docstrings when this error happens
             logger.error(f"The device associated to the network interface does not support the schedule:\n{self.scheduler.schedule}")
