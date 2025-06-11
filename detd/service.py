@@ -30,6 +30,7 @@ import threading
 from pathlib import Path
 from unittest import mock
 
+from .ipc_pb2 import DetdMessage
 from .ipc_pb2 import StreamQosRequest
 from .ipc_pb2 import StreamQosResponse
 
@@ -218,28 +219,38 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
             response.vlan_interface = vlan_interface
             response.socket_priority = soprio
 
-        message = response.SerializePartialToString()
-        return message
+        message = DetdMessage()
+        message.stream_qos_response.CopyFrom(response)
+
+        packet = message.SerializeToString()
+
+        return packet
+
 
     def receive_qos_request(self):
 
         data = self.packet
-        request = StreamQosRequest()
-        request.ParseFromString(data)
+
+        message = DetdMessage()
+        message.ParseFromString(data)
+
+        assert message.stream_qos_request is not None
+        request = message.stream_qos_request
 
         return request
 
 
     def send_qos_response(self, vlan_interface, soprio):
 
-        message = self.build_qos_response(vlan_interface, soprio)
-        self.send(message)
+        packet = self.build_qos_response(vlan_interface, soprio)
+        self.send(packet)
 
 
     def send_qos_socket_response(self, fd):
 
         message = self.build_qos_response(fd=fd)
         self.send_fd(message, fd)
+
 
     def build_listener_qos_response(self, vlan_interface=None, soprio=None, fd=None):
         response = StreamQosResponse()
@@ -248,9 +259,13 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
             response.vlan_interface = vlan_interface
             response.socket_priority = soprio
 
-        message = response.SerializePartialToString()
-        return message
+        message = DetdMessage()
+        message.stream_qos_response.CopyFrom(response)
 
+        packet = message.SerializeToString()
+
+
+        return packet
 
 
     def send_listener_qos_response(self, vlan_interface, soprio):

@@ -10,6 +10,7 @@ enum TxSelection{
     STRICT_PRIO = 1;
 }
 
+
 message StreamQosRequest {
 	string interface = 1;
 	uint32 period = 2;
@@ -38,3 +39,10 @@ message StreamQosResponse {
 	uint32  socket_priority = 3;
 }
 
+
+message DetdMessage {
+	oneof msg {
+	    StreamQosRequest stream_qos_request = 1;
+	    StreamQosResponse stream_qos_response = 2;
+	}
+}
