@@ -23,6 +23,7 @@ import socket
 
 from .common import Check
 
+from .ipc_pb2 import DetdMessage
 from .ipc_pb2 import StreamQosRequest
 from .ipc_pb2 import StreamQosResponse
 
@@ -53,10 +54,10 @@ class ServiceProxy:
         self.sock.connect(self.uds_address)
 
 
-    def send(self, message):
+    def send(self, packet):
 
         try:
-            self.sock.sendto(message, self.uds_address)
+            self.sock.sendto(packet, self.uds_address)
 
         except:
             raise
@@ -66,9 +67,9 @@ class ServiceProxy:
 
 
     def recv(self):
-        message, addr = self.sock.recvfrom(1024)
+        packet, addr = self.sock.recvfrom(1024)
 
-        return message
+        return packet
 
 
     def recv_fd(self, msglen):
@@ -106,15 +107,22 @@ class ServiceProxy:
         else:
             request.hints_available = False
 
-        message = request.SerializeToString()
-        self.send(message)
+        message = DetdMessage()
+        message.stream_qos_request.CopyFrom(request)
+
+        packet = message.SerializeToString()
+
+        self.send(packet)
 
 
     def receive_qos_response(self):
-        message = self.recv()
+        packet = self.recv()
 
-        response = StreamQosResponse()
-        response.ParseFromString(message)
+        message = DetdMessage()
+        message.ParseFromString(packet)
+
+        assert message.stream_qos_response is not None
+        response = message.stream_qos_response
 
         return response
 
@@ -122,9 +130,13 @@ class ServiceProxy:
     def receive_qos_socket_response(self):
         sock = self.sock
 
-        message, fds = self.recv_fd(1024)
-        response = StreamQosResponse()
-        response.ParseFromString(message)
+        data, fds = self.recv_fd(1024)
+
+        message = DetdMessage()
+        message.ParseFromString(data)
+
+        assert message.stream_qos_response is not None
+        response =  message.stream_qos_response
 
         s = socket.socket(fileno=fds[0])
 
@@ -146,15 +158,21 @@ class ServiceProxy:
         request.talker = False
         request.hints_available = False
 
-        message = request.SerializeToString()
-        self.send(message)
+        message = DetdMessage()
+        message.stream_qos_request.CopyFrom(request)
+
+        packet = message.SerializeToString()
+        self.send(packet)
 
 
     def receive_listener_qos_response(self):
-        message = self.recv()
+        packet = self.recv()
 
-        response = StreamQosResponse()
-        response.ParseFromString(message)
+        message = DetdMessage()
+        message.ParseFromString(packet)
+
+        assert message.stream_qos_response is not None
+        response = message.stream_qos_response
 
         return response
 
@@ -162,9 +180,13 @@ class ServiceProxy:
     def receive_listener_qos_socket_response(self):
         sock = self.sock
 
-        message, fds = self.recv_fd(1024)
-        response = StreamQosResponse()
-        response.ParseFromString(message)
+        data, fds = self.recv_fd(1024)
+
+        message = DetdMessage()
+        message.ParseFromString(data)
+
+        assert message.stream_qos_response is not None
+        response =  message.stream_qos_response
 
         s = socket.socket(fileno=fds[0])
 
