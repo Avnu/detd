@@ -33,6 +33,7 @@ from unittest import mock
 from .common import Hints
 
 from .ipc_pb2 import DetdMessage
+from .ipc_pb2 import HintsMessage
 from .ipc_pb2 import InitRequest
 from .ipc_pb2 import InitResponse
 from .ipc_pb2 import StreamQosRequest
@@ -312,12 +313,13 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
     def _init_interface(self, request):
 
         interface_name = request.interface
-        if request.hints_available == True:
-            tx_selection = request.hints_tx_selection
-            tx_selection_offload = request.hints_tx_selection_offload
-            data_path = request.hints_data_path
-            preemption = request.hints_preemption
-            launch_time_control = request.hints_launch_time_control
+
+        if request.HasField("hints"):
+            tx_selection = request.hints.hints_tx_selection
+            tx_selection_offload = request.hints.hints_tx_selection_offload
+            data_path = request.hints.hints_data_path
+            preemption = request.hints.hints_preemption
+            launch_time_control = request.hints.hints_launch_time_control
             hints = Hints(tx_selection, tx_selection_offload, data_path, preemption, launch_time_control)
         else:
             hints = None
@@ -340,12 +342,12 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
              mock.patch.object(Check,  'is_interface', return_value=True):
 
             interface_name = request.interface
-            if request.hints_available == True:
-                tx_selection = request.hints_tx_selection
-                tx_selection_offload = request.hints_tx_selection_offload
-                data_path = request.hints_data_path
-                preemption = request.hints_preemption
-                launch_time_control = request.hints_launch_time_control
+            if request.HasField("hints"):
+                tx_selection = request.hints.hints_tx_selection
+                tx_selection_offload = request.hints.hints_tx_selection_offload
+                data_path = request.hints.hints_data_path
+                preemption = request.hints.hints_preemption
+                launch_time_control = request.hints.hints_launch_time_control
                 hints = Hints(tx_selection, tx_selection_offload, data_path, preemption, launch_time_control)
             else:
                 hints = None

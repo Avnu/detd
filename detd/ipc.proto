@@ -27,14 +27,18 @@ enum TxSelection{
 }
 
 
+message HintsMessage {
+	TxSelection hints_tx_selection = 1;
+	bool hints_tx_selection_offload = 2;
+	DataPath hints_data_path = 3;
+	bool hints_preemption = 4;
+	bool hints_launch_time_control = 5;
+}
+
+
 message InitRequest {
 	string interface = 1;
-	bool hints_available = 2;
-	TxSelection hints_tx_selection = 3;
-	bool hints_tx_selection_offload = 4;
-	DataPath hints_data_path = 5;
-	bool hints_preemption = 6;
-	bool hints_launch_time_control = 7;
+	optional HintsMessage hints = 2;
 }
 
 

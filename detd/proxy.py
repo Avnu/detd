@@ -24,6 +24,7 @@ import socket
 from .common import Check
 
 from .ipc_pb2 import DetdMessage
+from .ipc_pb2 import HintsMessage
 from .ipc_pb2 import InitRequest
 from .ipc_pb2 import InitResponse
 from .ipc_pb2 import StreamQosRequest
@@ -90,14 +91,14 @@ class ServiceProxy:
         request.interface = configuration.interface_name
 
         if configuration.hints is not None:
-            request.hints_available = True
-            request.hints_tx_selection = configuration.hints.tx_selection.value
-            request.hints_tx_selection_offload = configuration.hints.tx_selection_offload
-            request.hints_data_path = configuration.hints.data_path.value
-            request.hints_preemption = configuration.hints.preemption
-            request.hints_launch_time_control = configuration.hints.launch_time_control
-        else:
-            request.hints_available = False
+            hints = HintsMessage()
+            hints.hints_tx_selection = configuration.hints.tx_selection.value
+            hints.hints_tx_selection_offload = configuration.hints.tx_selection_offload
+            hints.hints_data_path = configuration.hints.data_path.value
+            hints.hints_preemption = configuration.hints.preemption
+            hints.hints_launch_time_control = configuration.hints.launch_time_control
+
+            request.hints = CopyFrom(hints)
 
 
         message = DetdMessage()
