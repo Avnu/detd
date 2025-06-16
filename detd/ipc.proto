@@ -11,6 +11,22 @@ enum TxSelection{
 }
 
 
+message InitRequest {
+	string interface = 1;
+	bool hints_available = 2;
+	TxSelection hints_tx_selection = 3;
+	bool hints_tx_selection_offload = 4;
+	DataPath hints_data_path = 5;
+	bool hints_preemption = 6;
+	bool hints_launch_time_control = 7;
+}
+
+
+message InitResponse {
+	bool ok = 1;
+}
+
+
 message StreamQosRequest {
 	string interface = 1;
 	uint32 period = 2;
@@ -22,14 +38,8 @@ message StreamQosRequest {
 	uint32 txmax = 8;
 	bool   setup_socket = 9;
 	uint32 basetime = 10;
-	bool hints_available = 11;
-	TxSelection hints_tx_selection = 12;
-	bool hints_tx_selection_offload = 13;
-	DataPath hints_data_path = 14;
-	bool hints_preemption = 15;
-	bool hints_launch_time_control = 16;
-	bool talker = 17;
-	string maddress = 18;
+	bool talker = 11;
+	string maddress = 12;
 }
 
 
@@ -42,7 +52,9 @@ message StreamQosResponse {
 
 message DetdMessage {
 	oneof msg {
-	    StreamQosRequest stream_qos_request = 1;
-	    StreamQosResponse stream_qos_response = 2;
+	    InitRequest       init_request = 1;
+	    InitResponse      init_response = 2;
+	    StreamQosRequest  stream_qos_request = 3;
+	    StreamQosResponse stream_qos_response = 4;
 	}
 }

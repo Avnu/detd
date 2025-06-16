@@ -36,7 +36,7 @@ logger = get_logger(__name__)
 
 class Configuration:
 
-    def __init__(self, interface, stream, traffic, hints = None):
+    def __init__(self, interface, stream, traffic):
 
         if stream.txoffset > traffic.interval:
             raise TypeError("Invalid TxOffset, it exceeds Interval")
@@ -44,17 +44,21 @@ class Configuration:
         self.interface = interface
         self.stream = stream
         self.traffic = traffic
-        self.hints = hints
+
+
+
 
 class ListenerConfiguration:
 
-    def __init__(self, interface, stream, traffic, maddress, hints = None):
+    def __init__(self, interface, stream, traffic, maddress):
 
         self.interface = interface
         self.stream = stream
         self.traffic = traffic
         self.maddress = maddress
-        self.hints = hints
+
+
+
 
 class StreamConfiguration:
 
@@ -443,46 +447,4 @@ class Scheduler:
             self.schedule.add_best_effort_padding(self.traffics[0])
             # FIXME: error handling
 
-class DataPath(enum.Enum):
-    AF_PACKET = 0
-    AF_XDP_ZC = 1
 
-class TxSelection(enum.Enum):
-    EST = 0            # ENHANCEMENTS_FOR_SCHEDULED_TRAFFIC
-    STRICT_PRIO = 1    # STRICT_PRIORITY (Preemption)
-
-class Hints:
-    """
-    A configuration class for managing traffic specifications and QoS (Quality of Service)
-    settings for network devices.
-
-    Attributes:
-        tx_selection (str): Determines the transmission selection mechanism to use.
-            Possible values are:
-            - 'ENHANCEMENTS_FOR_SCHEDULED_TRAFFIC' (802.1Qbv)
-            - 'STRICT_PRIORITY'
-        tx_selection_offload (bool): Indicates whether a hardware offload for the
-            tx_selection mechanism is used. True means hardware offload is enabled,
-            false implies a software-based approach.
-        data_path (str): Specifies the data path technology used. Current options include:
-            - 'AF_PACKET'
-            - 'AF_XDP_ZC'
-            Future expansions may include other data paths like 'DPDK'.
-        preemption (bool): Enables or disables preemption in the data transmission.
-        launch_time_control (bool): Enables or disables launch time control for packets.
-
-    """
-    def __init__(self, tx_selection: TxSelection, tx_selection_offload: bool, data_path: DataPath, preemption: bool, launch_time_control: bool):
-       
-        self.tx_selection = tx_selection
-        self.tx_selection_offload = tx_selection_offload
-        self.data_path = data_path
-        self.preemption = preemption
-        self.launch_time_control = launch_time_control
-
-    def __repr__(self):
-        return (f"Hints(tx_selection={self.tx_selection.name}, "
-                f"tx_selection_offload={self.tx_selection_offload}, "
-                f"data_path={self.data_path.name}, "
-                f"preemption={self.preemption}, "
-                f"launch_time_control={self.launch_time_control})")

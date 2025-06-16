@@ -18,9 +18,9 @@ from .device import Device
 
 from ..mapping import MappingFlexible
 
-from ..scheduler import DataPath
-from ..scheduler import TxSelection
-from ..scheduler import Hints
+from ..common import DataPath
+from ..common import TxSelection
+from ..common import Hints
 
 logger = get_logger(__name__)
 

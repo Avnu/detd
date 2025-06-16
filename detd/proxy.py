@@ -24,6 +24,8 @@ import socket
 from .common import Check
 
 from .ipc_pb2 import DetdMessage
+from .ipc_pb2 import InitRequest
+from .ipc_pb2 import InitResponse
 from .ipc_pb2 import StreamQosRequest
 from .ipc_pb2 import StreamQosResponse
 
@@ -83,6 +85,28 @@ class ServiceProxy:
         return msg, list(fds)
 
 
+    def send_init_interface_request(self, configuration):
+        request = InitRequest()
+        request.interface = configuration.interface_name
+
+        if configuration.hints is not None:
+            request.hints_available = True
+            request.hints_tx_selection = configuration.hints.tx_selection.value
+            request.hints_tx_selection_offload = configuration.hints.tx_selection_offload
+            request.hints_data_path = configuration.hints.data_path.value
+            request.hints_preemption = configuration.hints.preemption
+            request.hints_launch_time_control = configuration.hints.launch_time_control
+        else:
+            request.hints_available = False
+
+
+        message = DetdMessage()
+        message.init_request.CopyFrom(request)
+
+        packet = message.SerializeToString()
+
+        self.send(packet)
+
 
     def send_qos_request(self, configuration, setup_socket):
         request = StreamQosRequest()
@@ -97,16 +121,6 @@ class ServiceProxy:
         request.setup_socket = setup_socket
         request.talker = True
 
-        if configuration.hints is not None:
-            request.hints_available = True
-            request.hints_tx_selection = configuration.hints.tx_selection.value
-            request.hints_tx_selection_offload = configuration.hints.tx_selection_offload
-            request.hints_data_path = configuration.hints.data_path.value
-            request.hints_preemption = configuration.hints.preemption
-            request.hints_launch_time_control = configuration.hints.launch_time_control
-        else:
-            request.hints_available = False
-
         message = DetdMessage()
         message.stream_qos_request.CopyFrom(request)
 
@@ -115,13 +129,24 @@ class ServiceProxy:
         self.send(packet)
 
 
-    def receive_qos_response(self):
+    def receive_init_interface_response(self):
         packet = self.recv()
 
         message = DetdMessage()
         message.ParseFromString(packet)
 
-        assert message.stream_qos_response is not None
+        assert message.HasField("init_response")
+        response = message.init_response
+
+        return response
+
+
+    def receive_qos_response(self):
+        packet = self.recv()
+
+        message = DetdMessage()
+        message.ParseFromString(packet)
+        assert message.HasField("stream_qos_response")
         response = message.stream_qos_response
 
         return response
@@ -135,7 +160,7 @@ class ServiceProxy:
         message = DetdMessage()
         message.ParseFromString(data)
 
-        assert message.stream_qos_response is not None
+        assert message.HasField("stream_qos_response")
         response =  message.stream_qos_response
 
         s = socket.socket(fileno=fds[0])
@@ -156,7 +181,6 @@ class ServiceProxy:
         request.setup_socket = setup_socket
         request.maddress = configuration.maddress
         request.talker = False
-        request.hints_available = False
 
         message = DetdMessage()
         message.stream_qos_request.CopyFrom(request)
@@ -171,7 +195,7 @@ class ServiceProxy:
         message = DetdMessage()
         message.ParseFromString(packet)
 
-        assert message.stream_qos_response is not None
+        assert message.HasField("stream_qos_response")
         response = message.stream_qos_response
 
         return response
@@ -185,7 +209,7 @@ class ServiceProxy:
         message = DetdMessage()
         message.ParseFromString(data)
 
-        assert message.stream_qos_response is not None
+        assert message.HasField("stream_qos_response")
         response =  message.stream_qos_response
 
         s = socket.socket(fileno=fds[0])
@@ -193,11 +217,20 @@ class ServiceProxy:
         return response, s
 
 
+    def init_interface(self, configuration):
+        self.setup_socket()
+        self.send_init_interface_request(configuration)
+        response = self.receive_init_interface_response()
+        if response.ok == False:
+            raise RuntimeError("Service replied with an error on interface init")
+        self.sock.close()
+
+
     def add_talker_socket(self, configuration):
 
         self.setup_socket()
         self.send_qos_request(configuration, setup_socket=True)
-        status, sock = self.receive_qos_socket_response()
+        response, sock = self.receive_qos_socket_response()
         self.sock.close()
 
         return sock

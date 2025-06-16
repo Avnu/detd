@@ -40,19 +40,42 @@ class TestManager(unittest.TestCase):
         self.assertEqual(mapping.tc_to_hwq, tc_to_hwq)
 
 
-    def test_add_talker_success(self):
-
-        config = setup_config(self.mode)
+    def test_init_interface_success(self):
 
         with RunContext(self.mode):
+            interface, config = setup_interface_config(self.mode)
+
             manager = Manager()
-            vlan_interface, soprio = manager.add_talker(config)
+            manager.init_interface(config)
+
+
+    def test_init_and_add_talker_success(self):
+
+
+        with RunContext(self.mode):
+            interface, interface_config = setup_interface_config(self.mode)
+            talker_config = setup_config(self.mode)
+
+            manager = Manager()
+            manager.init_interface(interface_config)
+            vlan_interface, soprio = manager.add_talker(talker_config)
 
         self.assertEqual(vlan_interface, "eth0.3")
         self.assertEqual(soprio, 7)
 
 
-    def test_add_max_talkers_success_and_error(self):
+    def test_add_talker_not_initialized_error(self):
+
+        config = setup_config(self.mode)
+
+        with RunContext(self.mode):
+            manager = Manager()
+            #vlan_interface, soprio = manager.add_talker(config)
+
+            self.assertRaises(RuntimeError, manager.add_talker, config)
+
+
+    def test_init_and_add_max_talkers_success_and_error(self):
 
         interface_name = "eth0"
 
@@ -80,6 +103,8 @@ class TestManager(unittest.TestCase):
         # Initialize the manager to be used in all the sequence
         with RunContext(self.mode):
             manager = Manager()
+            interface, interface_config = setup_interface_config(self.mode)
+            manager.init_interface(interface_config)
 
 
         # Add first stream

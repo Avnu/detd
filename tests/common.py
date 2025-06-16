@@ -15,6 +15,7 @@ from detd import StreamConfiguration
 from detd import TrafficSpecification
 from detd import Configuration
 from detd import Interface
+from detd import InterfaceConfiguration
 from detd import Traffic
 from detd import TrafficType
 from detd import Manager
@@ -111,6 +112,19 @@ def traffic_helper(txoffset, interval):
     rate = 1 * Gbps_to_bps
 
     return Traffic(rate, TrafficType.SCHEDULED, config)
+
+
+
+
+def setup_interface_config(mode, interface_name="eth0", hints=None):
+
+    with RunContext(mode):
+        interface = Interface(interface_name)
+        hints = hints
+
+        config = InterfaceConfiguration(interface_name, hints)
+
+    return interface, config
 
 
 

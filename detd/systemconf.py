@@ -60,10 +60,10 @@ from .tc import CommandTc
 
 from .common import Check
 from .common import Mbps_to_bps
+from .common import TxSelection
 
 from .logger import get_logger
 
-from .scheduler import TxSelection
 
 logger = get_logger(__name__)
 
@@ -89,6 +89,15 @@ class SystemConfigurator:
         # We track the VLAN ids configured. So when streams share the same VID,
         # we do not configure it again.
         self.already_configured_vids = []
+
+
+    def init_system(self, interface):
+
+        if not Check.is_interface(interface.name):
+            raise TypeError
+
+        self.device.init_interface(interface)
+        self.set_interface_up(interface)
 
 
     def args_valid(self, interface, mapping, scheduler, stream, hints):
@@ -224,13 +233,13 @@ class DeviceConfigurator:
         pass
 
 
-    def setup_talker(self, interface, eee="off"):
+    def init_interface(self, interface):
 
         sysinfo = SystemInformation()
 
         ethtool = CommandEthtool()
 
-        ethtool.set_eee(interface, eee)
+        ethtool.set_eee(interface, "off")
         ethtool.set_features(interface)
 
         if sysinfo.interface_supports_split_channels(interface):
@@ -240,23 +249,18 @@ class DeviceConfigurator:
 
         ethtool.set_rings(interface)
 
+
+
+    def setup_talker(self, interface, eee="off"):
+        pass
+
+
     def setup_listener(self, interface, maddress, eee="off"):
 
-        sysinfo = SystemInformation()
         ip = CommandIp()
-        ethtool = CommandEthtool()
-
-        ethtool.set_eee(interface, eee)
-        ethtool.set_features_ingress(interface)
 
         ip.subscribe_multicast(interface.name, maddress)
 
-        if sysinfo.interface_supports_split_channels(interface):
-            ethtool.set_split_channels(interface)
-        else:
-            ethtool.set_combined_channels(interface)
-
-        ethtool.set_rings(interface)
 
 class VlanConfigurator:
 

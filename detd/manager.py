@@ -24,11 +24,10 @@ from .scheduler import Scheduler
 from .scheduler import Traffic
 from .scheduler import TrafficType
 
-from .scheduler import TxSelection
+from .common import TxSelection
 
 from .systemconf import SystemInformation
 from .systemconf import SystemConfigurator
-#from .mapping import MappingFixed
 from .mapping import MappingFlexible
 from .common import Check
 
@@ -39,6 +38,19 @@ from .logger import get_logger
 
 
 logger = get_logger(__name__)
+
+
+
+
+
+
+
+
+class InterfaceConfiguration:
+
+    def __init__(self, interface_name, hints=None):
+        self.interface_name = interface_name
+        self.hints = hints
 
 
 
@@ -89,18 +101,28 @@ class Manager():
         self.lock = threading.Lock()
 
 
+    def init_interface(self, config):
+        logger.info("Initializing interface")
+
+        with self.lock:
+            if not config.interface_name in self.talker_manager:
+                interface_manager = InterfaceManager(config)
+            interface_manager.initialize()
+            self.talker_manager[config.interface_name] = interface_manager
+            self.listener_manager[config.interface_name] = interface_manager
+
+
+
     def add_talker(self, config):
 
         logger.info("Adding talker to Manager")
-
         with self.lock:
-
             if not config.interface.name in self.talker_manager:
-                interface_manager = InterfaceManager(config)
-                self.talker_manager[config.interface.name] = interface_manager
+                raise RuntimeError("Trying to add a talker before initialization")
 
             return self.talker_manager[config.interface.name].add_talker(config)
-    
+
+
     def add_listener(self, config):
 
         logger.info("Adding listener to Manager")
@@ -108,10 +130,12 @@ class Manager():
         with self.lock:
 
             if not config.interface.name in self.listener_manager:
-                interface_manager = InterfaceManager(config)
-                self.listener_manager[config.interface.name] = interface_manager
+                raise RuntimeError("Trying to add a listener before initialization")
 
         return self.listener_manager[config.interface.name].add_listener(config)
+
+
+
 
 class InterfaceManager():
 
@@ -119,17 +143,10 @@ class InterfaceManager():
 
         logger.info(f"Initializing {__class__.__name__}")
 
-        self.interface = config.interface
+        self.interface = Interface(config.interface_name)
 
         sysinfo = SystemInformation()
         sysconf = SystemConfigurator()
-
-        try:
-            if not sysinfo.has_link(config.interface):
-                sysconf.set_interface_up(config.interface)
-        except:
-            logger.error(f"Failed to Power up Interface {config.interface}")
-            raise RuntimeError(f"Interface {config.interface} is not up")
 
         self.hints = self._get_device_hints(config)
 
@@ -141,9 +158,15 @@ class InterfaceManager():
             else:
                 self.mapping = MappingFlexible(self.interface.device)
         else:
-            raise RuntimeError(f"Mapping not defined for{self.hints.tx_selection}")
+            raise RuntimeError(f"Mapping not defined for {self.hints.tx_selection}")
         
         self.scheduler = Scheduler(self.mapping)
+
+
+    def initialize(self):
+        sysconf = SystemConfigurator()
+        sysconf.init_system(self.interface)
+
 
     def add_talker(self, config):
         '''
@@ -290,7 +313,8 @@ class InterfaceManager():
                 self.interface.setup_listener(self.mapping, self.scheduler, config.stream, config.maddress, self.hints)
             except RuntimeError:
                 logger.error("Error applying the configuration on the system")
-                raise
+                # FIXME do clean-ups
+                raise RuntimeError("Error applying the configuration on the system")
 
             vlan_interface = "{}.{}".format(self.interface.name, config.stream.vid)
             return vlan_interface, soprio    

@@ -37,7 +37,7 @@ proxy._SERVICE_UNIX_DOMAIN_SOCKET   = UNIX_DOMAIN_SOCKET
 
 def setup_configuration(mode):
 
-    interface_name = "eth1"
+    interface_name = "eth0"
     interval = 20 * 1000 * 1000 # ns
     size = 1522                 # Bytes
 
@@ -144,13 +144,23 @@ class TestService(unittest.TestCase):
         sock.close()
 
 
-    def test_service_add_talker(self):
+    def test_service_init_interface(self):
 
+        interface, interface_config = setup_interface_config(self.mode)
+
+        self.proxy.init_interface(interface_config)
+
+
+
+    def test_service_init_and_add_talker(self):
+
+        interface, interface_config = setup_interface_config(self.mode)
         configuration = setup_configuration(self.mode)
 
+        self.proxy.init_interface(interface_config)
         vlan_interface, soprio = self.proxy.add_talker(configuration)
 
-        self.assertEqual(vlan_interface, "eth1.3")
+        self.assertEqual(vlan_interface, "eth0.3")
         self.assertEqual(soprio, 7)
 
 
