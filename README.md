@@ -33,8 +33,11 @@ This is a prototype of a system service to handle time-sensitive applications
 The following snippet illustrates the add_talker interface:
 
 ```python
+# The interface to use for the deterministic communication
 interface_name = "eth0"
-interval = 2 * 1000 * 1000 # ns for 2 ms
+
+# The talker stream
+interval = 2 * 1000 * 1000  # ns for 2 ms
 size = 1522                 # Bytes
 
 txoffset = 250 * 1000       # ns for 250 us
@@ -47,11 +50,13 @@ interface = Interface(interface_name)
 traffic = TrafficSpecification(interval, size)
 stream = StreamConfiguration(addr, vid, pcp, txoffset)
 
-config = Configuration(interface, stream, traffic)
+interface_config = InterfaceConfiguration(interface_name)
+talker_config = Configuration(interface, stream, traffic)
 
 
 manager = Manager()
-manager.add_talker(config)
+manager.init_interface(interface_config)
+manager.add_talker(talker_config)
 ```
 
 In a little bit more detail:
