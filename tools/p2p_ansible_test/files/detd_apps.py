@@ -289,12 +289,21 @@ if __name__ == "__main__":
         # The talker will be configured and triggered after a pre-configured
         # pause.
         time.sleep(5)
-        config = Configuration(interface, stream, traffic, hints)
-        vlan_interface, socket_priority = proxy.add_talker(config)
+
+        interface_config = InterfaceConfiguration(args.interface, hints)
+        talker_config = Configuration(interface, stream, traffic)
+
+        proxy.init_interface(interface_config)
+        vlan_interface, socket_priority = proxy.add_talker(talker_config)
+
         talk(vlan_interface, args.addr, socket_priority, args.cycle, args.samples)
     elif args.role == 'listener':
-        config = ListenerConfiguration(interface, stream, traffic, args.addr, hints)
-        vlan_interface, socket_priority = proxy.add_listener(config)
+        interface_config = InterfaceConfiguration(args.interface, hints)
+        listener_config = ListenerConfiguration(interface, stream, traffic, args.addr)
+
+        proxy.init_interface(interface_config)
+        vlan_interface, socket_priority = proxy.add_listener(listener_config)
+
         listen(vlan_interface, socket_priority, args.cycle, args.samples)
     else:
         print("Error!!!")
