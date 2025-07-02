@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright(C) 2020-2022 Intel Corporation
+# Copyright(C) 2020-2025 Intel Corporation
 # Authors:
 #   Hector Blanco Alcaine
 
@@ -22,13 +22,7 @@ import array
 import socket
 
 from .common import Check
-
-from .ipc_pb2 import DetdMessage
-from .ipc_pb2 import HintsMessage
-from .ipc_pb2 import InitRequest
-from .ipc_pb2 import InitResponse
-from .ipc_pb2 import StreamQosRequest
-from .ipc_pb2 import StreamQosResponse
+from .ipc import *
 
 
 _SERVICE_UNIX_DOMAIN_SOCKET='/var/run/detd/detd_service.sock'
@@ -87,133 +81,92 @@ class ServiceProxy:
 
 
     def send_init_interface_request(self, configuration):
-        request = InitRequest()
-        request.interface = configuration.interface_name
 
-        if configuration.hints is not None:
-            hints = HintsMessage()
-            hints.hints_tx_selection = configuration.hints.tx_selection.value
-            hints.hints_tx_selection_offload = configuration.hints.tx_selection_offload
-            hints.hints_data_path = configuration.hints.data_path.value
-            hints.hints_preemption = configuration.hints.preemption
-            hints.hints_launch_time_control = configuration.hints.launch_time_control
-
-            request.hints = CopyFrom(hints)
-
-
-        message = DetdMessage()
-        message.init_request.CopyFrom(request)
-
-        packet = message.SerializeToString()
+        packet = Message.encode_init_interface_request(configuration)
 
         self.send(packet)
 
 
     def send_qos_request(self, configuration, setup_socket):
-        request = StreamQosRequest()
-        request.interface = configuration.interface.name
-        request.period = configuration.traffic.interval
-        request.size = configuration.traffic.size
-        request.dmac = configuration.stream.addr
-        request.vid = configuration.stream.vid
-        request.pcp = configuration.stream.pcp
-        request.txmin = configuration.stream.txoffset
-        request.txmax = configuration.stream.txoffset
-        request.setup_socket = setup_socket
-        request.talker = True
 
-        message = DetdMessage()
-        message.stream_qos_request.CopyFrom(request)
-
-        packet = message.SerializeToString()
+        packet = Message.encode_stream_qos_request(configuration, setup_socket)
 
         self.send(packet)
 
 
-    def receive_init_interface_response(self):
+    def send_qos_listener_request(self, configuration, setup_socket):
+
+        packet = Message.encode_stream_qos_request(configuration, setup_socket)
+
+        self.send(packet)
+
+
+    def receive_response(self):
+
         packet = self.recv()
 
-        message = DetdMessage()
-        message.ParseFromString(packet)
+        response_type, response = Message.extract_response(packet)
 
-        assert message.HasField("init_response")
-        response = message.init_response
+        return response_type, response
+
+
+    def receive_response_socket(self):
+
+        packet, fds = self.recv_fd(1024)
+
+        response_type, response = Message.extract_response(packet)
+
+        s = socket.socket(fileno=fds[0])
+
+        return response_type, response, s
+
+
+    def receive_init_interface_response(self):
+
+        request_type, response = self.receive_response()
+
+        if request_type != InitResponse:
+            raise Exception("Unexpected response")
 
         return response
 
 
     def receive_qos_response(self):
-        packet = self.recv()
 
-        message = DetdMessage()
-        message.ParseFromString(packet)
-        assert message.HasField("stream_qos_response")
-        response = message.stream_qos_response
+        request_type, response = self.receive_response()
+
+        if request_type != StreamQosResponse:
+            raise Exception("Unexpected response")
 
         return response
 
-
+    
     def receive_qos_socket_response(self):
-        sock = self.sock
 
-        data, fds = self.recv_fd(1024)
+        request_type, response, s = self.receive_response_socket()
 
-        message = DetdMessage()
-        message.ParseFromString(data)
-
-        assert message.HasField("stream_qos_response")
-        response =  message.stream_qos_response
-
-        s = socket.socket(fileno=fds[0])
+        if request_type != StreamQosResponse:
+            raise Exception("Unexpected response")
 
         return response, s
-    
-    def send_qos_listener_request(self, configuration, setup_socket):
-
-        request = StreamQosRequest()
-        request.interface = configuration.interface.name
-        request.period = configuration.traffic.interval
-        request.size = configuration.traffic.size
-        request.dmac = configuration.stream.addr
-        request.vid = configuration.stream.vid
-        request.pcp = configuration.stream.pcp
-        request.txmin = configuration.stream.txoffset
-        request.txmax = configuration.stream.txoffset
-        request.setup_socket = setup_socket
-        request.maddress = configuration.maddress
-        request.talker = False
-
-        message = DetdMessage()
-        message.stream_qos_request.CopyFrom(request)
-
-        packet = message.SerializeToString()
-        self.send(packet)
 
 
     def receive_listener_qos_response(self):
-        packet = self.recv()
 
-        message = DetdMessage()
-        message.ParseFromString(packet)
+        request_type, response = self.receive_response()
 
-        assert message.HasField("stream_qos_response")
-        response = message.stream_qos_response
+        if request_type != StreamQosResponse:
+            raise Exception("Unexpected response")
 
         return response
 
 
     def receive_listener_qos_socket_response(self):
-        sock = self.sock
 
-        data, fds = self.recv_fd(1024)
+        request_type, response, s = self.receive_response_socket()
 
-        message = DetdMessage()
-        message.ParseFromString(data)
-
-        assert message.HasField("stream_qos_response")
-        response =  message.stream_qos_response
-
-        s = socket.socket(fileno=fds[0])
+        if request_type != StreamQosResponse:
+            raise Exception("Unexpected response")
 
         return response, s
 
@@ -222,7 +175,8 @@ class ServiceProxy:
         self.setup_socket()
         self.send_init_interface_request(configuration)
         response = self.receive_init_interface_response()
-        if response.ok == False:
+        ok = Message.decode_init_interface_response(response)
+        if ok == False:
             raise RuntimeError("Service replied with an error on interface init")
         self.sock.close()
 
@@ -232,6 +186,9 @@ class ServiceProxy:
         self.setup_socket()
         self.send_qos_request(configuration, setup_socket=True)
         response, sock = self.receive_qos_socket_response()
+        ok, _, _ = Message.decode_stream_qos_response(response)
+        if ok == False:
+            raise RuntimeError("Service replied with an error on add talker socket")
         self.sock.close()
 
         return sock
@@ -242,30 +199,35 @@ class ServiceProxy:
         self.setup_socket()
         self.send_qos_request(configuration, setup_socket=False)
         response = self.receive_qos_response()
+        ok, vlan_interface, soprio = Message.decode_stream_qos_response(response)
+        if ok == False:
+            raise RuntimeError("Service replied with an error on add talker")
         self.sock.close()
 
-        vlan_interface = response.vlan_interface
-        soprio = response.socket_priority
-
         return vlan_interface, soprio
+
 
     def add_listener_socket(self, configuration):
 
         self.setup_socket()
-        self.send_qos_listener_request(configuration, setup_socket=True)
-        status, sock = self.receive_listener_qos_socket_response()
+        self.send_listener_qos_request(configuration, setup_socket=True)
+        response, sock = self.receive_listener_qos_socket_response()
+        ok, _, _ = Message.decode_stream_qos_response(response)
+        if ok == False:
+            raise RuntimeError("Service replied with an error on add listener socket")
         self.sock.close()
 
         return sock
+
 
     def add_listener(self, configuration):
 
         self.setup_socket()
         self.send_qos_listener_request(configuration, setup_socket=False)
         response = self.receive_listener_qos_response()
+        ok, vlan_interface, soprio = Message.decode_stream_qos_response(response)
+        if ok == False:
+            raise RuntimeError("Service replied with an error on add listener")
         self.sock.close()
-
-        vlan_interface = response.vlan_interface
-        soprio = response.socket_priority
 
         return vlan_interface, soprio

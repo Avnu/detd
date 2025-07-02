@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright(C) 2020-2022 Intel Corporation
+# Copyright(C) 2020-2025 Intel Corporation
 # Authors:
 #   Hector Blanco Alcaine
 
@@ -32,12 +32,7 @@ from unittest import mock
 
 from .common import Hints
 
-from .ipc_pb2 import DetdMessage
-from .ipc_pb2 import HintsMessage
-from .ipc_pb2 import InitRequest
-from .ipc_pb2 import InitResponse
-from .ipc_pb2 import StreamQosRequest
-from .ipc_pb2 import StreamQosResponse
+from .ipc import *
 
 from .manager import Interface
 from .manager import InterfaceConfiguration
@@ -180,8 +175,6 @@ class Service(socketserver.UnixDatagramServer):
                 raise
 
 
-
-
 class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
 
@@ -219,89 +212,37 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         return self.socket.sendmsg([msg], ancdata, 0, addr)
 
 
-    def build_init_interface_response(self, ok):
-        response = InitResponse()
-
-        response.ok = ok
-
-        message = DetdMessage()
-        message.init_response.CopyFrom(response)
-
-        packet = message.SerializeToString()
-
-        return packet
-
-
-    def build_qos_response(self, ok=False, vlan_interface=None, soprio=None, fd=None):
-        response = StreamQosResponse()
-
-        response.ok = ok
-        if fd is None:
-            response.vlan_interface = vlan_interface
-            response.socket_priority = soprio
-
-        message = DetdMessage()
-        message.stream_qos_response.CopyFrom(response)
-
-        packet = message.SerializeToString()
-
-        return packet
-
-
     def receive_request(self):
 
         data = self.packet
 
-        message = DetdMessage()
-        message.ParseFromString(data)
-
-        if message.HasField("init_request"):
-            request = message.init_request
-        elif message.HasField("stream_qos_request"):
-            request = message.stream_qos_request
+        request = Message.extract_request(data)
 
         return request
 
 
     def send_init_interface_response(self, ok):
 
-        packet = self.build_init_interface_response(ok)
+        packet = Message.encode_init_interface_response(ok)
         self.send(packet)
 
 
-    def send_qos_response(self, ok, vlan_interface, soprio):
+    def send_qos_response(self, ok, vlan_interface, socket_priority):
 
-        packet = self.build_qos_response(ok, vlan_interface, soprio)
+        packet = Message.encode_stream_qos_response(ok, vlan_interface, socket_priority)
         self.send(packet)
 
 
     def send_qos_socket_response(self, ok, fd):
 
-        message = self.build_qos_response(ok, fd=fd)
-        self.send_fd(message, fd)
-
-
-    def build_listener_qos_response(self, ok=False, vlan_interface=None, soprio=None, fd=None):
-        response = StreamQosResponse()
-
-        response.ok = ok
-        if fd is None:
-            response.vlan_interface = vlan_interface
-            response.socket_priority = soprio
-
-        message = DetdMessage()
-        message.stream_qos_response.CopyFrom(response)
-
-        packet = message.SerializeToString()
-
-
-        return packet
+        packet = Message.encode_stream_qos_response(ok, vlan_interface=None, socket_priority=None)
+        self.send_fd(packet, fd)
 
 
     def send_listener_qos_response(self, ok, vlan_interface, soprio):
 
-        message = self.build_listener_qos_response(ok, vlan_interface, soprio)
-        self.send(message)
+        packet = Message.encode_stream_qos_response(ok, vlan_interface, soprio)
+        self.send(packet)
 
 
     def send_listener_qos_socket_response(self, ok, fd):
@@ -312,23 +253,9 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
     def _init_interface(self, request):
 
-        interface_name = request.interface
-
-        if request.HasField("hints"):
-            tx_selection = request.hints.hints_tx_selection
-            tx_selection_offload = request.hints.hints_tx_selection_offload
-            data_path = request.hints.hints_data_path
-            preemption = request.hints.hints_preemption
-            launch_time_control = request.hints.hints_launch_time_control
-            hints = Hints(tx_selection, tx_selection_offload, data_path, preemption, launch_time_control)
-        else:
-            hints = None
-
-        interface_config = InterfaceConfiguration(interface_name, hints)
-
+        interface_config = Message.decode_init_interface_request(request)
 
         self.server.manager.init_interface(interface_config)
-
 
     def _mock_init_interface(self, request):
 
@@ -341,36 +268,14 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
              mock.patch.object(SystemInformation,  'has_link', return_value=True), \
              mock.patch.object(Check,  'is_interface', return_value=True):
 
-            interface_name = request.interface
-            if request.HasField("hints"):
-                tx_selection = request.hints.hints_tx_selection
-                tx_selection_offload = request.hints.hints_tx_selection_offload
-                data_path = request.hints.hints_data_path
-                preemption = request.hints.hints_preemption
-                launch_time_control = request.hints.hints_launch_time_control
-                hints = Hints(tx_selection, tx_selection_offload, data_path, preemption, launch_time_control)
-            else:
-                hints = None
-
-            interface_config = InterfaceConfiguration(interface_name, hints)
+            interface_config = Message.decode_init_interface_request(request)
 
             self.server.manager.init_interface(interface_config)
 
 
     def _add_talker(self, request):
-        addr = request.dmac
-        vid = request.vid
-        pcp = request.pcp
-        txoffset = request.txmin
-        interval = request.period
-        size = request.size
-        interface_name = request.interface
 
-        interface = Interface(interface_name)
-        stream = StreamConfiguration(addr, vid, pcp, txoffset)
-        traffic = TrafficSpecification(interval, size)
-
-        config = Configuration(interface, stream, traffic)
+        config = Message.decode_stream_qos_request(request)
 
         vlan_interface, soprio = self.server.manager.add_talker(config)
 
@@ -388,19 +293,7 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
              mock.patch.object(SystemInformation,  'has_link', return_value=True), \
              mock.patch.object(Check,  'is_interface', return_value=True):
 
-            addr = request.dmac
-            vid = request.vid
-            pcp = request.pcp
-            txoffset = request.txmin
-            interval = request.period
-            size = request.size
-            interface_name = request.interface
-
-            stream = StreamConfiguration(addr, vid, pcp, txoffset)
-            traffic = TrafficSpecification(interval, size)
-            interface = Interface(interface_name)
-
-            config = Configuration(interface, stream, traffic)
+            config = Message.decode_stream_qos_request(request)
 
             vlan_interface, soprio = self.server.manager.add_talker(config)
 
@@ -420,24 +313,13 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
         return s
 
     def _add_listener(self, request):
-        addr = request.dmac
-        vid = request.vid
-        pcp = request.pcp
-        txoffset = request.txmin
-        interval = request.period
-        size = request.size
-        maddress = request.maddress
-        interface_name = request.interface
 
-        interface = Interface(interface_name)
-        stream = StreamConfiguration(addr, vid, pcp, txoffset)
-        traffic = TrafficSpecification(interval, size)
-
-        config = ListenerConfiguration(interface, stream, traffic, maddress)
+        config = Message.decode_stream_qos_request(request)
 
         vlan_interface, soprio = self.server.manager.add_listener(config)
 
         return vlan_interface, soprio
+
 
     def _add_listener_socket(self, request):
         # FIXME: complete once manager implements setup socket
@@ -455,23 +337,12 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
              mock.patch.object(SystemInformation,  'has_link', return_value=True), \
              mock.patch.object(Check,  'is_interface', return_value=True):
 
-            addr = request.dmac
-            vid = request.vid
-            pcp = request.pcp
-            txoffset = request.txmin
-            interval = request.period
-            size = request.size
-            interface_name = request.interface
-
-            stream = StreamConfiguration(addr, vid, pcp, txoffset)
-            traffic = TrafficSpecification(interval, size)
-            interface = Interface(interface_name)
-
-            config = Configuration(interface, stream, traffic)
+            config = Message.decode_stream_qos_request(request)
 
             vlan_interface, soprio = self.server.manager.add_listener(config)
 
-        return vlan_interface, soprio
+            return vlan_interface, soprio
+
 
     def _mock_add_listener_socket(self, request):
         # FIXME: modify once manager implements setup socket
@@ -505,7 +376,6 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
             # FIXME: perform actual configuration
             # Currently manager only supports non-socket config
                 try:
-                    sock = None
                     sock = self.add_talker_socket(request)
                     if sock is None:
                         raise ValueError("Failed to create a talker, socket is None.")
@@ -520,11 +390,8 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
 
                 self.mock_socket_cleanup(sock)
 
-
             elif request.setup_socket == False:
                 try:
-                    vlan_interface = None
-                    soprio = None
                     vlan_interface, soprio = self.add_talker(request)
                     if vlan_interface is None or soprio is None:
                          raise ValueError("Failed to create a talker, vlan_interface or soprio is None.")
@@ -578,10 +445,10 @@ class ServiceRequestHandler(socketserver.DatagramRequestHandler):
     def handle(self):
         logger.info("Handling request")
 
-        request = self.receive_request()
+        request_type, request = self.receive_request()
 
-        if type(request) == InitRequest:
+        if request_type == InitRequest:
             self.handle_init_interface_request(request)
 
-        elif type(request) == StreamQosRequest:
+        elif request_type == StreamQosRequest:
             self.handle_stream_qos_request(request)

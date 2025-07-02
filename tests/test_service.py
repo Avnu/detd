@@ -56,6 +56,27 @@ def setup_configuration(mode):
     return config
 
 
+def setup_listener_configuration(mode):
+
+    interface_name = "eth0"
+    interval = 20 * 1000 * 1000 # ns
+    size = 1522                 # Bytes
+
+    txoffset = 250 * 1000       # ns
+    addr = "03:C0:FF:EE:FF:AB"
+    vid = 3
+    pcp = 6
+
+    with RunContext(mode):
+        interface = Interface(interface_name)
+        stream = StreamConfiguration(addr, vid, pcp, txoffset)
+        traffic = TrafficSpecification(interval, size)
+
+        config = ListenerConfiguration(interface, stream, traffic, addr)
+
+    return config
+
+
 def setup_proxy():
 
     proxy = ServiceProxy()
@@ -164,6 +185,17 @@ class TestService(unittest.TestCase):
         self.assertEqual(soprio, 7)
 
 
+
+    def test_service_init_and_add_listener(self):
+
+        interface, interface_config = setup_interface_config(self.mode)
+        configuration = setup_listener_configuration(self.mode)
+
+        self.proxy.init_interface(interface_config)
+        vlan_interface, soprio = self.proxy.add_listener(configuration)
+
+        self.assertEqual(vlan_interface, "eth0.3")
+        self.assertEqual(soprio, 7)
 
 
 if __name__ == '__main__':
