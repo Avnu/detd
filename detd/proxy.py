@@ -154,7 +154,6 @@ class ServiceProxy:
         request.txmin = configuration.stream.txoffset
         request.txmax = configuration.stream.txoffset
         request.setup_socket = setup_socket
-        request.maddress = configuration.maddress
         request.talker = False
         request.hints_available = False
 

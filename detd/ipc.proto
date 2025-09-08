@@ -29,7 +29,6 @@ message StreamQosRequest {
 	bool hints_preemption = 15;
 	bool hints_launch_time_control = 16;
 	bool talker = 17;
-	string maddress = 18;
 }
 
 
